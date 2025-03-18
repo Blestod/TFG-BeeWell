@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Semi-transparent overlay to reduce pattern intensity -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#B3FFFFFF"/>  <!-- Adjust alpha for transparency -->
+        </shape>
+    </item>
+
+    <!-- Honeycomb pattern properly tiled -->
+    <item>
+        <bitmap
+            android:src="@drawable/honeycombs"
+            android:tileMode="repeat"
+            android:gravity="fill"
+            android:scaleType="centerInside"
+            android:antialias="true"
+            android:filter="true"
+            android:alpha="0.4"/>
+    </item>
+
+</layer-list>
+

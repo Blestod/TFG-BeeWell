@@ -12,12 +12,12 @@
         android:title="@string/title_dashboard" />
 
     <item
-        android:id="@+id/navigation_daily"
+        android:id="@+id/navigation_dashboard"
         android:icon="@drawable/nota"
         android:title="@string/title_notifications" />
 
     <item
-        android:id="@+id/navigation_achievements"
+        android:id="@+id/navigation_notifications"
         android:icon="@drawable/calendario"
         android:title="@string/title_notifications" />
 

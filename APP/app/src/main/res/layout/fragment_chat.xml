@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/beeWhite"
+    android:elevation="8dp"
+    android:fitsSystemWindows="true">
+
+    <!-- RecyclerView for chat messages -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/chatRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@drawable/honeycombp"
+        android:padding="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/frameLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <FrameLayout
+        android:id="@+id/frameLayout"
+        android:layout_width="match_parent"
+        android:layout_height="84dp"
+        android:layout_marginBottom="56dp"
+        android:background="@drawable/rounded_card_bg"
+        android:elevation="8dp"
+        android:foregroundGravity="bottom"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+
+        <LinearLayout
+            android:id="@+id/messageInputContainer"
+            android:layout_width="380dp"
+            android:layout_height="72dp"
+            android:layout_gravity="bottom|center"
+            android:layout_marginLeft="8dp"
+            android:layout_marginTop="0dp"
+            android:layout_marginRight="8dp"
+            android:background="@drawable/white_card_bg"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <EditText
+                android:id="@+id/messageInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_weight="1"
+                android:hint="Ask a Question!"
+                android:padding="12dp"
+                android:textColor="@color/beeBlack"
+                android:textSize="16sp" />
+
+            <ImageButton
+                android:id="@+id/sendButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bluecircle"
+                android:contentDescription="Send Message"
+                android:padding="8dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/enviar"
+                app:tint="@color/beeWhite" />
+        </LinearLayout>
+
+    </FrameLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
+
