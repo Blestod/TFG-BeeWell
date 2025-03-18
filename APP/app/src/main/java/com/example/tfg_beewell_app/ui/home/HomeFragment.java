@@ -18,14 +18,26 @@ public class HomeFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
+
+        // ✅ Use ViewModelProvider.Factory for AndroidViewModel
         HomeViewModel homeViewModel =
-                new ViewModelProvider(this).get(HomeViewModel.class);
+                new ViewModelProvider(requireActivity(),
+                        new ViewModelProvider.AndroidViewModelFactory(requireActivity().getApplication()))
+                        .get(HomeViewModel.class);
 
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        final TextView textView = binding.textHome;
-        homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        // ✅ Ensure textInfo is correctly referenced in the layout
+        final TextView textView = binding.textInfo;
+
+        // ✅ Observe ViewModel's LiveData and update UI
+        homeViewModel.getText().observe(getViewLifecycleOwner(), text -> {
+            if (text != null && !text.isEmpty()) {
+                textView.setText(text);
+            }
+        });
+
         return root;
     }
 
