@@ -33,13 +33,38 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Diet"
-                    android:textColor="@color/beeBlue"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal"
+                    android:padding="8dp">
+
+                    <!-- Text on the left -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Diet"
+                        android:textColor="@color/beeBlue"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <!-- Spacer to push the image right -->
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <!-- Image aligned to the right -->
+                    <ImageView
+                        android:id="@+id/dietToggleBtn"
+                        android:layout_width="32dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="center_vertical"
+                        android:contentDescription="Edit"
+                        android:src="@drawable/agrandar"
+                        app:tint="@color/beeBlue" />
+                </LinearLayout>
+
 
                 <!-- You can use a placeholder for now -->
                 <androidx.recyclerview.widget.RecyclerView
@@ -66,13 +91,38 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Exercise"
-                    android:textColor="@color/beeBlue"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal"
+                    android:padding="8dp">
+
+                    <!-- Text on the left -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Exercise"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/beeBlue" />
+
+                    <!-- Spacer to push the image right -->
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <!-- Image aligned to the right -->
+                    <ImageView
+                        android:id="@+id/exerciseToggleBtn"
+                        android:layout_width="32dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="center_vertical"
+                        android:contentDescription="Edit"
+                        android:src="@drawable/agrandar"
+                        app:tint="@color/beeBlue" />
+                </LinearLayout>
+
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/exerciseRecyclerView"
