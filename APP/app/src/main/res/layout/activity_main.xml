@@ -2,30 +2,29 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="false">
 
+    <!-- Main Fragment Container -->
     <fragment
         android:id="@+id/nav_host_fragment_activity_main"
         android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="0dp"
-        android:layout_marginBottom="0dp"
         app:defaultNavHost="true"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        app:navGraph="@navigation/mobile_navigation"
         android:fitsSystemWindows="false"
-        app:navGraph="@navigation/mobile_navigation" />
+        />
 
+    <!-- Floating Header (Optional, if needed) -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@android:color/transparent"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="0dp"
-        app:layout_constraintTop_toTopOf="parent">
+        android:paddingHorizontal="16dp">
 
         <ImageView
             android:id="@+id/logo"
@@ -33,7 +32,6 @@
             android:layout_height="54dp"
             android:layout_marginTop="8dp"
             android:contentDescription="logoBeeWell"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/beewell" />
@@ -43,25 +41,22 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:contentDescription="Menu"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/logo"
             app:srcCompat="@drawable/menus"
             app:tint="@color/beeBlue" />
-
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <!-- Bottom Navigation (fixed to screen bottom) -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/nav_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
         android:background="@drawable/bottom_nav_bg"
         app:itemIconTint="@color/bottom_nav_color"
         app:itemTextColor="@color/bottom_nav_color"
         app:labelVisibilityMode="unlabeled"
         app:itemIconSize="25dp"
-        app:menu="@menu/bottom_nav_menu"
-        android:layout_gravity="bottom"
-        app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior"/>
-
+        app:menu="@menu/bottom_nav_menu" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

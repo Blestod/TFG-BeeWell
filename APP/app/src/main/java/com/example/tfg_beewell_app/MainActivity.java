@@ -6,6 +6,9 @@ import android.view.Window;
 import android.view.WindowManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -30,6 +33,17 @@ public class MainActivity extends AppCompatActivity {
 
         // ✅ Setup Bottom Navigation and NavController
         BottomNavigationView navView = findViewById(R.id.nav_view);
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_container), (v, insets) -> {
+            Insets barInsets = insets.getInsets(
+                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.ime()
+            );
+
+            v.setPadding(0, 0, 0, barInsets.bottom);
+
+            return insets;
+        });
+
 
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.navigation_home,

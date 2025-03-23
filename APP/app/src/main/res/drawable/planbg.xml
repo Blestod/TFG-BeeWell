@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Base Yellow Background -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/beeYellow"/>
+        </shape>
+    </item>
+
+    <!-- White diagonal overlay -->
+    <item>
+        <rotate
+            android:fromDegrees="60"
+            android:pivotX="50%"
+            android:pivotY="50%">
+            <shape android:shape="rectangle">
+                <size
+                    android:width="300dp"
+                    android:height="3000dp" />
+
+                <solid android:color="@android:color/white"/>
+            </shape>
+        </rotate>
+    </item>
+
+</layer-list>
+
