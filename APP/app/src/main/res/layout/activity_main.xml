@@ -41,6 +41,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:contentDescription="Menu"
+            app:layout_constraintBottom_toBottomOf="@+id/logo"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/logo"
             app:srcCompat="@drawable/menus"
