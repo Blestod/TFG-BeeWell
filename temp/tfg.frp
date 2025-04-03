@@ -1,0 +1,39 @@
+﻿<?xml version="1.0"?>
+<FRequestProject frequestVersion="1.2" name="TFG" mainUrl="http://localhost/" uuid="{7e4286b9-fb42-436f-b043-e3f9e7354eff}" saveIdentCharacter="0">
+    <Request name="post_vital" uuid="{b69df019-a2fc-401c-a6c9-057312c3a24c}" order="0" bOverridesMainUrl="true" overrideMainUrl="http://127.0.0.1:5000" path="vital" type="1" bDownloadResponseAsFile="false" bDisableGlobalHeaders="true">
+        <Body type="0"><![CDATA[{
+  "user_email": "test",
+  "vital_time": 1743718785,
+  "glucose_value": 95,
+  "heart_rate": 72,
+  "temperature": 98.6,
+  "calories": 250,
+  "diastolic": 80,
+  "systolic": 120,
+  "is_sleeping": false
+}
+]]></Body>
+        <Headers>
+            <Header>
+                <Key><![CDATA[Content-type]]></Key>
+                <Value><![CDATA[application/json]]></Value>
+            </Header>
+        </Headers>
+    </Request>
+    <Request name="post_usuario" uuid="{77332a0c-6024-4413-aa3d-007fe773f84b}" order="1" bOverridesMainUrl="true" overrideMainUrl="http://127.0.0.1:5000" path="user" type="1" bDownloadResponseAsFile="false" bDisableGlobalHeaders="true">
+        <Body type="0"><![CDATA[{
+  "email": "test",
+  "password": "test",
+  "birth_date": 23022002,
+  "sex": true,
+  "insulin_type": "test"
+}]]></Body>
+        <Headers>
+            <Header>
+                <Key><![CDATA[Content-type]]></Key>
+                <Value><![CDATA[application/json]]></Value>
+            </Header>
+        </Headers>
+    </Request>
+    <GlobalHeaders />
+</FRequestProject>
