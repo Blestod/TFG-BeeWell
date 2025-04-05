@@ -15,20 +15,18 @@ public class MainEntryActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        SharedPreferences prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
-        boolean isFirstLaunch = prefs.getBoolean(KEY_FIRST_LAUNCH, true);
+        SharedPreferences prefs = getSharedPreferences("user_session", MODE_PRIVATE);
+        String userEmail = prefs.getString("user_email", null);
 
-        if (isFirstLaunch) {
-            // Go to LoginActivity
-            startActivity(new Intent(this, LoginActivity.class));
-
-            // Update flag
-            prefs.edit().putBoolean(KEY_FIRST_LAUNCH, false).apply();
-        } else {
-            // Go directly to your MainActivity
+        if (userEmail != null) {
+            // El usuario ya está logueado → ir a MainActivity
             startActivity(new Intent(this, MainActivity.class));
+        } else {
+            // No hay sesión → ir a LoginActivity
+            startActivity(new Intent(this, LoginActivity.class));
         }
 
-        finish(); // Prevent this activity from showing again
+        finish();
     }
 }
+
