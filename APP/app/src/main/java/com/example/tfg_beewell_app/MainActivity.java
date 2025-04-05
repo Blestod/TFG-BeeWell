@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ImageView;
+
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -15,8 +17,22 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import com.example.tfg_beewell_app.databinding.ActivityMainBinding;
 
-public class MainActivity extends AppCompatActivity {
+import android.util.Log;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
+
+import java.io.IOException;
+
+public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "POST_VITAL";
+    private static final OkHttpClient client = new OkHttpClient();
+    private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private ActivityMainBinding binding;
 
     @Override
@@ -30,6 +46,15 @@ public class MainActivity extends AppCompatActivity {
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        ImageView menuButton = findViewById(R.id.menuButton);
+        menuButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendTestVital();
+            }
+        });
+
 
         // ✅ Setup Bottom Navigation and NavController
         BottomNavigationView navView = findViewById(R.id.nav_view);
@@ -85,5 +110,46 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         hideSystemUI();
+    }
+
+    public static void sendTestVital() {
+        String json = "{"
+                + "\"user_email\": \"test\","
+                + "\"vital_time\": \"202504\","
+                + "\"glucose_value\": 112,"
+                + "\"heart_rate\": 72,"
+                + "\"temperature\": 36.6,"
+                + "\"calories\": 300,"
+                + "\"diastolic\": 70,"
+                + "\"systolic\": 120,"
+                + "\"is_sleeping\": false"
+                + "}";
+
+        RequestBody body = RequestBody.create(JSON, json);
+        Request request = new Request.Builder()
+                .url("http://192.168.31.10:5050/vital")
+                .post(body)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e(TAG, "Error: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                try {
+                    if (response.isSuccessful()) {
+                        Log.d(TAG, "Success! Code: " + response.code());
+                    } else {
+                        Log.e(TAG, "Failed. Code: " + response.code());
+                    }
+                } finally {
+                    response.close(); //
+                }
+            }
+
+        });
     }
 }

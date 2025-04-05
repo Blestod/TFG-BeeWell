@@ -32,23 +32,28 @@ def post_user():
 
 @api.route("/vital", methods=["POST"])
 def post_vital():
-    user = User.query.get(request.json["user_email"])
-    if user is None:
-        return "User not found", 404
-    vital = Vital(
-        user_email=user.email,
-        vital_time=request.json["vital_time"],
-        glucose_value=request.json["glucose_value"],
-        heart_rate=request.json["heart_rate"],
-        temperature=request.json["temperature"],
-        calories=request.json["calories"],
-        diastolic=request.json["diastolic"],
-        systolic=request.json["systolic"],
-        is_sleeping=request.json["is_sleeping"]
-    )
-    db.session.add(vital)
-    db.session.commit()
-    return "ok", 201
+    try:
+        user = User.query.get(request.json["user_email"])
+        if user is None:
+            return "User not found", 404
+        vital = Vital(
+            user_email=user.email,
+            vital_time=request.json["vital_time"],
+            glucose_value=request.json["glucose_value"],
+            heart_rate=request.json["heart_rate"],
+            temperature=request.json["temperature"],
+            calories=request.json["calories"],
+            diastolic=request.json["diastolic"],
+            systolic=request.json["systolic"],
+            is_sleeping=request.json["is_sleeping"]
+        )
+        db.session.add(vital)
+        db.session.commit()
+        return "ok", 201
+    except Exception as e:
+        db.session.rollback()
+        print("ERROR in /vital:", str(e))
+        return "Internal Server Error", 500
 
 @api.route("/vital/<int:vital_id>", methods=["GET"])
 def get_vital_by_id(vital_id:int):
@@ -59,4 +64,4 @@ def get_vital_by_id(vital_id:int):
 
 #---------------------MAIN----------------------
 if __name__ == "__main__":
-    api.run()
+    api.run(host="0.0.0.0", port=5050)
