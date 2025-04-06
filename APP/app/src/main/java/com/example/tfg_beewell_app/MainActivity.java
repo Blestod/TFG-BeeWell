@@ -79,8 +79,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         terms.setOnClickListener(v -> {
-            Toast.makeText(this, "Terms clicked", Toast.LENGTH_SHORT).show();
             menuOverlay.setVisibility(View.GONE);
+            startActivity(new Intent(MainActivity.this, TermsReadActivity.class));
         });
 
         logout.setOnClickListener(v -> {

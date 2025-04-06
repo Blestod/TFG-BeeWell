@@ -28,15 +28,6 @@
         android:background="@android:color/transparent"
         android:paddingHorizontal="16dp">
 
-        <ImageView
-            android:id="@+id/logo"
-            android:layout_width="120dp"
-            android:layout_height="54dp"
-            android:layout_marginTop="8dp"
-            android:contentDescription="logoBeeWell"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/beewell" />
 
         <ImageView
             android:id="@+id/menuButton"
@@ -48,6 +39,20 @@
             app:layout_constraintTop_toTopOf="@+id/logo"
             app:srcCompat="@drawable/menus"
             app:tint="@color/beeBlue" />
+
+
+
+        <ImageView
+            android:id="@+id/logo"
+            android:layout_width="120dp"
+            android:layout_height="54dp"
+            android:layout_marginTop="8dp"
+            android:contentDescription="logoBeeWell"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/beewell" />
+
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Bottom Navigation (fixed to screen bottom) -->

@@ -38,6 +38,8 @@
         <activity android:name=".LoginActivity"/>
         <activity android:name=".RegisterActivity"/>
         <activity android:name=".TermsActivity"/>
+        <activity android:name=".TermsReadActivity" />
+
     </application>
 
 </manifest>

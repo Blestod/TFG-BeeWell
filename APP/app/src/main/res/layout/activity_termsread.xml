@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/loginbg"
+    android:padding="24dp">
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/titleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:text="Terms and Conditions"
+        android:textColor="@color/beeWhite"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="@+id/backButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Back Image -->
+    <ImageView
+        android:id="@+id/backButton"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:contentDescription="Back"
+        android:src="@drawable/x"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/beeWhite" />
+
+    <!-- CardView with Scrollable Terms -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardView3"
+        android:layout_width="320dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="32dp"
+        app:cardCornerRadius="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/titleText">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/white"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/termsContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🐝 BeeWell – Terms and Conditions\n\nLast Updated: April 2025\n\nPlease read these Terms and Conditions (\Terms\) carefully before using the BeeWell mobile application (the \App\). By accessing or using the App, you agree to be bound by these Terms.\n\n\n1. Purpose of the App\nBeeWell is designed to support individuals living with diabetes and related health concerns. The app gathers data from wearable devices and manual entries to provide predictions, insights, and general advice.\n\n⚠️ It does NOT replace professional medical advice, diagnosis, or treatment.\n\n\n2. User Responsibilities\nYou agree to:\n• Provide accurate and honest information\n• Use the App responsibly\n• Seek professional advice for medical decisions\n\n\n3. Privacy and Data\n• Your data is handled according to our Privacy Policy\n• We do NOT sell or share health data without your consent\n• Data is used to personalize your experience\n\n\n4. AI and Predictions Disclaimer\nThe AI features in BeeWell (like glucose prediction and lifestyle advice) are:\n• Experimental\n• Not 100% accurate\n• Intended to assist, not replace medical professionals\n\n\n5. Account and Security\n• Keep your credentials safe\n• You’re responsible for activity in your account\n• Report unauthorized use immediately\n\n\n6. Limitations of Liability\nBeeWell is not liable for:\n• Inaccurate predictions or insights\n• Health issues resulting from app reliance\nAlways consult a doctor when in doubt.\n\n\n7. Changes to Terms\nWe may update these Terms occasionally. Continuing to use the app means you agree to any updates.\n\n\n8. Contact Us\nQuestions or support? Reach us at:\nsupport@beewellapp.com\n\n\nBeeWell cares about your health 🐝"
+                android:textColor="@color/beeBlack"
+                android:textSize="16sp" />
+        </ScrollView>
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
