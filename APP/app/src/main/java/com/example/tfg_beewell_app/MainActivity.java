@@ -1,5 +1,7 @@
 package com.example.tfg_beewell_app;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
@@ -17,17 +19,15 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import com.example.tfg_beewell_app.databinding.ActivityMainBinding;
 
-import android.util.Log;
-import okhttp3.Call;
-import okhttp3.Callback;
+import android.widget.Toast;
+
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
+import android.widget.PopupMenu;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 
-import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "POST_VITAL";
@@ -48,15 +48,48 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         ImageView menuButton = findViewById(R.id.menuButton);
-        menuButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendTestVital();
-            }
+        FrameLayout menuOverlay = findViewById(R.id.menuOverlay);
+
+        menuButton.setOnClickListener(v -> {
+            menuOverlay.setVisibility(View.VISIBLE);
+            menuOverlay.setTranslationY(-1000f);
+            menuOverlay.animate().translationY(0f).setDuration(300).start();
+            hideSystemUI(); // keep immersive
+        });
+
+        TextView profile = findViewById(R.id.menu_profile);
+        TextView terms = findViewById(R.id.menu_terms);
+        TextView logout = findViewById(R.id.menu_aboutus);
+
+        ImageView closeMenuBtn = findViewById(R.id.closeMenuBtn);
+
+        closeMenuBtn.setOnClickListener(v -> {
+            menuOverlay.setVisibility(View.GONE);
+        });
+
+// Optional: close when tapping outside the menu
+        menuOverlay.setOnClickListener(v -> {
+            menuOverlay.setVisibility(View.GONE);
         });
 
 
-        // ✅ Setup Bottom Navigation and NavController
+        profile.setOnClickListener(v -> {
+            Toast.makeText(this, "Profile clicked", Toast.LENGTH_SHORT).show();
+            menuOverlay.setVisibility(View.GONE);
+        });
+
+        terms.setOnClickListener(v -> {
+            Toast.makeText(this, "Terms clicked", Toast.LENGTH_SHORT).show();
+            menuOverlay.setVisibility(View.GONE);
+        });
+
+        logout.setOnClickListener(v -> {
+            SharedPreferences prefs = getSharedPreferences("user_session", MODE_PRIVATE);
+            prefs.edit().clear().apply();
+            startActivity(new Intent(MainActivity.this, LoginActivity.class));
+            finish();
+        });
+
         BottomNavigationView navView = findViewById(R.id.nav_view);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_container), (v, insets) -> {
@@ -84,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
         hideSystemUI();
     }
 
+
     private void hideSystemUI() {
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
@@ -110,46 +144,5 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         hideSystemUI();
-    }
-
-    public static void sendTestVital() {
-        String json = "{"
-                + "\"user_email\": \"test\","
-                + "\"vital_time\": \"202504\","
-                + "\"glucose_value\": 112,"
-                + "\"heart_rate\": 72,"
-                + "\"temperature\": 36.6,"
-                + "\"calories\": 300,"
-                + "\"diastolic\": 70,"
-                + "\"systolic\": 120,"
-                + "\"is_sleeping\": false"
-                + "}";
-
-        RequestBody body = RequestBody.create(JSON, json);
-        Request request = new Request.Builder()
-                .url("http://192.168.31.10:5050/vital")
-                .post(body)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Log.e(TAG, "Error: " + e.getMessage());
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                try {
-                    if (response.isSuccessful()) {
-                        Log.d(TAG, "Success! Code: " + response.code());
-                    } else {
-                        Log.e(TAG, "Failed. Code: " + response.code());
-                    }
-                } finally {
-                    response.close(); //
-                }
-            }
-
-        });
     }
 }

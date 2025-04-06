@@ -7,6 +7,8 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="false">
 
+
+
     <!-- Main Fragment Container -->
     <fragment
         android:id="@+id/nav_host_fragment_activity_main"
@@ -55,9 +57,13 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:background="@drawable/bottom_nav_bg"
+        app:elevation="8dp"
+        app:itemIconSize="25dp"
         app:itemIconTint="@color/bottom_nav_color"
         app:itemTextColor="@color/bottom_nav_color"
         app:labelVisibilityMode="unlabeled"
-        app:itemIconSize="25dp"
         app:menu="@menu/bottom_nav_menu" />
+
+    <include layout="@layout/menu_overlay" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
