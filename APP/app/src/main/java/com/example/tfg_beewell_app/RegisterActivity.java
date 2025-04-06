@@ -5,15 +5,7 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.widget.Toast;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.Volley;
-import com.android.volley.toolbox.JsonObjectRequest;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -26,7 +18,7 @@ public class RegisterActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_register); // Use the actual XML file name
+        setContentView(R.layout.activity_register); // Your layout file
 
         registerEmailInput = findViewById(R.id.registerEmailInput);
         registerPasswordInput = findViewById(R.id.registerPasswordInput);
@@ -39,33 +31,15 @@ public class RegisterActivity extends AppCompatActivity {
             String password = registerPasswordInput.getText().toString();
             String confirmPassword = registerConfirmPasswordInput.getText().toString();
 
-
             if (!email.isEmpty() && password.equals(confirmPassword)) {
-                String url = "http://192.168.31.10:5050/user";
-
-                JSONObject jsonBody = new JSONObject();
-                try {
-                    jsonBody.put("email", email);
-                    jsonBody.put("password", password);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-                RequestQueue queue = Volley.newRequestQueue(this);
-                JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, jsonBody,
-                        response -> {
-                            Toast.makeText(this, "Usuario registrado con éxito", Toast.LENGTH_SHORT).show();
-                            startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
-                            finish();
-                        },
-                        error -> {
-                            Toast.makeText(this, "Error al registrar", Toast.LENGTH_SHORT).show();
-                        }
-                );
-
-                queue.add(request);
-            } else{
-                Toast.makeText(this, "Please make sure to fill in correctly", Toast.LENGTH_SHORT).show();
+                // 👉 Redirect to TermsActivity with user input
+                Intent intent = new Intent(RegisterActivity.this, TermsActivity.class);
+                intent.putExtra("email", email);
+                intent.putExtra("password", password);
+                startActivity(intent);
+                finish(); // Optional: remove this if you want user to go "Back"
+            } else {
+                Toast.makeText(this, "Please check your inputs and try again.", Toast.LENGTH_SHORT).show();
             }
         });
 
