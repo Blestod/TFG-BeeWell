@@ -7,4 +7,11 @@
     <string name="appbar_scrolling_view_behavior">com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="sex_prompt">Select your sex</string>
+    <string-array name="sex_options">
+        <item>Select your sex</item>
+        <item>Male</item>
+        <item>Female</item>
+    </string-array>
+
 </resources>

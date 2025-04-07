@@ -25,12 +25,12 @@
         android:id="@+id/cardEmail"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="200dp"
+        android:layout_marginBottom="16dp"
         app:cardCornerRadius="12dp"
         app:cardElevation="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/cardPassword"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/registerTitle">
+        app:layout_constraintStart_toStartOf="parent">
 
         <EditText
             android:id="@+id/registerEmailInput"
@@ -48,12 +48,12 @@
         android:id="@+id/cardPassword"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
         app:cardCornerRadius="12dp"
         app:cardElevation="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/cardConfirmPassword"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cardEmail">
+        app:layout_constraintStart_toStartOf="parent">
 
         <EditText
             android:id="@+id/registerPasswordInput"
@@ -71,11 +71,11 @@
         android:id="@+id/cardConfirmPassword"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginBottom="24dp"
         app:cardCornerRadius="12dp"
+        app:layout_constraintBottom_toTopOf="@+id/registerButton"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cardPassword">
+        app:layout_constraintStart_toStartOf="parent">
 
         <EditText
             android:id="@+id/registerConfirmPasswordInput"
@@ -93,27 +93,27 @@
         android:id="@+id/registerButton"
         android:layout_width="160dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginBottom="24dp"
         android:backgroundTint="@color/beeBlue"
         android:elevation="8dp"
         android:text="Register"
         android:textColor="@android:color/white"
-        app:cornerRadius="12dp"
+        app:cornerRadius="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/loginRedirect"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cardConfirmPassword" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <!-- Back to Login -->
     <TextView
         android:id="@+id/loginRedirect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginBottom="128dp"
         android:text="Already have an account? Log In"
         android:textColor="@color/beeBlue"
         android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/registerButton" />
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

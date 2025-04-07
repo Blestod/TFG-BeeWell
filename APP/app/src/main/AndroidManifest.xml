@@ -39,6 +39,7 @@
         <activity android:name=".RegisterActivity"/>
         <activity android:name=".TermsActivity"/>
         <activity android:name=".TermsReadActivity" />
+        <activity android:name=".ProfileActivity" />
 
     </application>
 

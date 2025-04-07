@@ -74,8 +74,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         profile.setOnClickListener(v -> {
-            Toast.makeText(this, "Profile clicked", Toast.LENGTH_SHORT).show();
             menuOverlay.setVisibility(View.GONE);
+            startActivity(new Intent(MainActivity.this, ProfileActivity.class));
         });
 
         terms.setOnClickListener(v -> {
