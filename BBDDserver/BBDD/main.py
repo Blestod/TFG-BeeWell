@@ -14,8 +14,8 @@ def get_home():
     return "Running serVidor"
 
 # Setup para bcrypt
-# Login
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Login
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
@@ -49,8 +49,7 @@ def post_user():
         email=request.json.get("email"),
         password = hash_password(request.json.get("password")),
         birth_date=request.json.get("birth_date"),
-        sex=request.json.get("sex"),
-        insulin_type=request.json.get("insulin_type")
+        sex=request.json.get("sex")
     )
     db.session.add(user)
     db.session.commit()
