@@ -31,7 +31,7 @@
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="56dp">
+                    android:layout_marginTop="72dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -116,7 +116,7 @@
             android:layout_margin="16dp"
             android:layout_marginTop="12dp"
             android:padding="8dp"
-            android:text="• Lorem ipsum dolor sit amet...\n• More generated insights here..."
+            android:text="Lorem ipsum dolor sit amet...\nMore generated insights here..."
             android:textColor="@color/beeBlack"
             android:textSize="16sp" />
     </LinearLayout>

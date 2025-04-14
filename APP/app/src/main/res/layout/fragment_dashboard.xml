@@ -10,7 +10,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="64dp"
+        android:layout_marginTop="72dp"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -44,7 +44,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Diet"
-                        android:textColor="@color/beeBlue"
+                        android:textColor="@color/beeBlack"
                         android:textSize="20sp"
                         android:textStyle="bold" />
 
@@ -102,9 +102,9 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Exercise"
+                        android:textColor="@color/beeBlack"
                         android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/beeBlue" />
+                        android:textStyle="bold" />
 
                     <!-- Spacer to push the image right -->
                     <Space

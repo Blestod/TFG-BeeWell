@@ -59,7 +59,7 @@ public class TermsActivity extends AppCompatActivity {
                 }
 
                 RequestQueue queue = Volley.newRequestQueue(this);
-                String url = "http://192.168.31.10:5050/user";
+                String url = "http://192.168.1.65:5050/user";
 
                 JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, jsonBody,
                         response -> {

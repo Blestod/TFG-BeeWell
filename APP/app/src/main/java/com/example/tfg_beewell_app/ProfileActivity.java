@@ -27,7 +27,6 @@ public class ProfileActivity extends AppCompatActivity {
 
         // Bind views
         birthdateInput = findViewById(R.id.birthdate);
-        insulinTypeInput = findViewById(R.id.insulinTypeInput);
         sexSpinner = findViewById(R.id.sexSpinner);
         saveButton = findViewById(R.id.saveUserDataButton);
         changeEmailButton = findViewById(R.id.changeEmailButton);
@@ -47,7 +46,6 @@ public class ProfileActivity extends AppCompatActivity {
         // === Load profile data from SharedPreferences ===
         SharedPreferences prefs = getSharedPreferences("user_profile", MODE_PRIVATE);
         birthdateInput.setText(prefs.getString("birthdate", ""));
-        insulinTypeInput.setText(prefs.getString("insulin_type", ""));
 
         // Restore sex (if saved)
         String savedSex = prefs.getString("sex", "");
@@ -62,7 +60,6 @@ public class ProfileActivity extends AppCompatActivity {
         saveButton.setOnClickListener(v -> {
             SharedPreferences.Editor editor = prefs.edit();
             editor.putString("birthdate", birthdateInput.getText().toString());
-            editor.putString("insulin_type", insulinTypeInput.getText().toString());
 
             String selectedSex = sexSpinner.getSelectedItem().toString();
             if (!selectedSex.equals("Select your sex")) {

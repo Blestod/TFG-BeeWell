@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/beeWhite"
+    android:padding="16dp">
+
+    <!-- Form Content -->
+    <LinearLayout
+        android:id="@+id/insulinFormContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="0dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <EditText
+            android:id="@+id/insulinType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:hint="Insulin Type"
+            android:inputType="number"
+            android:padding="12dp"
+            android:textColor="@color/beeBlack"
+            android:textColorHint="@color/material_dynamic_neutral40" />
+
+        <EditText
+            android:id="@+id/insulinInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:hint="Units (e.g., 6)"
+            android:inputType="number"
+            android:padding="12dp"
+            android:textColor="@color/beeBlack"
+            android:textColorHint="@color/material_dynamic_neutral40" />
+    </LinearLayout>
+
+    <!-- Save Button pinned to bottom-end -->
+    <Button
+        android:id="@+id/saveInsulinBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/beeBlue"
+        android:text="Save"
+        android:textColor="@android:color/white"
+        app:cornerRadius="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

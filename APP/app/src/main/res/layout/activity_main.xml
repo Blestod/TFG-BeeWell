@@ -41,12 +41,11 @@
             app:tint="@color/beeBlue" />
 
 
-
         <ImageView
             android:id="@+id/logo"
             android:layout_width="120dp"
             android:layout_height="54dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="16dp"
             android:contentDescription="logoBeeWell"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -68,6 +67,31 @@
         app:itemTextColor="@color/bottom_nav_color"
         app:labelVisibilityMode="unlabeled"
         app:menu="@menu/bottom_nav_menu" />
+
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/fab_add"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginRight="24dp"
+        android:layout_marginBottom="72dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="@color/beeWhite"
+        app:cardCornerRadius="32dp"
+        app:cardElevation="8dp">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:backgroundTint="@color/beeWhite"
+            android:contentDescription="Add"
+            android:src="@drawable/agregar"
+            android:tint="@color/beeBlue" />
+    </androidx.cardview.widget.CardView>
+
 
     <include layout="@layout/menu_overlay" />
 

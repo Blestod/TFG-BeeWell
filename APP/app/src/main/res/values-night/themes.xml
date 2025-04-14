@@ -22,5 +22,14 @@
         <item name="android:fontFamily">@font/nunitoregular</item>
 
         <item name="colorControlNormal">@color/beeBlack</item>
+
+        <item name="bottomSheetDialogTheme">@style/CustomBottomSheetDialog</item>
+
     </style>
+
+    <style name="CustomBottomSheetDialog" parent="Theme.Design.Light.BottomSheetDialog">
+        <item name="android:backgroundDimAmount">0.3</item>
+        <item name="background">@android:color/transparent</item>
+    </style>
+
 </resources>
