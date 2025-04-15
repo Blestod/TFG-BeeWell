@@ -37,7 +37,7 @@
             app:layout_constraintBottom_toBottomOf="@+id/logo"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/logo"
-            app:srcCompat="@drawable/menus"
+            app:srcCompat="@drawable/menu"
             app:tint="@color/beeBlue" />
 
 
@@ -62,7 +62,7 @@
         android:layout_gravity="bottom"
         android:background="@drawable/bottom_nav_bg"
         app:elevation="8dp"
-        app:itemIconSize="25dp"
+        app:itemIconSize="26dp"
         app:itemIconTint="@color/bottom_nav_color"
         app:itemTextColor="@color/bottom_nav_color"
         app:labelVisibilityMode="unlabeled"

@@ -38,9 +38,9 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:tabIndicatorColor="@color/beeBlue"
-                app:tabSelectedTextAppearance="@style/TextAppearance.AppCompat.Large"
+                app:tabSelectedTextAppearance="@style/TextAppearance.AppCompat.Medium"
                 app:tabSelectedTextColor="@color/beeBlue"
-                app:tabTextAppearance="@style/TextAppearance.AppCompat.Large"
+                app:tabTextAppearance="@style/TextAppearance.AppCompat.Medium"
                 app:tabTextColor="@color/beeBlack" />
 
             <androidx.viewpager2.widget.ViewPager2

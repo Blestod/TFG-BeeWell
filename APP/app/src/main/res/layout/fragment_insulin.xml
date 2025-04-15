@@ -30,7 +30,8 @@
             android:inputType="number"
             android:padding="12dp"
             android:textColor="@color/beeBlack"
-            android:textColorHint="@color/material_dynamic_neutral40" />
+            android:textColorHint="@color/material_dynamic_neutral40"
+            android:textSize="16sp" />
 
         <EditText
             android:id="@+id/insulinInput"
@@ -44,7 +45,8 @@
             android:inputType="number"
             android:padding="12dp"
             android:textColor="@color/beeBlack"
-            android:textColorHint="@color/material_dynamic_neutral40" />
+            android:textColorHint="@color/material_dynamic_neutral40"
+            android:textSize="16sp" />
     </LinearLayout>
 
     <!-- Save Button pinned to bottom-end -->

@@ -44,10 +44,10 @@ public class NotificationsFragment extends Fragment {
         toggleBtn.setOnClickListener(v -> {
             if (!isAchievementsExpanded) {
                 setCardHeight(achievementsCard, EXPANDED_HEIGHT_DP);
-                toggleBtn.setImageResource(R.drawable.x);
+                toggleBtn.setImageResource(R.drawable.fold);
             } else {
                 setCardHeight(achievementsCard, COLLAPSED_HEIGHT_DP);
-                toggleBtn.setImageResource(R.drawable.agrandar);
+                toggleBtn.setImageResource(R.drawable.unfold);
             }
             isAchievementsExpanded = !isAchievementsExpanded;
         });

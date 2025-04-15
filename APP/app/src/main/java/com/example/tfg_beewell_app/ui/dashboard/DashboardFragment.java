@@ -39,8 +39,8 @@ public class DashboardFragment extends Fragment {
             if (!isDietExpanded) {
                 setCardHeight(dietCard, EXPANDED_HEIGHT_DP);
                 setCardHeight(exerciseCard, COLLAPSED_HEIGHT_DP);
-                dietToggleBtn.setImageResource(R.drawable.x); // close icon
-                exerciseToggleBtn.setImageResource(R.drawable.agrandar);
+                dietToggleBtn.setImageResource(R.drawable.fold); // close icon
+                exerciseToggleBtn.setImageResource(R.drawable.unfold);
                 isDietExpanded = true;
                 isExerciseExpanded = false;
             } else {
@@ -52,8 +52,8 @@ public class DashboardFragment extends Fragment {
             if (!isExerciseExpanded) {
                 setCardHeight(exerciseCard, EXPANDED_HEIGHT_DP);
                 setCardHeight(dietCard, COLLAPSED_HEIGHT_DP);
-                exerciseToggleBtn.setImageResource(R.drawable.x);
-                dietToggleBtn.setImageResource(R.drawable.agrandar);
+                exerciseToggleBtn.setImageResource(R.drawable.fold);
+                dietToggleBtn.setImageResource(R.drawable.unfold);
                 isExerciseExpanded = true;
                 isDietExpanded = false;
             } else {
@@ -78,8 +78,8 @@ public class DashboardFragment extends Fragment {
                                   ImageView dietBtn, ImageView exerciseBtn) {
         setCardHeight(dietCard, NORMAL_HEIGHT_DP);
         setCardHeight(exerciseCard, NORMAL_HEIGHT_DP);
-        dietBtn.setImageResource(R.drawable.agrandar);
-        exerciseBtn.setImageResource(R.drawable.agrandar);
+        dietBtn.setImageResource(R.drawable.unfold);
+        exerciseBtn.setImageResource(R.drawable.unfold);
         isDietExpanded = false;
         isExerciseExpanded = false;
     }

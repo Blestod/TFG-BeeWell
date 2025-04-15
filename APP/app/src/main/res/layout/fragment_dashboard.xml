@@ -58,10 +58,10 @@
                     <ImageView
                         android:id="@+id/dietToggleBtn"
                         android:layout_width="32dp"
-                        android:layout_height="24dp"
+                        android:layout_height="32dp"
                         android:layout_gravity="center_vertical"
                         android:contentDescription="Edit"
-                        android:src="@drawable/agrandar"
+                        android:src="@drawable/unfold"
                         app:tint="@color/beeBlue" />
                 </LinearLayout>
 
@@ -116,10 +116,10 @@
                     <ImageView
                         android:id="@+id/exerciseToggleBtn"
                         android:layout_width="32dp"
-                        android:layout_height="24dp"
+                        android:layout_height="32dp"
                         android:layout_gravity="center_vertical"
                         android:contentDescription="Edit"
-                        android:src="@drawable/agrandar"
+                        android:src="@drawable/unfold"
                         app:tint="@color/beeBlue" />
                 </LinearLayout>
 
