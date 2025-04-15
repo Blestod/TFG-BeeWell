@@ -34,14 +34,14 @@ class User(db.Model):
 class UserVariables(db.Model):
         __tablename__="user_variables"
 
-        user_variable_id = db.Column(db.Integer,primary_key = True, autoincrement = True)
+        user_var = db.Column(db.Integer,primary_key = True, autoincrement = True)
         change_date_time = db.Column(db.Integer)
         height = db.Column(db.Float)
         weight = db.Column(db.Float)
 
         user_email=db.Column(db.String(45),db.ForeignKey("user.email"))
 
-        def __init__(self, user_email, change_date_time, height, weight, insulin_type):
+        def __init__(self, user_email, change_date_time, height, weight):
             self.user_email = user_email
             self.change_date_time = change_date_time
             self.height = height
@@ -49,7 +49,7 @@ class UserVariables(db.Model):
 
         def serialize(self):
             return {
-                "user_variable_id": self.user_variable_id,
+                "user_var": self.user_var,
                 "change_date_time": self.change_date_time,
                 "height": self.height,
                 "weight": self.weight

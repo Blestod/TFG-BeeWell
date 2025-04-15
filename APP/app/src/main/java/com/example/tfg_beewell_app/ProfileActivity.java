@@ -13,11 +13,21 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-public class ProfileActivity extends AppCompatActivity {
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 
-    EditText birthdateInput, insulinTypeInput;
+import org.json.JSONObject;
+
+public class ProfileActivity extends AppCompatActivity {
+    String email;
+
+    EditText heightInput, weightInput;
+
+    EditText birthdateInput;
     Spinner sexSpinner;
-    Button saveButton, changeEmailButton, changePasswordButton, deleteProfileButton;
+    Button saveUserInfoButton, saveHeightWeightButton, changeEmailButton, changePasswordButton, deleteProfileButton;
     ImageView backButton;
 
     @Override
@@ -25,10 +35,17 @@ public class ProfileActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
+        // ✅ Get email
+        SharedPreferences prefs = getSharedPreferences("user_session", MODE_PRIVATE);
+        email = prefs.getString("user_email", null);
+
         // Bind views
         birthdateInput = findViewById(R.id.birthdate);
         sexSpinner = findViewById(R.id.sexSpinner);
-        saveButton = findViewById(R.id.saveUserDataButton);
+        heightInput = findViewById(R.id.height);
+        weightInput = findViewById(R.id.weight);
+        saveUserInfoButton = findViewById(R.id.saveUserDataButton);
+        saveHeightWeightButton = findViewById(R.id.saveUserVariablesButton);
         changeEmailButton = findViewById(R.id.changeEmailButton);
         changePasswordButton = findViewById(R.id.changePasswordButton);
         deleteProfileButton = findViewById(R.id.deleteProfileButton);
@@ -43,8 +60,6 @@ public class ProfileActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(R.layout.spinner_dropdown_item); // dropdown style
         sexSpinner.setAdapter(adapter);
 
-        // === Load profile data from SharedPreferences ===
-        SharedPreferences prefs = getSharedPreferences("user_profile", MODE_PRIVATE);
         birthdateInput.setText(prefs.getString("birthdate", ""));
 
         // Restore sex (if saved)
@@ -57,20 +72,93 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
         // === Save profile data ===
-        saveButton.setOnClickListener(v -> {
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putString("birthdate", birthdateInput.getText().toString());
-
+        saveUserInfoButton.setOnClickListener(v -> {
+            String birthdateStr = birthdateInput.getText().toString();
             String selectedSex = sexSpinner.getSelectedItem().toString();
-            if (!selectedSex.equals("Select your sex")) {
-                editor.putString("sex", selectedSex);
-            } else {
-                editor.remove("sex");
+
+            JSONObject body = new JSONObject();
+            boolean isSomethingSent = false;
+
+            try {
+                if (!birthdateStr.isEmpty()) {
+                    body.put("birth_date", Integer.parseInt(birthdateStr));
+                    isSomethingSent = true;
+                }
+                if (selectedSex.equals("Male")) {
+                    body.put("sex", false);
+                    isSomethingSent = true;
+                } else if (selectedSex.equals("Female")) {
+                    body.put("sex", true);
+                    isSomethingSent = true;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
-            editor.apply();
-            Toast.makeText(this, "Profile updated", Toast.LENGTH_SHORT).show();
+            if (!isSomethingSent) {
+                Toast.makeText(this, "Nothing to update", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String url = Constants.BASE_URL + "/user/" + email;
+
+            JsonObjectRequest request = new JsonObjectRequest(Request.Method.PUT, url, body,
+                    response -> {
+                        Toast.makeText(this, "User info updated", Toast.LENGTH_SHORT).show();
+                    },
+                    error -> Toast.makeText(this, "Error updating user info", Toast.LENGTH_SHORT).show()
+            );
+
+            Volley.newRequestQueue(this).add(request);
         });
+
+
+        saveHeightWeightButton.setOnClickListener(v -> {
+            String heightStr = heightInput.getText().toString();
+            String weightStr = weightInput.getText().toString();
+
+            if (heightStr.isEmpty() && weightStr.isEmpty()) {
+                Toast.makeText(this, "Nothing to update", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            JSONObject body = new JSONObject();
+            StringBuilder updatedFields = new StringBuilder();
+
+            try {
+                body.put("user_email", email);
+                body.put("change_date_time", System.currentTimeMillis() / 1000);
+
+                if (!heightStr.isEmpty()) {
+                    body.put("height", Double.parseDouble(heightStr));
+                    updatedFields.append("Height ");
+                } else {
+                    body.put("height", JSONObject.NULL);
+                }
+
+                if (!weightStr.isEmpty()) {
+                    body.put("weight", Double.parseDouble(weightStr));
+                    updatedFields.append("Weight ");
+                } else {
+                    body.put("weight", JSONObject.NULL);
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            final String fieldsUpdated = updatedFields.toString().trim();
+
+            JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST,
+                    Constants.BASE_URL + "/user_variables",
+                    body,
+                    response -> Toast.makeText(this, fieldsUpdated + " saved", Toast.LENGTH_SHORT).show(),
+                    error -> Toast.makeText(this, "Error saving user variables", Toast.LENGTH_SHORT).show()
+            );
+
+            Volley.newRequestQueue(this).add(request);
+        });
+
 
         // === Placeholder logic for unimplemented features ===
         changeEmailButton.setOnClickListener(v ->
@@ -97,5 +185,67 @@ public class ProfileActivity extends AppCompatActivity {
 
         // === Back Button ===
         backButton.setOnClickListener(v -> finish());
+
+        loadUserInfo(email);
+        loadUserVariables(email);
     }
+
+    private void loadUserInfo(String email) {
+        String url = Constants.BASE_URL + "/user/" + email;
+
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
+                response -> {
+                    int birthDate = response.optInt("birth_date", 0); // 0 = null
+                    boolean hasSex = response.has("sex") && !response.isNull("sex");
+                    boolean sexValue = response.optBoolean("sex", false);
+
+                    if (birthDate > 0) {
+                        birthdateInput.setText(String.valueOf(birthDate));
+                    } else {
+                        birthdateInput.setText(""); // shows hint
+                    }
+
+                    if (hasSex) {
+                        if (sexValue) {
+                            sexSpinner.setSelection(2); // Female
+                        } else {
+                            sexSpinner.setSelection(1); // Male
+                        }
+                    } else {
+                        sexSpinner.setSelection(0); // "Choose an option"
+                    }
+
+                },
+                error -> Toast.makeText(this, "Error loading user data", Toast.LENGTH_SHORT).show()
+        );
+
+        Volley.newRequestQueue(this).add(request);
+    }
+
+    private void loadUserVariables(String email) {
+        String url = Constants.BASE_URL + "/user_variables/last/" + email;
+
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
+                response -> {
+                    int height = response.optInt("height", -1);
+                    int weight = response.optInt("weight", -1);
+
+                    if (height > 0) {
+                        heightInput.setText(String.valueOf(height));
+                    } else {
+                        heightInput.setText("");
+                    }
+
+                    if (weight > 0) {
+                        weightInput.setText(String.valueOf(weight));
+                    } else {
+                        weightInput.setText("");
+                        }
+                },
+                error -> Toast.makeText(this, "Error loading user data", Toast.LENGTH_SHORT).show()
+        );
+
+        Volley.newRequestQueue(this).add(request);
+    }
+
 }
