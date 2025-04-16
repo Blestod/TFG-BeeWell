@@ -18,7 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/square_card_bg"
-            android:paddingBottom="40dp">
+            android:paddingBottom="48dp">
 
             <!-- White card at top -->
 
@@ -28,7 +28,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
                 android:layout_marginLeft="8dp"
-                android:layout_marginTop="72dp"
+                android:layout_marginTop="80dp"
                 android:layout_marginRight="8dp"
                 app:cardBackgroundColor="@color/beeWhite"
                 app:cardCornerRadius="8dp"
@@ -64,53 +64,23 @@
 
         <!-- 2) Red section: placeholder for future chart (outside the yellow portion) -->
 
-        <LinearLayout
+        <com.google.android.flexbox.FlexboxLayout
             android:id="@+id/greenCard"
             android:layout_width="300dp"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:layout_gravity="center"
             android:layout_marginLeft="8dp"
-            android:layout_marginTop="-24dp"
+            android:layout_marginTop="-30dp"
             android:layout_marginRight="8dp"
             android:layout_marginBottom="8dp"
             android:background="@drawable/green_card_bg"
             android:elevation="8dp"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:padding="8dp">
+            app:alignItems="center"
+            app:flexWrap="wrap"
+            app:justifyContent="center">
 
+        </com.google.android.flexbox.FlexboxLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:text="80mg/dl"
-                android:textColor="@android:color/black"
-                android:textSize="20sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:text="80bpm"
-                android:textColor="@android:color/black"
-                android:textSize="20sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:text="8hr"
-                android:textColor="@android:color/black"
-                android:textSize="20sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="36ºC"
-                android:textColor="@android:color/black"
-                android:textSize="20sp" />
-        </LinearLayout>
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
