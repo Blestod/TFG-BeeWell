@@ -5,7 +5,7 @@ from flask import request
 from passlib.context import CryptContext
 
 api: Flask=Flask(__name__)
-api.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://thomas:root@localhost:3306/mydb"
+api.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://blestod:spyro123@blestod.mysql.eu.pythonanywhere-services.com/blestod$beewell"
 db.app=api
 db.init_app(api)
 
