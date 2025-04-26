@@ -2,7 +2,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- ───── Permisos de red ───── -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- ───── Permisos de lectura Health Connect ───── -->
+    <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED"/>
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE"/>
+    <uses-permission android:name="android.permission.health.READ_BODY_TEMPERATURE"/>
+    <uses-permission android:name="android.permission.health.READ_SLEEP"/>
+    <!-- Blood-glucose (glucosa capilar/CGM) -->
+    <uses-permission android:name="android.permission.health.READ_BLOOD_GLUCOSE"/>
+    <!-- Blood-pressure (sistólica / diastólica) -->
+    <uses-permission android:name="android.permission.health.READ_BLOOD_PRESSURE"/>
+
 
     <application
         android:allowBackup="true"
@@ -13,35 +25,59 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.TFG_BeeWell_APP"
-        tools:targetApi="31"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        tools:targetApi="34">
+
+        <!-- ───── Lanzador ───── -->
         <activity
             android:name=".MainEntryActivity"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.TFG_BeeWell_APP"
-            android:windowSoftInputMode="adjustResize"
-            android:screenOrientation="portrait"
-            android:configChanges="keyboardHidden|orientation|screenSize">
-            <meta-data
-                android:name="android.max_aspect"
-                android:value="2.1" />
-        </activity>
+
+        <!-- Resto de tus pantallas normales -->
+        <activity android:name=".MainActivity" android:exported="true"/>
         <activity android:name=".LoginActivity"/>
         <activity android:name=".RegisterActivity"/>
         <activity android:name=".TermsActivity"/>
-        <activity android:name=".TermsReadActivity" />
-        <activity android:name=".ProfileActivity" />
+        <activity android:name=".TermsReadActivity"/>
+        <activity android:name=".ProfileActivity"/>
 
+        <!-- ─────────────────────────────────────────────
+             1) ACTIVITY de explicación de permisos
+        ────────────────────────────────────────────── -->
+        <activity
+            android:name=".HealthRationaleActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+
+        <!-- ─────────────────────────────────────────────
+             2) ALIAS para View-Permission-Usage (solo API 34)
+        ────────────────────────────────────────────── -->
+        <activity-alias
+            android:name=".ViewPermissionUsageActivity"
+            android:exported="true"
+            android:targetActivity=".HealthRationaleActivity"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE"/>
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS"/>
+            </intent-filter>
+        </activity-alias>
 
     </application>
+
+    <!-- Health Connect package query -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata"/>
+    </queries>
 
 </manifest>

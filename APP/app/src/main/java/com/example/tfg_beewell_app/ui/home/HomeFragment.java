@@ -1,36 +1,52 @@
 package com.example.tfg_beewell_app.ui.home;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.PermissionRequest;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.core.content.ContextCompat;
+
+import androidx.health.connect.client.HealthConnectClient;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.tfg_beewell_app.R;
 import com.example.tfg_beewell_app.databinding.FragmentHomeBinding;
 import com.example.tfg_beewell_app.ui.VitalData;
-import com.google.android.flexbox.FlexboxLayout;
-
-import android.util.TypedValue;
-import android.view.ViewGroup.LayoutParams;
-
+import com.example.tfg_beewell_app.utils.HealthConnectPermissionHelper;
+import com.example.tfg_beewell_app.utils.Prefs;
 import com.example.tfg_beewell_app.utils.SmartwatchReader;
+import com.google.android.flexbox.FlexboxLayout;
+import androidx.health.connect.client.contracts.HealthPermissionsRequestContract;
+
+
+import java.util.HashSet;
+import java.util.Set;
+
+
 
 public class HomeFragment extends Fragment {
 
     private FragmentHomeBinding binding;
+    private ActivityResultLauncher<Set<? extends String>> permissionLauncher;
+    private HealthConnectPermissionHelper permissionHelper;
 
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
 
+
+    @NonNull
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         HomeViewModel homeViewModel =
                 new ViewModelProvider(requireActivity(),
                         new ViewModelProvider.AndroidViewModelFactory(requireActivity().getApplication()))
@@ -39,25 +55,51 @@ public class HomeFragment extends Fragment {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        final TextView textView = binding.textInfo;
+        permissionHelper = new HealthConnectPermissionHelper(requireContext());
 
+        permissionLauncher = registerForActivityResult(
+                new HealthPermissionsRequestContract(),
+                granted -> {
+                    Set<String> requested = permissionHelper.getRequiredPermissions();
+                    Set<String> missing = new HashSet<>(requested);
+                    missing.removeAll(granted);
+
+                    if (missing.isEmpty()) {
+                        Prefs.markShown(requireContext());
+                        Toast.makeText(getContext(), "✅ All permissions granted", Toast.LENGTH_SHORT).show();
+                    } else {
+                        StringBuilder sb = new StringBuilder("❌ Missing permissions:\n\n");
+                        for (String perm : missing) sb.append("• ").append(perm).append("\n");
+
+                        new AlertDialog.Builder(requireContext())
+                                .setTitle("Permisos denegados")
+                                .setMessage(sb.toString())
+                                .setPositiveButton("OK", null)
+                                .show();
+                    }
+                }
+        );
+        if (!Prefs.wasShown(requireContext())) {          // ← solo la 1ª vez
+            permissionLauncher.launch(
+                    permissionHelper.getRequiredPermissions());
+        }
+
+        // Texto superior (info del ViewModel)
+        final TextView textView = binding.textInfo;
         homeViewModel.getText().observe(getViewLifecycleOwner(), text -> {
             if (text != null && !text.isEmpty()) {
                 textView.setText(text);
             }
         });
 
-        // 🔁 Crear ejemplo de datos simulados
-        // 🔁 Obtener datos desde "dispositivo"
+        // Mostrar datos ficticios
         VitalData v = SmartwatchReader.getCurrentVitals("paciente@ejemplo.com");
-        showVitals(v);
-
-
-        // 🔁 Mostrar los datos en greenCard
         showVitals(v);
 
         return root;
     }
+
+
 
     private void showVitals(VitalData vital) {
         FlexboxLayout greenCard = binding.greenCard;
@@ -110,7 +152,7 @@ public class HomeFragment extends Fragment {
 
         // Set layout params
         FlexboxLayout.LayoutParams lp = new FlexboxLayout.LayoutParams(
-                LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(16, 0, 16, 4);
         container.setLayoutParams(lp);
 

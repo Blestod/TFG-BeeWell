@@ -125,7 +125,7 @@ class Vital(db.Model):
     __tablename__="vital"
 
     vital_id = db.Column(db.Integer,primary_key = True, autoincrement = True)
-    glucose_value = db.Column(db.Float)
+    glucose_value = db.Column(db.Float,nullable=True)
     vital_time = db.Column(db.Integer)
     heart_rate = db.Column(db.Float,nullable=True)
     temperature = db.Column(db.Float,nullable=True)

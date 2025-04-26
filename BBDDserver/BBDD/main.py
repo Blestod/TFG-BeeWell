@@ -155,6 +155,18 @@ def get_vital_by_id(vital_id:int):
         return "Vital not found", 404
     return vital.serialize(), 200
 
+@api.route("/vital/latest/<string:user_email>", methods=["GET"])
+def get_latest_vital(user_email):
+    vital = (
+        Vital.query
+        .filter_by(user_email=user_email)
+        .order_by(Vital.vital_id.desc())
+        .first()
+    )
+    if vital is None:
+        return "No vitals found for this user", 404
+    return vital.serialize(), 200
+
 #---------------------MEAL----------------------
 
 #-------------------INSULIN---------------------
