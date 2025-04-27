@@ -18,7 +18,7 @@ public class DashboardFragment extends Fragment {
     private boolean isExerciseExpanded = false;
 
     private final int NORMAL_HEIGHT_DP = 320;
-    private final int EXPANDED_HEIGHT_DP = 580;
+    private final int EXPANDED_HEIGHT_DP = 560;
     private final int COLLAPSED_HEIGHT_DP = 80;
 
     @Override

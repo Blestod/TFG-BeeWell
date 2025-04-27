@@ -3,6 +3,7 @@ package com.example.tfg_beewell_app.ui.home;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,12 +20,14 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.core.content.ContextCompat;
 
-import androidx.health.connect.client.HealthConnectClient;
+import androidx.lifecycle.LifecycleCoroutineScope;
+import androidx.lifecycle.LifecycleOwnerKt;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.tfg_beewell_app.databinding.FragmentHomeBinding;
 import com.example.tfg_beewell_app.ui.VitalData;
 import com.example.tfg_beewell_app.utils.HealthConnectPermissionHelper;
+import com.example.tfg_beewell_app.utils.HealthReader;
 import com.example.tfg_beewell_app.utils.Prefs;
 import com.example.tfg_beewell_app.utils.SmartwatchReader;
 import com.google.android.flexbox.FlexboxLayout;
@@ -34,6 +37,10 @@ import androidx.health.connect.client.contracts.HealthPermissionsRequestContract
 import java.util.HashSet;
 import java.util.Set;
 
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.CoroutineScope;
 
 
 public class HomeFragment extends Fragment {
@@ -41,6 +48,8 @@ public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
     private ActivityResultLauncher<Set<? extends String>> permissionLauncher;
     private HealthConnectPermissionHelper permissionHelper;
+
+
 
 
 
@@ -92,13 +101,30 @@ public class HomeFragment extends Fragment {
             }
         });
 
+        // print health connect reader
+
+        new Thread(() -> {
+            Long bpm = HealthReader.getLastHeartRateBpmBlocking(requireContext());
+
+            // Volvemos al hilo UI para pintar el resultado
+            requireActivity().runOnUiThread(() -> {
+                String txt = bpm != null
+                        ? "Última FC: " + bpm + " bpm"
+                        : "Sin dato o sin permisos";
+                Toast.makeText(requireContext(), txt, Toast.LENGTH_SHORT).show();
+            });
+        }).start();
+
+
+
+
+
         // Mostrar datos ficticios
         VitalData v = SmartwatchReader.getCurrentVitals("paciente@ejemplo.com");
         showVitals(v);
 
         return root;
     }
-
 
 
     private void showVitals(VitalData vital) {
@@ -165,4 +191,5 @@ public class HomeFragment extends Fragment {
         super.onDestroyView();
         binding = null;
     }
+
 }

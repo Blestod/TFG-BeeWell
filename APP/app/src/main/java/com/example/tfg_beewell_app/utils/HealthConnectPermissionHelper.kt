@@ -16,7 +16,6 @@ class HealthConnectPermissionHelper(private val context: Context) {
 
     val permissions: Set<String> = setOf(
         HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class),
-        HealthPermission.getReadPermission(BloodPressureRecord::class),
         HealthPermission.getReadPermission(HeartRateRecord::class),
         HealthPermission.getReadPermission(BodyTemperatureRecord::class),
         HealthPermission.getReadPermission(SleepSessionRecord::class),

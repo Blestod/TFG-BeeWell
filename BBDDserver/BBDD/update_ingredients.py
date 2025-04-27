@@ -8,7 +8,7 @@ MAX_LEN = 255
 def normalize_name(name):
     return name.lower().strip() if isinstance(name, str) else ""
 
-def actualizar_ingredientes_desde_csv(ruta_csv="ingredients.csv"):
+def actualizar_ingredientes_desde_csv(ruta_csv="ingredients_cleaned.csv"):
     with open(ruta_csv, newline='', encoding="utf-8") as csvfile:
         lector = csv.DictReader(csvfile, delimiter=",")
 
