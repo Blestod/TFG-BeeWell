@@ -131,15 +131,16 @@ def post_vital():
             return "User not found", 404
         vital = Vital(
             user_email=user.email,
-            vital_time=request.json["vital_time"],
-            glucose_value=request.json["glucose_value"],
-            heart_rate=request.json["heart_rate"],
-            temperature=request.json["temperature"],
-            calories=request.json["calories"],
-            diastolic=request.json["diastolic"],
-            systolic=request.json["systolic"],
-            is_sleeping=request.json["is_sleeping"]
-        )
+            vital_time=request.json.get("vital_time"),
+            glucose_value=request.json.get("glucose_value"),
+            heart_rate=request.json.get("heart_rate"),
+            temperature=request.json.get("temperature"),
+            calories=request.json.get("calories"),
+            diastolic=request.json.get("diastolic"),
+            systolic=request.json.get("systolic"),
+            is_sleeping=request.json.get("is_sleeping")
+)
+
         db.session.add(vital)
         db.session.commit()
         return "ok", 201
