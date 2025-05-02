@@ -121,39 +121,46 @@ class MealIngredient(db.Model):
     ingredient = db.relationship("Ingredient", back_populates="meals")
 
 
+#---------------------VITAL----------------------
 class Vital(db.Model):
     __tablename__ = "vital"
 
-    vital_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    glucose_value = db.Column(db.Float, nullable=True)
-    vital_time = db.Column(db.Integer)
-    heart_rate = db.Column(db.Float, nullable=True)
-    temperature = db.Column(db.Float, nullable=True)
-    calories = db.Column(db.Float, nullable=True)
-    sleep_duration = db.Column(db.Integer, nullable=True)  # duración en segundos
-    oxygen_saturation = db.Column(db.Float, nullable=True)  # %
-    
+    vital_id   = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    vital_time = db.Column(db.Integer,  nullable=False)
+
+    glucose_value     = db.Column(db.Float,  nullable=True)
+    heart_rate        = db.Column(db.Float,  nullable=True)
+    temperature       = db.Column(db.Float,  nullable=True)
+    calories          = db.Column(db.Float,  nullable=True)
+    sleep_duration    = db.Column(db.Float,  nullable=True)
+    oxygen_saturation = db.Column(db.Float,  nullable=True)
+
     user_email = db.Column(db.String(45), db.ForeignKey("user.email"))
 
-    def __init__(self, user_email, vital_time, glucose_value, heart_rate, temperature, calories, sleep_duration, oxygen_saturation):
-        self.vital_time = vital_time
-        self.user_email = user_email
-        self.glucose_value = glucose_value
-        self.heart_rate = heart_rate
-        self.temperature = temperature
-        self.calories = calories
-        self.sleep_duration = sleep_duration
+    def __init__(
+        self, user_email, vital_time,
+        glucose_value=None, heart_rate=None, temperature=None,
+        calories=None, sleep_duration=None, oxygen_saturation=None
+    ):
+        self.user_email        = user_email
+        self.vital_time        = vital_time
+        self.glucose_value     = glucose_value
+        self.heart_rate        = heart_rate
+        self.temperature       = temperature
+        self.calories          = calories
+        self.sleep_duration    = sleep_duration
         self.oxygen_saturation = oxygen_saturation
 
     def serialize(self):
         return {
-            "vital_time": self.vital_time,
-            "glucose_value": self.glucose_value,
-            "heart_rate": self.heart_rate,
-            "temperature": self.temperature,
-            "calories": self.calories,
-            "sleep_duration": self.sleep_duration,
-            "oxygen_saturation": self.oxygen_saturation
+            "vital_id":          self.vital_id,
+            "vital_time":        self.vital_time,
+            "glucose_value":     self.glucose_value,
+            "heart_rate":        self.heart_rate,
+            "temperature":       self.temperature,
+            "calories":          self.calories,
+            "sleep_duration":    self.sleep_duration,
+            "oxygen_saturation": self.oxygen_saturation,
         }
 
 

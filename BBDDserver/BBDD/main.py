@@ -187,15 +187,17 @@ def post_insulin():
     user = db.session.get(User, request.json["user_email"])
     if user is None:
         return "User not found", 404
+
     insulin = InsulinInjected(
-        user_email=user.email,
-        insulin_time=request.json["insulin_time"],
-        insulin_value=request.json["insulin_value"],
-        insulin_type=request.json["insulin_type"]
+        user_email = user.email,
+        in_time    = request.json["insulin_time"],
+        in_units   = request.json["insulin_value"],
+        insulin_type = request.json["insulin_type"]
     )
     db.session.add(insulin)
     db.session.commit()
     return "ok", 201
+
 
 #---------------------MAIN----------------------
 if __name__ == "__main__":
