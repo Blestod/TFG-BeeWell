@@ -4,8 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/loginbg"
-    android:padding="24dp">
+    android:background="@drawable/loginbg">
 
     <TextView
         android:id="@+id/loginTitle"
@@ -25,6 +24,8 @@
         android:id="@+id/cardView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
         android:layout_marginBottom="16dp"
         android:backgroundTint="@color/beeWhite"
         app:cardCornerRadius="12dp"
@@ -49,6 +50,8 @@
         android:id="@+id/cardView2"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
         android:layout_marginBottom="24dp"
         android:backgroundTint="@color/beeWhite"
         app:cardCornerRadius="12dp"
@@ -61,6 +64,7 @@
             android:id="@+id/passwordInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginRight="24dp"
             android:background="@android:color/transparent"
             android:hint="Password"
             android:inputType="textPassword"

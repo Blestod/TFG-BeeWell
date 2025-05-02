@@ -5,10 +5,9 @@ public class VitalData {
     private Float heartRate;
     private Float temperature;
     private Float calories;
-    private Float diastolic;
-    private Float systolic;
-    private Boolean isSleeping;
-    private Long vitalTime;
+    private Integer sleepDuration;
+    private Float oxygenSaturation;
+    private Integer vitalTime = (int)(System.currentTimeMillis() / 1000);
     private String userEmail;
 
     // Getters
@@ -16,10 +15,10 @@ public class VitalData {
     public Float getHeartRate() { return heartRate; }
     public Float getTemperature() { return temperature; }
     public Float getCalories() { return calories; }
-    public Float getDiastolic() { return diastolic; }
-    public Float getSystolic() { return systolic; }
-    public Boolean getIsSleeping() { return isSleeping; }
-    public Long getVitalTime() { return vitalTime; }
+
+    public Float getOxygenSaturation() { return oxygenSaturation; }
+    public Integer getSleepDuration() { return sleepDuration; }
+    public Integer getVitalTime() { return vitalTime; }
     public String getUserEmail() { return userEmail; }
 
     // Setters
@@ -27,9 +26,9 @@ public class VitalData {
     public void setHeartRate(Float heartRate) { this.heartRate = heartRate; }
     public void setTemperature(Float temperature) { this.temperature = temperature; }
     public void setCalories(Float calories) { this.calories = calories; }
-    public void setDiastolic(Float diastolic) { this.diastolic = diastolic; }
-    public void setSystolic(Float systolic) { this.systolic = systolic; }
-    public void setIsSleeping(Boolean isSleeping) { this.isSleeping = isSleeping; }
-    public void setVitalTime(Long vitalTime) { this.vitalTime = vitalTime; }
+
+    public void setOxygenSaturation(Float oxygenSaturation) { this.oxygenSaturation = oxygenSaturation; }
+    public void setSleepDuration(Integer sleepDuration) { this.sleepDuration = sleepDuration; }
+    public void setVitalTime(Integer vitalTime) { this.vitalTime = vitalTime; }
     public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
 }

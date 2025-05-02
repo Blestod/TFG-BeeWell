@@ -12,8 +12,11 @@
     <uses-permission android:name="android.permission.health.READ_SLEEP"/>
     <!-- Blood-glucose (glucosa capilar/CGM) -->
     <uses-permission android:name="android.permission.health.READ_BLOOD_GLUCOSE"/>
-    <!-- Blood-pressure (sistólica / diastólica) -->
-    <uses-permission android:name="android.permission.health.READ_BLOOD_PRESSURE"/>
+
+    <!-- Oxygen Saturation (SpO2) -->
+    <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION"/>
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
 
     <application
@@ -39,12 +42,12 @@
         </activity>
 
         <!-- Resto de tus pantallas normales -->
-        <activity android:name=".MainActivity" android:exported="true"/>
-        <activity android:name=".LoginActivity"/>
-        <activity android:name=".RegisterActivity"/>
-        <activity android:name=".TermsActivity"/>
-        <activity android:name=".TermsReadActivity"/>
-        <activity android:name=".ProfileActivity"/>
+        <activity android:name=".MainActivity" android:screenOrientation="portrait" android:exported="true"/>
+        <activity android:name=".LoginActivity" android:screenOrientation="portrait"/>
+        <activity android:name=".RegisterActivity" android:screenOrientation="portrait"/>
+        <activity android:name=".TermsActivity" android:screenOrientation="portrait"/>
+        <activity android:name=".TermsReadActivity" android:screenOrientation="portrait"/>
+        <activity android:name=".ProfileActivity" android:screenOrientation="portrait"/>
 
         <!-- ─────────────────────────────────────────────
              1) ACTIVITY de explicación de permisos

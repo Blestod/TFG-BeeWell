@@ -19,8 +19,8 @@ class HealthConnectPermissionHelper(private val context: Context) {
         HealthPermission.getReadPermission(HeartRateRecord::class),
         HealthPermission.getReadPermission(BodyTemperatureRecord::class),
         HealthPermission.getReadPermission(SleepSessionRecord::class),
-        HealthPermission.getReadPermission(BloodPressureRecord::class)
-
+        HealthPermission.getReadPermission(BloodGlucoseRecord::class),
+        HealthPermission.getReadPermission(OxygenSaturationRecord::class)
     )
 
     fun hasAllPermissions(callback: (Boolean) -> Unit) {

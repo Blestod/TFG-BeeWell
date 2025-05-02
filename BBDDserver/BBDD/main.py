@@ -121,43 +121,37 @@ def get_last_user_variable(user_email):
 
     return user_variable.serialize(), 200
 
-#---------------------VITAL----------------------
-@api.route("/vital", methods=["POST"])
+#---------------------VITAL----------------------@api.route("/vital", methods=["POST"])
 def post_vital():
     try:
         print("📩 JSON recibido:", request.json)
-        # Test rápido de conexión activa
-        db.session.execute("SELECT 1")
+
+        # ➡️ Elimina o corrige el ping
+        # db.session.execute(text("SELECT 1"))
 
         user = db.session.get(User, request.json["user_email"])
         if user is None:
-            print("🛑 Usuario no encontrado:", request.json["user_email"])
             return "User not found", 404
 
         vital = Vital(
-            user_email=user.email,
-            vital_time=request.json.get("vital_time"),
-            glucose_value=request.json.get("glucose_value"),
-            heart_rate=request.json.get("heart_rate"),
-            temperature=request.json.get("temperature"),
-            calories=request.json.get("calories"),
-            sleep_duration=request.json.get("sleep_duration"),
-            oxygen_saturation=request.json.get("oxygen_saturation")
+            user_email      = user.email,
+            vital_time      = request.json.get("vital_time"),
+            glucose_value   = request.json.get("glucose_value"),
+            heart_rate      = request.json.get("heart_rate"),
+            temperature     = request.json.get("temperature"),
+            calories        = request.json.get("calories"),
+            sleep_duration  = request.json.get("sleep_duration"),
+            oxygen_saturation = request.json.get("oxygen_saturation"),
         )
 
         db.session.add(vital)
         db.session.commit()
-        print("✅ Vital guardado correctamente.")
         return "ok", 201
 
     except Exception as e:
         db.session.rollback()
         print("❌ ERROR en /vital:", str(e))
         return "Internal Server Error", 500
-
-    finally:
-        db.session.close()
-
 
 
 @api.route("/vital/<int:vital_id>", methods=["GET"])

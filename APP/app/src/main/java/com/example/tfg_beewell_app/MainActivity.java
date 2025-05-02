@@ -3,6 +3,7 @@ package com.example.tfg_beewell_app;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -19,11 +20,19 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-
+import androidx.work.Constraints;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
 
 import com.example.tfg_beewell_app.databinding.ActivityMainBinding;
+import com.example.tfg_beewell_app.utils.VitalsWorker;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -111,6 +120,47 @@ public class MainActivity extends AppCompatActivity {
         });
 
         hideSystemUI();
+
+        OneTimeWorkRequest testRequest = new OneTimeWorkRequest.Builder(VitalsWorker.class).build();
+        WorkManager.getInstance(this).enqueue(testRequest);
+        // Programar ejecución periódica de HeartWorker cada 15 min
+        Constraints constraints = new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresBatteryNotLow(true)  // Opcional, para que no consuma batería si está baja
+                .build();
+
+        PeriodicWorkRequest workRequest = new PeriodicWorkRequest.Builder(
+                VitalsWorker.class,
+                15, TimeUnit.MINUTES
+        ).setConstraints(constraints).build();
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                "vitals_upload",
+                ExistingPeriodicWorkPolicy.KEEP,
+                workRequest
+        );
+
+        logNextWorkerExecution();
+
+    }
+
+    private void logNextWorkerExecution() {
+        WorkManager.getInstance(this).getWorkInfosForUniqueWorkLiveData("vitals_upload")
+                .observe(this, workInfos -> {
+                    if (workInfos == null || workInfos.isEmpty()) return;
+
+                    for (androidx.work.WorkInfo info : workInfos) {
+                        if (info.getState() == androidx.work.WorkInfo.State.ENQUEUED) {
+                            long nextTimeMillis = info.getNextScheduleTimeMillis(); // solo desde WorkManager 2.8.0+
+                            if (nextTimeMillis > 0) {
+                                java.util.Date date = new java.util.Date(nextTimeMillis);
+                                Log.d("VitalsWorker", "⏰ Próxima ejecución estimada: " + date.toString());
+                            } else {
+                                Log.d("VitalsWorker", "ℹ️ Work encolado pero sin hora estimada visible.");
+                            }
+                        }
+                    }
+                });
     }
 
     private void hideSystemUI() {

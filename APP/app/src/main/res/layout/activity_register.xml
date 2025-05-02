@@ -4,8 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/regbg"
-    android:padding="24dp">
+    android:background="@drawable/regbg">
 
     <TextView
         android:id="@+id/registerTitle"
@@ -25,6 +24,8 @@
         android:id="@+id/cardEmail"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
         android:layout_marginBottom="16dp"
         app:cardCornerRadius="12dp"
         app:cardElevation="8dp"
@@ -48,6 +49,8 @@
         android:id="@+id/cardPassword"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
         android:layout_marginBottom="16dp"
         app:cardCornerRadius="12dp"
         app:cardElevation="8dp"
@@ -71,6 +74,8 @@
         android:id="@+id/cardConfirmPassword"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
         android:layout_marginBottom="24dp"
         app:cardCornerRadius="12dp"
         app:layout_constraintBottom_toTopOf="@+id/registerButton"

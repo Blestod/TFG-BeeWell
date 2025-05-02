@@ -1,20 +1,17 @@
 package com.example.tfg_beewell_app.ui.home;
 
 import android.content.Context;
-import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.PermissionRequest;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
@@ -29,7 +26,7 @@ import com.example.tfg_beewell_app.ui.VitalData;
 import com.example.tfg_beewell_app.utils.HealthConnectPermissionHelper;
 import com.example.tfg_beewell_app.utils.HealthReader;
 import com.example.tfg_beewell_app.utils.Prefs;
-import com.example.tfg_beewell_app.utils.SmartwatchReader;
+import com.example.tfg_beewell_app.utils.VitalsChangesListener;
 import com.google.android.flexbox.FlexboxLayout;
 import androidx.health.connect.client.contracts.HealthPermissionsRequestContract;
 
@@ -39,8 +36,11 @@ import java.util.Set;
 
 import kotlin.Unit;
 import kotlin.coroutines.Continuation;
-import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.Job;
+import kotlin.jvm.functions.Function1;
+import kotlin.jvm.functions.Function2;
+
 
 
 public class HomeFragment extends Fragment {
@@ -49,8 +49,7 @@ public class HomeFragment extends Fragment {
     private ActivityResultLauncher<Set<? extends String>> permissionLauncher;
     private HealthConnectPermissionHelper permissionHelper;
 
-
-
+    private Job vitalsJob;          // ⬅­­ guarda la corrutina
 
 
     @NonNull
@@ -63,6 +62,9 @@ public class HomeFragment extends Fragment {
 
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
+
+        SharedPreferences prefs = requireContext().getSharedPreferences("user_session", Context.MODE_PRIVATE);
+        String userEmail = prefs.getString("user_email", null);
 
         permissionHelper = new HealthConnectPermissionHelper(requireContext());
 
@@ -104,24 +106,16 @@ public class HomeFragment extends Fragment {
         // print health connect reader
 
         new Thread(() -> {
-            Long bpm = HealthReader.getLastHeartRateBpmBlocking(requireContext());
+            VitalData data = HealthReader.getLatestVitalsBlocking(requireContext(), userEmail);
 
-            // Volvemos al hilo UI para pintar el resultado
-            requireActivity().runOnUiThread(() -> {
-                String txt = bpm != null
-                        ? "Última FC: " + bpm + " bpm"
-                        : "Sin dato o sin permisos";
-                Toast.makeText(requireContext(), txt, Toast.LENGTH_SHORT).show();
-            });
+            if (data != null) {
+                requireActivity().runOnUiThread(() -> {
+                    //Muestra los datos
+                    showVitals(data);
+
+                });
+            }
         }).start();
-
-
-
-
-
-        // Mostrar datos ficticios
-        VitalData v = SmartwatchReader.getCurrentVitals("paciente@ejemplo.com");
-        showVitals(v);
 
         return root;
     }
@@ -143,10 +137,10 @@ public class HomeFragment extends Fragment {
             greenCard.addView(createVitalTextView(String.valueOf(vital.getTemperature()), "ºC"));
         }
 
-        if (vital.getSystolic() != null && vital.getDiastolic() != null) {
-            String pressure = vital.getSystolic().intValue() + "/" + vital.getDiastolic().intValue();
-            greenCard.addView(createVitalTextView(pressure, "mmHg"));
+        if (vital.getOxygenSaturation() != null) {
+            greenCard.addView(createVitalTextView(String.valueOf(vital.getOxygenSaturation()), "% SpO₂"));
         }
+
     }
 
 
@@ -185,6 +179,49 @@ public class HomeFragment extends Fragment {
         return container;
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        LifecycleCoroutineScope scope =
+                LifecycleOwnerKt.getLifecycleScope(getViewLifecycleOwner());
+
+        vitalsJob = scope.launchWhenStarted(
+                /* --------------- λ de launchWhenStarted --------------- */
+                (Function2<CoroutineScope, Continuation<? super Unit>, Object>)
+                        (coroutineScope, cont) ->
+
+                                /* --------------- llamada suspend --------------- */
+                                VitalsChangesListener.INSTANCE.listen(
+                                        requireContext(),
+
+                                        /* ---- λ suspend onUpsert ---- */
+                                        (Function1<Continuation<? super Unit>, Object>)
+                                                (Continuation<? super Unit> cont2) -> {
+                                                    Long bpm =
+                                                            HealthReader.getLastHeartRateBpmBlocking(requireContext());
+
+                                                    requireActivity().runOnUiThread(() -> {
+                                                        String txt = bpm != null ? bpm + " bpm" : "—";
+                                                        binding.textInfo.setText(txt);
+                                                    });
+
+                                                    // finalizar la λ suspend
+                                                    return Unit.INSTANCE;
+                                                },
+
+                                        /* ---- continuation que nos pasa launchWhenStarted ---- */
+                                        cont
+                                )
+        );
+    }
+
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (vitalsJob != null) vitalsJob.cancel(null);   // ok en Java
+    }
 
     @Override
     public void onDestroyView() {
