@@ -122,12 +122,16 @@ def get_last_user_variable(user_email):
     return user_variable.serialize(), 200
 
 #---------------------VITAL----------------------
-
 @api.route("/vital", methods=["POST"])
 def post_vital():
     try:
+        print("📩 JSON recibido:", request.json)
+        # Test rápido de conexión activa
+        db.session.execute("SELECT 1")
+
         user = db.session.get(User, request.json["user_email"])
         if user is None:
+            print("🛑 Usuario no encontrado:", request.json["user_email"])
             return "User not found", 404
 
         vital = Vital(
@@ -143,11 +147,17 @@ def post_vital():
 
         db.session.add(vital)
         db.session.commit()
+        print("✅ Vital guardado correctamente.")
         return "ok", 201
+
     except Exception as e:
         db.session.rollback()
-        print("ERROR in /vital:", str(e))
+        print("❌ ERROR en /vital:", str(e))
         return "Internal Server Error", 500
+
+    finally:
+        db.session.close()
+
 
 
 @api.route("/vital/<int:vital_id>", methods=["GET"])
