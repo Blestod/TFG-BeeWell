@@ -3,11 +3,25 @@ from tables import db, User, UserVariables, Meal, Ingredient, MealIngredient, Vi
 from flask import jsonify
 from flask import request
 from passlib.context import CryptContext
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 
-api: Flask=Flask(__name__)
+# ────────────── Flask Setup ──────────────
+api: Flask = Flask(__name__)
 api.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://blestod:spyro123@blestod.mysql.eu.pythonanywhere-services.com/blestod$beewell"
-db.app=api
+db.app = api
 db.init_app(api)
+
+# 🔧 Fix MySQL disconnects
+@event.listens_for(Engine, "engine_connect")
+def ping_connection(connection, branch):
+    if branch:
+        return
+    try:
+        connection.scalar("SELECT 1")
+    except:
+        connection.invalidate()
+        connection.scalar("SELECT 1")
 
 @api.route("/api")
 def get_home():
