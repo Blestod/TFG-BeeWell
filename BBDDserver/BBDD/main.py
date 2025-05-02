@@ -3,28 +3,11 @@ from tables import db, User, UserVariables, Meal, Ingredient, MealIngredient, Vi
 from flask import jsonify
 from flask import request
 from passlib.context import CryptContext
-from sqlalchemy import event
-from sqlalchemy.engine import Engine
-from sqlalchemy import text
 
-
-# ────────────── Flask Setup ──────────────
-api: Flask = Flask(__name__)
+api: Flask=Flask(__name__)
 api.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://blestod:spyro123@blestod.mysql.eu.pythonanywhere-services.com/blestod$beewell"
-db.app = api
+db.app=api
 db.init_app(api)
-
-# 🔧 Fix MySQL disconnects – listener
-@event.listens_for(Engine, "engine_connect")
-def ping_connection(connection, branch):
-    if branch:
-        return
-    try:
-        connection.scalar(text("SELECT 1")) # ✅ envuelto en text()
-    except Exception:
-        connection.invalidate()
-        connection.scalar(text("SELECT 1")) # ✅ aquí también
-
 
 @api.route("/api")
 def get_home():
@@ -144,8 +127,7 @@ def post_vital():
     try:
         print("📩 JSON recibido:", request.json)
         # Test rápido de conexión activa
-        db.session.execute(text("SELECT 1"))
-
+        db.session.execute("SELECT 1")
 
         user = db.session.get(User, request.json["user_email"])
         if user is None:
