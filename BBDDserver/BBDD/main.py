@@ -129,6 +129,7 @@ def post_vital():
         user = db.session.get(User, request.json["user_email"])
         if user is None:
             return "User not found", 404
+
         vital = Vital(
             user_email=user.email,
             vital_time=request.json.get("vital_time"),
@@ -136,10 +137,9 @@ def post_vital():
             heart_rate=request.json.get("heart_rate"),
             temperature=request.json.get("temperature"),
             calories=request.json.get("calories"),
-            diastolic=request.json.get("diastolic"),
-            systolic=request.json.get("systolic"),
-            is_sleeping=request.json.get("is_sleeping")
-)
+            sleep_duration=request.json.get("sleep_duration"),
+            oxygen_saturation=request.json.get("oxygen_saturation")
+        )
 
         db.session.add(vital)
         db.session.commit()
@@ -148,6 +148,7 @@ def post_vital():
         db.session.rollback()
         print("ERROR in /vital:", str(e))
         return "Internal Server Error", 500
+
 
 @api.route("/vital/<int:vital_id>", methods=["GET"])
 def get_vital_by_id(vital_id:int):

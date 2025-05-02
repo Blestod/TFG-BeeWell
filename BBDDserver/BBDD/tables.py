@@ -122,30 +122,28 @@ class MealIngredient(db.Model):
 
 
 class Vital(db.Model):
-    __tablename__="vital"
+    __tablename__ = "vital"
 
-    vital_id = db.Column(db.Integer,primary_key = True, autoincrement = True)
-    glucose_value = db.Column(db.Float,nullable=True)
+    vital_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    glucose_value = db.Column(db.Float, nullable=True)
     vital_time = db.Column(db.Integer)
-    heart_rate = db.Column(db.Float,nullable=True)
-    temperature = db.Column(db.Float,nullable=True)
-    calories = db.Column(db.Float,nullable=True)
-    diastolic = db.Column(db.Float,nullable=True)
-    systolic = db.Column(db.Float,nullable=True)
-    is_sleeping = db.Column(db.Boolean,nullable=True)
+    heart_rate = db.Column(db.Float, nullable=True)
+    temperature = db.Column(db.Float, nullable=True)
+    calories = db.Column(db.Float, nullable=True)
+    sleep_duration = db.Column(db.Integer, nullable=True)  # duración en segundos
+    oxygen_saturation = db.Column(db.Float, nullable=True)  # %
+    
+    user_email = db.Column(db.String(45), db.ForeignKey("user.email"))
 
-    user_email=db.Column(db.String(45),db.ForeignKey("user.email"))
-
-    def __init__(self, user_email, vital_time, glucose_value, heart_rate, temperature, calories, diastolic, systolic, is_sleeping):
+    def __init__(self, user_email, vital_time, glucose_value, heart_rate, temperature, calories, sleep_duration, oxygen_saturation):
         self.vital_time = vital_time
         self.user_email = user_email
         self.glucose_value = glucose_value
         self.heart_rate = heart_rate
         self.temperature = temperature
         self.calories = calories
-        self.diastolic = diastolic
-        self.systolic = systolic
-        self.is_sleeping = is_sleeping
+        self.sleep_duration = sleep_duration
+        self.oxygen_saturation = oxygen_saturation
 
     def serialize(self):
         return {
@@ -154,10 +152,10 @@ class Vital(db.Model):
             "heart_rate": self.heart_rate,
             "temperature": self.temperature,
             "calories": self.calories,
-            "diastolic": self.diastolic,
-            "systolic": self.systolic,
-            "is_sleeping": self.is_sleeping
+            "sleep_duration": self.sleep_duration,
+            "oxygen_saturation": self.oxygen_saturation
         }
+
 
 class Prediction(db.Model):
     __tablename__="prediction"
