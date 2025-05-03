@@ -33,8 +33,7 @@
         tools:targetApi="34">
 
         <!-- ───── Lanzador ───── -->
-        <activity
-            android:name=".MainEntryActivity"
+        <activity android:name=".SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
