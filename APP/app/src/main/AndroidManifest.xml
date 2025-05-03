@@ -12,10 +12,11 @@
     <uses-permission android:name="android.permission.health.READ_SLEEP"/>
     <!-- Blood-glucose (glucosa capilar/CGM) -->
     <uses-permission android:name="android.permission.health.READ_BLOOD_GLUCOSE"/>
-
     <!-- Oxygen Saturation (SpO2) -->
     <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION"/>
 
+    <!-- Background Read -->
+    <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
 
