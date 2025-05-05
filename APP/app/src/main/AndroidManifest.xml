@@ -75,12 +75,17 @@
                 <category android:name="android.intent.category.HEALTH_PERMISSIONS"/>
             </intent-filter>
         </activity-alias>
-
+        <receiver android:name="com.example.tfg_beewell_app.Receiver" android:enabled="true" android:exported="true">
+            <intent-filter>
+                <action android:name="glucodata.Minute"/>
+            </intent-filter>
+        </receiver>
     </application>
 
     <!-- Health Connect package query -->
     <queries>
         <package android:name="com.google.android.apps.healthdata"/>
+        <package android:name="tk.glucodata"/>
     </queries>
 
 </manifest>
