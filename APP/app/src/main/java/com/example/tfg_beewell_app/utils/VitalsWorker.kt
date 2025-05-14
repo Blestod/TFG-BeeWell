@@ -8,6 +8,7 @@ import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.tfg_beewell_app.Constants
+import com.example.tfg_beewell_app.ui.VitalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -46,6 +47,11 @@ class VitalsWorker(
 
             if (vitalTime <= lastSavedTime) {
                 Log.d("VitalsWorker", "🔁 No nuevos datos. Último enviado: $lastSavedTime")
+                return@withContext Result.success()
+            }
+
+            if (isVitalDataEmpty(vital)) {
+                Log.w("VitalsWorker", "🚫 No se enviaron datos: todos los campos están vacíos o nulos.")
                 return@withContext Result.success()
             }
 
@@ -95,4 +101,14 @@ class VitalsWorker(
             return@withContext Result.retry()
         }
     }
+
+    private fun isVitalDataEmpty(v: VitalData): Boolean {
+        return (v.glucoseValue == null || v.glucoseValue == 0) &&
+                (v.heartRate == null || v.heartRate == 0f) &&
+                (v.temperature == null || v.temperature == 0f) &&
+                (v.calories == null || v.calories == 0f) &&
+                (v.sleepDuration == null || v.sleepDuration == 0) &&
+                (v.oxygenSaturation == null || v.oxygenSaturation == 0f)
+    }
+
 }

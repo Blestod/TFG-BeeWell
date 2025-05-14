@@ -121,7 +121,8 @@ def get_last_user_variable(user_email):
 
     return user_variable.serialize(), 200
 
-#---------------------VITAL----------------------@api.route("/vital", methods=["POST"])
+#---------------------VITAL----------------------
+@api.route("/vital", methods=["POST"])
 def post_vital():
     try:
         print("📩 JSON recibido:", request.json)

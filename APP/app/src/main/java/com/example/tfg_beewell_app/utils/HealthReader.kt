@@ -94,14 +94,26 @@ object HealthReader {
             }
 
             // Glucose
-            Log.d("HealthReader", "🔍 Leyendo glucosa...")
-            val glucose = client.readRecords(
-                ReadRecordsRequest(BloodGlucoseRecord::class, TimeRangeFilter.between(oneHourAgo, now))
-            ).records.lastOrNull()
-            glucose?.let {
-                result.setGlucoseValue(it.level.inMillimolesPerLiter.toInt())
-                Log.d("HealthReader", "🩸 Glucosa: ${it.level.inMillimolesPerLiter}")
+            // Leer glucosa desde el Receiver si está disponible
+            val gPrefs = context.getSharedPreferences("glucose_cache", Context.MODE_PRIVATE)
+            val glucoseValue = gPrefs.getInt("glucose_mgdl", -1)
+            if (glucoseValue != -1) {
+                result.setGlucoseValue(glucoseValue)
+                Log.d("HealthReader", "🩸 Glucosa desde Receiver: $glucoseValue mg/dL")
+                // ✅ Limpiar después de usar para evitar reenvíos repetidos
+                gPrefs.edit().remove("glucose_mgdl").apply()
+            } else {
+                // Glucosa desde Health Connect
+                Log.d("HealthReader", "🔍 Leyendo glucosa desde Health Connect...")
+                val glucose = client.readRecords(
+                    ReadRecordsRequest(BloodGlucoseRecord::class, TimeRangeFilter.between(oneHourAgo, now))
+                ).records.lastOrNull()
+                glucose?.let {
+                    result.setGlucoseValue(it.level.inMillimolesPerLiter.toInt())
+                    Log.d("HealthReader", "🩸 Glucosa desde HC: ${it.level.inMillimolesPerLiter}")
+                }
             }
+
 
             // Temperature
             Log.d("HealthReader", "🔍 Leyendo temperatura corporal...")

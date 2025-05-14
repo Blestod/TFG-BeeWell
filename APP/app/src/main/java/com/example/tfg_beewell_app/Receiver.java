@@ -3,6 +3,7 @@ package com.example.tfg_beewell_app;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import java.text.DateFormat;
@@ -97,5 +98,11 @@ static     String librelabel(float rate) {
         long time = extras.getLong(TIME);
         showalarm(alarm);
         System.out.println(name + " glucose=" + glucose + "(mgdL=" + mgdl + ") rate=" + rate + " (libreLabel=" + librelabel(rate) + ", dexcomlabel="+getdexcomlabel(rate)+") time=" + dateformat.format(new Date(time)));
+        SharedPreferences prefs = context.getSharedPreferences("glucose_cache", Context.MODE_PRIVATE);
+        prefs.edit()
+                .putInt("glucose_mgdl", (int) glucose)
+                .putLong("glucose_time", time)
+                .apply();
+
     }
 }

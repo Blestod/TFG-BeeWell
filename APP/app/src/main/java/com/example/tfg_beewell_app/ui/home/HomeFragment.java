@@ -83,7 +83,7 @@ public class HomeFragment extends Fragment {
             requireContext().registerReceiver(
                     permsGrantedReceiver,
                     filter,
-                    Context.RECEIVER_NOT_EXPORTED      // ← solo visible en nuestra app
+                    Context.RECEIVER_NOT_EXPORTED      // ← solo visible en app
             );
         } else {
             requireContext().registerReceiver(permsGrantedReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
