@@ -96,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         checkAndRequestPermissions();             // ⬅️ lanzamos chequeo
+        maybeRequestNotificationPermission();
     }
 
     /* ─────────────────────────────── */
@@ -132,6 +133,14 @@ public class MainActivity extends AppCompatActivity {
         tenemos todos los permisos       */
     private void notifyPermsGranted() {
         sendBroadcast(new Intent("HC_PERMS_GRANTED"));
+
+        // Start the HealthDataService
+        Intent serviceIntent = new Intent(this, com.example.tfg_beewell_app.utils.HealthDataService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
     }
 
     /* ─────────────────────────────── */
@@ -225,6 +234,33 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
     }
+
+    private void maybeRequestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 1002);
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == 1002) { // POST_NOTIFICATIONS
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d("NOTIF", "✔️ Notification permission granted");
+            } else {
+                Log.w("NOTIF", "❌ Notification permission denied");
+            }
+
+            // 👉 Continue with Health Connect permissions after notif permission response
+            checkAndRequestPermissions();
+        }
+    }
+
 
     private void hideSystemUI() {
         getWindow().getDecorView().setSystemUiVisibility(

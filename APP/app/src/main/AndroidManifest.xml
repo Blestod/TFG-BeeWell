@@ -3,22 +3,23 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- ───── Permisos de red ───── -->
-    <uses-permission android:name="android.permission.INTERNET"/>
-
-    <!-- ───── Permisos de lectura Health Connect ───── -->
-    <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED"/>
-    <uses-permission android:name="android.permission.health.READ_HEART_RATE"/>
-    <uses-permission android:name="android.permission.health.READ_BODY_TEMPERATURE"/>
-    <uses-permission android:name="android.permission.health.READ_SLEEP"/>
-    <!-- Blood-glucose (glucosa capilar/CGM) -->
-    <uses-permission android:name="android.permission.health.READ_BLOOD_GLUCOSE"/>
-    <!-- Oxygen Saturation (SpO2) -->
-    <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION"/>
-
-    <!-- Background Read -->
-    <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND"/>
+    <uses-permission android:name="android.permission.INTERNET" /> <!-- ───── Permisos de lectura Health Connect ───── -->
+    <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.READ_BODY_TEMPERATURE" />
+    <uses-permission android:name="android.permission.health.READ_SLEEP" /> <!-- Blood-glucose (glucosa capilar/CGM) -->
+    <uses-permission android:name="android.permission.health.READ_BLOOD_GLUCOSE" /> <!-- Oxygen Saturation (SpO2) -->
+    <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION" /> <!-- Background Read -->
+    <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- Health Connect package query -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+        <package android:name="tk.glucodata" />
+    </queries>
 
     <application
         android:allowBackup="true"
@@ -31,61 +32,81 @@
         android:theme="@style/Theme.TFG_BeeWell_APP"
         android:usesCleartextTraffic="true"
         tools:targetApi="34">
+        <service
+            android:name=".utils.HealthDataService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
         <!-- ───── Lanzador ───── -->
-        <activity android:name=".SplashActivity"
+        <activity
+            android:name=".SplashActivity"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <!-- Resto de tus pantallas normales -->
-        <activity android:name=".MainActivity" android:screenOrientation="portrait" android:exported="true"/>
-        <activity android:name=".LoginActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".RegisterActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".TermsActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".TermsReadActivity" android:screenOrientation="portrait"/>
-        <activity android:name=".ProfileActivity" android:screenOrientation="portrait"/>
-
-        <!-- ─────────────────────────────────────────────
+        </activity> <!-- Resto de tus pantallas normales -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".LoginActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".RegisterActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".TermsActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".TermsReadActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ProfileActivity"
+            android:screenOrientation="portrait" />
+        <!--
+ ─────────────────────────────────────────────
              1) ACTIVITY de explicación de permisos
-        ────────────────────────────────────────────── -->
+        ──────────────────────────────────────────────
+        -->
         <activity
             android:name=".HealthRationaleActivity"
             android:exported="true">
             <intent-filter>
-                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
-                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-
-        <!-- ─────────────────────────────────────────────
+        <!--
+ ─────────────────────────────────────────────
              2) ALIAS para View-Permission-Usage (solo API 34)
-        ────────────────────────────────────────────── -->
+        ──────────────────────────────────────────────
+        -->
         <activity-alias
             android:name=".ViewPermissionUsageActivity"
             android:exported="true"
-            android:targetActivity=".HealthRationaleActivity"
-            android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
-
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE"
+            android:targetActivity=".HealthRationaleActivity">
             <intent-filter>
-                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE"/>
-                <category android:name="android.intent.category.HEALTH_PERMISSIONS"/>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
             </intent-filter>
         </activity-alias>
-        <receiver android:name="com.example.tfg_beewell_app.Receiver" android:enabled="true" android:exported="true">
+
+        <receiver
+            android:name=".utils.BootReceiver"
+            android:enabled="true"
+            android:exported="false">
             <intent-filter>
-                <action android:name="glucodata.Minute"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
     </application>
-
-    <!-- Health Connect package query -->
-    <queries>
-        <package android:name="com.google.android.apps.healthdata"/>
-        <package android:name="tk.glucodata"/>
-    </queries>
 
 </manifest>
