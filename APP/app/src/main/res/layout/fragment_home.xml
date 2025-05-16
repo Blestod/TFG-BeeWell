@@ -127,7 +127,7 @@
                     app:cardElevation="8dp">
 
                     <TextView
-                        android:id="@+id/predictText"
+                        android:id="@+id/tipText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_margin="8dp"
