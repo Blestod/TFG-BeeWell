@@ -6,8 +6,14 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+
+import com.example.tfg_beewell_app.local.GlucoseDB;
+import com.example.tfg_beewell_app.local.LocalGlucoseDao;
+import com.example.tfg_beewell_app.local.LocalGlucoseEntry;
+
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.List;
 
 public class Receiver extends BroadcastReceiver {
     private static final String ACTION = "glucodata.Minute";
@@ -104,5 +110,38 @@ static     String librelabel(float rate) {
                 .putLong("glucose_time", time)
                 .apply();
 
+        long lastSavedTime = prefs.getLong("last_saved_glucose_time", 0);
+        long now = System.currentTimeMillis();
+
+        if (now - lastSavedTime < 30 * 1000) {
+            return;
+        }
+
+        prefs.edit().putLong("last_saved_glucose_time", now).apply();
+
+        // Save to Room DB
+        LocalGlucoseEntry entry = new LocalGlucoseEntry();
+        entry.timestamp = time;
+        entry.glucoseValue = glucose;
+
+        new Thread(() -> {
+            try {
+                LocalGlucoseDao dao = GlucoseDB.getInstance(context).glucoseDao();
+                dao.insert(entry);
+
+                long cutoff = System.currentTimeMillis() - 8 * 60 * 60 * 1000;
+                dao.deleteOlderThan(cutoff);
+
+                List<LocalGlucoseEntry> all = dao.getLast8Hours(cutoff);
+                Log.d("Receiver", "📋 Current stored glucose values:");
+                for (LocalGlucoseEntry e : all) {
+                    Log.d("Receiver", "🩸 " + e.timestamp + " → " + e.glucoseValue + " mg/dL");
+                }
+
+            } catch (Exception e) {
+                Log.e("Receiver", "❌ Error saving glucose to DB", e);
+            }
+        }).start();
     }
+
 }

@@ -31,6 +31,7 @@ import com.example.tfg_beewell_app.utils.VitalsChangesListener;
 import com.example.tfg_beewell_app.utils.VitalsWorker;
 import com.google.android.flexbox.FlexboxLayout;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import androidx.work.Constraints;
@@ -41,6 +42,12 @@ import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 import kotlinx.coroutines.Job;
 import kotlin.Unit;
+
+import com.example.tfg_beewell_app.utils.PredictionManager;
+import lecho.lib.hellocharts.model.PointValue;
+import android.util.Log;
+import com.example.tfg_beewell_app.Forecast;
+
 
 public class HomeFragment extends Fragment {
 
@@ -107,12 +114,29 @@ public class HomeFragment extends Fragment {
         return root;
     }
 
-    @Override public void onStart() {
+    @Override
+    public void onStart() {
         super.onStart();
         ensureVitalsStarted();                // por si ya había permisos
 
         binding.tipText.setText(TipManager.getDailyTip(requireContext()));
+
+        // ✅ Obtener predicciones y loguearlas
+        new Thread(() -> {
+            List<PointValue> predicciones = PredictionManager.getPredictionForNextHour(requireContext());
+            if (predicciones != null && !predicciones.isEmpty()) {
+                Log.d("Prediction", "📈 Predicciones próximas:");
+                for (PointValue p : predicciones) {
+                    long timestamp = (long) (p.getX() * Forecast.FUZZER);
+                    float value = p.getY();
+                    Log.d("Prediction", "⏩ " + Forecast.dateTimeText(timestamp) + " → " + value + " mg/dL");
+                }
+            } else {
+                Log.d("Prediction", "⚠️ No hay suficientes datos para predecir");
+            }
+        }).start();
     }
+
 
     @Override public void onStop() {
         super.onStop();
