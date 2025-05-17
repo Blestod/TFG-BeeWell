@@ -120,7 +120,6 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:layout_marginRight="16dp"
-                    android:layout_marginBottom="24dp"
                     android:backgroundTint="@color/beeWhite"
                     android:clipToPadding="false"
                     app:cardCornerRadius="8dp"
@@ -139,22 +138,21 @@
 
             </LinearLayout>
 
-            <FrameLayout
-                android:id="@+id/chartHome"
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/glucoseChart"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="300dp"
                 android:layout_marginLeft="16dp"
-                android:layout_marginTop="0dp"
                 android:layout_marginRight="16dp"
-                android:layout_marginBottom="24dp"
-                android:contentDescription="Chart placeholder" />
+                android:layout_marginBottom="32dp" />
+
 
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
-                android:layout_marginBottom="32dp"
+                android:layout_marginBottom="96dp"
                 android:backgroundTint="@color/beeWhite"
                 app:cardCornerRadius="8dp"
                 app:cardElevation="8dp">

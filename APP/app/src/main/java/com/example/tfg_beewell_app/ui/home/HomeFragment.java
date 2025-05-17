@@ -48,6 +48,21 @@ import lecho.lib.hellocharts.model.PointValue;
 import android.util.Log;
 import com.example.tfg_beewell_app.Forecast;
 
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.ValueFormatter;
+
+import com.example.tfg_beewell_app.local.GlucoseDB;
+import com.example.tfg_beewell_app.local.LocalGlucoseEntry;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+
+
 
 public class HomeFragment extends Fragment {
 
@@ -117,25 +132,65 @@ public class HomeFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        ensureVitalsStarted();                // por si ya había permisos
+        ensureVitalsStarted();
 
         binding.tipText.setText(TipManager.getDailyTip(requireContext()));
 
-        // ✅ Obtener predicciones y loguearlas
         new Thread(() -> {
             List<PointValue> predicciones = PredictionManager.getPredictionForNextHour(requireContext());
-            if (predicciones != null && !predicciones.isEmpty()) {
-                Log.d("Prediction", "📈 Predicciones próximas:");
-                for (PointValue p : predicciones) {
-                    long timestamp = (long) (p.getX() * Forecast.FUZZER);
-                    float value = p.getY();
-                    Log.d("Prediction", "⏩ " + Forecast.dateTimeText(timestamp) + " → " + value + " mg/dL");
-                }
-            } else {
-                Log.d("Prediction", "⚠️ No hay suficientes datos para predecir");
+
+            List<LocalGlucoseEntry> reales = GlucoseDB.getInstance(requireContext())
+                    .glucoseDao()
+                    .getLast8Hours(System.currentTimeMillis() - 8 * 60 * 60 * 1000);
+
+            // Convertir reales a Entry
+            List<Entry> realPoints = new ArrayList<>();
+            for (LocalGlucoseEntry e : reales) {
+                realPoints.add(new Entry(e.timestamp / 1000f, (float) e.glucoseValue));
             }
+
+            // Convertir predicciones a Entry
+            List<Entry> predPoints = new ArrayList<>();
+            for (PointValue p : predicciones) {
+                float x = (p.getX() * Forecast.FUZZER) / 1000f;
+                predPoints.add(new Entry(x, p.getY()));
+            }
+
+            requireActivity().runOnUiThread(() -> {
+                LineChart chart = binding.glucoseChart;
+
+                LineDataSet setReal = new LineDataSet(realPoints, "Historial");
+                setReal.setColor(ContextCompat.getColor(requireContext(), android.R.color.holo_blue_dark));
+                setReal.setLineWidth(2f);
+                setReal.setDrawCircles(false);
+
+                LineDataSet setPred = new LineDataSet(predPoints, "Predicción");
+                setPred.setColor(ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark));
+                setPred.setLineWidth(2f);
+                setPred.setDrawCircles(false);
+                setPred.enableDashedLine(10, 10, 0);
+
+                LineData lineData = new LineData(setReal, setPred);
+                chart.setData(lineData);
+                chart.getDescription().setEnabled(false);
+                chart.setTouchEnabled(true);
+                chart.setPinchZoom(true);
+
+                // Formato de hora en el eje X
+                XAxis xAxis = chart.getXAxis();
+                xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+                xAxis.setValueFormatter(new ValueFormatter() {
+                    @Override
+                    public String getFormattedValue(float value) {
+                        return new SimpleDateFormat("HH:mm").format(new Date((long) value * 1000));
+                    }
+                });
+
+                chart.invalidate(); // refrescar gráfico
+            });
         }).start();
     }
+
 
 
     @Override public void onStop() {
