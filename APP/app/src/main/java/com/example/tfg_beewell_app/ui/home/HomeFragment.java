@@ -22,6 +22,7 @@ import androidx.lifecycle.LifecycleCoroutineScope;
 import androidx.lifecycle.LifecycleOwnerKt;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.tfg_beewell_app.TipManager;
 import com.example.tfg_beewell_app.databinding.FragmentHomeBinding;
 import com.example.tfg_beewell_app.ui.VitalData;
 import com.example.tfg_beewell_app.utils.HealthConnectPermissionHelper;
@@ -109,6 +110,8 @@ public class HomeFragment extends Fragment {
     @Override public void onStart() {
         super.onStart();
         ensureVitalsStarted();                // por si ya había permisos
+
+        binding.tipText.setText(TipManager.getDailyTip(requireContext()));
     }
 
     @Override public void onStop() {
