@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- ───── Permisos de red ───── -->
-    <uses-permission android:name="android.permission.INTERNET" /> <!-- ───── Permisos de lectura Health Connect ───── -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- ───── Permisos de lectura Health Connect ───── -->
     <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED" />
     <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
     <uses-permission android:name="android.permission.health.READ_BODY_TEMPERATURE" />
