@@ -141,7 +141,7 @@ public class HomeFragment extends Fragment {
 
             List<LocalGlucoseEntry> reales = GlucoseDB.getInstance(requireContext())
                     .glucoseDao()
-                    .getLast8Hours(System.currentTimeMillis() - 8 * 60 * 60 * 1000);
+                    .getLast8Hours(System.currentTimeMillis() - 1 * 60 * 60 * 1000); // solo 1 horas para centrado
 
             // Convertir reales a Entry
             List<Entry> realPoints = new ArrayList<>();
