@@ -287,8 +287,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void scheduleMonthlyFullSync() {
-        LocalDateTime now    = LocalDateTime.now();
-        LocalDateTime next1st= now.withDayOfMonth(1)
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime next1st = now.withDayOfMonth(1)
                 .plusMonths(1)
                 .withHour(0)
                 .withMinute(0)
@@ -303,11 +303,15 @@ public class MainActivity extends AppCompatActivity {
 
         WorkManager.getInstance(this)
                 .enqueueUniquePeriodicWork(
-                        "full_history_sync",
+                        "monthly_full_sync",
                         ExistingPeriodicWorkPolicy.REPLACE,
                         monthReq
                 );
+
+        // 📅 Log para confirmar la fecha y hora programada
+        Log.d("MonthlySync", "✅ Sync mensual programado para: " + next1st.toString());
     }
+
 
     @Override protected void onResume()   { super.onResume();   hideSystemUI(); }
     @Override public    void onWindowFocusChanged(boolean hasFocus) {
