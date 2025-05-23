@@ -174,6 +174,27 @@ def get_latest_vital(user_email):
         return "No vitals found for this user", 404
     return vital.serialize(), 200
 
+#Get all vitals for a user
+@api.route("/vital/all/<string:user_email>", methods=["GET"])
+def get_all_vitals(user_email):
+    try:
+        vitals = (
+            Vital.query
+            .filter_by(user_email=user_email)
+            .order_by(Vital.vital_time.asc())
+            .all()
+        )
+
+        if not vitals:
+            return jsonify([]), 200
+
+        return jsonify([v.serialize() for v in vitals]), 200
+
+    except Exception as e:
+        print("❌ Error in get_all_vitals:", str(e))
+        return jsonify({"error": "Internal Server Error"}), 500
+
+
 #---------------------MEAL----------------------
 
 #-------------------INSULIN---------------------
