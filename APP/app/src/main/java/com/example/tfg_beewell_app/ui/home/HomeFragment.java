@@ -22,32 +22,23 @@ import androidx.lifecycle.LifecycleCoroutineScope;
 import androidx.lifecycle.LifecycleOwnerKt;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.tfg_beewell_app.Forecast;
 import com.example.tfg_beewell_app.TipManager;
 import com.example.tfg_beewell_app.databinding.FragmentHomeBinding;
 import com.example.tfg_beewell_app.ui.VitalData;
 import com.example.tfg_beewell_app.utils.HealthConnectPermissionHelper;
 import com.example.tfg_beewell_app.utils.HealthReader;
 import com.example.tfg_beewell_app.utils.VitalsChangesListener;
-import com.example.tfg_beewell_app.utils.VitalsWorker;
 import com.google.android.flexbox.FlexboxLayout;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import androidx.work.Constraints;
-import androidx.work.ExistingPeriodicWorkPolicy;
-import androidx.work.NetworkType;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
 import kotlinx.coroutines.Job;
 import kotlin.Unit;
 
 import com.example.tfg_beewell_app.utils.PredictionManager;
 import lecho.lib.hellocharts.model.PointValue;
-import android.util.Log;
-import com.example.tfg_beewell_app.Forecast;
-
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.Entry;
@@ -62,18 +53,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
-
-
 public class HomeFragment extends Fragment {
 
-    /* ──────────────────────── campos ─────────────────────── */
     private FragmentHomeBinding binding;
     private HealthConnectPermissionHelper permissionHelper;
     private Job vitalsJob;
-    private boolean workerScheduled = false;
     private String userEmail;
-
-    /* ──────────────────────── ciclo de vida ─────────────────────── */
 
     @NonNull
     @Override
@@ -84,7 +69,6 @@ public class HomeFragment extends Fragment {
         binding = FragmentHomeBinding.inflate(inf, container, false);
         View root = binding.getRoot();
 
-        /* ViewModel de cabecera */
         HomeViewModel vm = new ViewModelProvider(
                 requireActivity(),
                 new ViewModelProvider.AndroidViewModelFactory(requireActivity().getApplication()))
@@ -93,38 +77,21 @@ public class HomeFragment extends Fragment {
         vm.getText().observe(getViewLifecycleOwner(),
                 t -> binding.textInfo.setText(t == null ? "" : t));
 
-        /* email del usuario logeado */
         SharedPreferences sp = requireContext()
                 .getSharedPreferences("user_session", Context.MODE_PRIVATE);
         userEmail = sp.getString("user_email", null);
 
         permissionHelper = new HealthConnectPermissionHelper(requireContext());
 
-        /* Receiver para saber cuándo MainActivity concede permisos */
+        // Register for HC_PERMS_GRANTED broadcast
         IntentFilter filter = new IntentFilter("HC_PERMS_GRANTED");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requireContext().registerReceiver(
-                    permsGrantedReceiver,
-                    filter,
-                    Context.RECEIVER_NOT_EXPORTED      // ← solo visible en app
-            );
-        } else {
-            requireContext().registerReceiver(permsGrantedReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        requireContext().registerReceiver(permsGrantedReceiver,
+                filter, Context.RECEIVER_NOT_EXPORTED);
+
+        // If user already granted, read and listen now
+        if (permissionHelper.hasAllHcPermissionsSync()) {
+            readAndShowVitals();
         }
-
-        // print health connect reader
-
-        new Thread(() -> {
-            VitalData data = HealthReader.getLatestVitalsBlocking(requireContext(), userEmail);
-
-            if (data != null) {
-                requireActivity().runOnUiThread(() -> {
-                    //Muestra los datos
-                    showVitals(data);
-
-                });
-            }
-        }).start();
 
         return root;
     }
@@ -132,113 +99,113 @@ public class HomeFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        ensureVitalsStarted();
 
         binding.tipText.setText(TipManager.getDailyTip(requireContext()));
 
+        // only start listener if perms granted
+        if (permissionHelper.hasAllHcPermissionsSync()) {
+            startVitalsListener();
+        }
+
+        // prediction + chart logic unchanged
         new Thread(() -> {
-            List<PointValue> predicciones = PredictionManager.getPredictionForNextHour(requireContext());
+            List<PointValue> predicciones;
+            List<Entry> predPoints = new ArrayList<>();
+            try {
+                predicciones = PredictionManager.getPredictionForNextHour(requireContext());
+                if (predicciones != null) {
+                    for (PointValue p : predicciones) {
+                        float x = (p.getX() * Forecast.FUZZER) / 1000f;
+                        predPoints.add(new Entry(x, p.getY()));
+                    }
+                }
+            } catch (Exception ex) {
+                predicciones = List.of();
+            }
 
             List<LocalGlucoseEntry> reales = GlucoseDB.getInstance(requireContext())
                     .glucoseDao()
-                    .getLast8Hours(System.currentTimeMillis() - 1 * 60 * 60 * 1000); // solo 1 horas para centrado
+                    .getLast8Hours(System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
 
-            // Convertir reales a Entry
             List<Entry> realPoints = new ArrayList<>();
-            for (LocalGlucoseEntry e : reales) {
-                realPoints.add(new Entry(e.timestamp / 1000f, (float) e.glucoseValue));
-            }
-
-            // Convertir predicciones a Entry
-            List<Entry> predPoints = new ArrayList<>();
-            for (PointValue p : predicciones) {
-                float x = (p.getX() * Forecast.FUZZER) / 1000f;
-                predPoints.add(new Entry(x, p.getY()));
+            if (reales != null) {
+                for (LocalGlucoseEntry e : reales) {
+                    realPoints.add(new Entry(e.timestamp / 1000f, (float) e.glucoseValue));
+                }
             }
 
             requireActivity().runOnUiThread(() -> {
                 LineChart chart = binding.glucoseChart;
 
+                if (realPoints.isEmpty() && predPoints.isEmpty()) {
+                    chart.clear();
+                    chart.setNoDataText("Aún no hay datos de glucosa");
+                    chart.setNoDataTextColor(
+                            ContextCompat.getColor(requireContext(), android.R.color.darker_gray));
+                    chart.invalidate();
+                    return;
+                }
+
                 LineDataSet setReal = new LineDataSet(realPoints, "Historial");
-                setReal.setColor(ContextCompat.getColor(requireContext(), android.R.color.holo_blue_dark));
+                setReal.setColor(
+                        ContextCompat.getColor(requireContext(), android.R.color.holo_blue_dark));
                 setReal.setLineWidth(2f);
                 setReal.setDrawCircles(false);
 
                 LineDataSet setPred = new LineDataSet(predPoints, "Predicción");
-                setPred.setColor(ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark));
+                setPred.setColor(
+                        ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark));
                 setPred.setLineWidth(2f);
                 setPred.setDrawCircles(false);
                 setPred.enableDashedLine(10, 10, 0);
 
-                LineData lineData = new LineData(setReal, setPred);
+                LineData lineData = new LineData();
+                if (!realPoints.isEmpty()) lineData.addDataSet(setReal);
+                if (!predPoints.isEmpty()) lineData.addDataSet(setPred);
+
                 chart.setData(lineData);
                 chart.getDescription().setEnabled(false);
                 chart.setTouchEnabled(true);
                 chart.setPinchZoom(true);
 
-                // Formato de hora en el eje X
                 XAxis xAxis = chart.getXAxis();
                 xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
                 xAxis.setValueFormatter(new ValueFormatter() {
+                    private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
                     @Override
                     public String getFormattedValue(float value) {
-                        return new SimpleDateFormat("HH:mm").format(new Date((long) value * 1000));
+                        return sdf.format(new Date((long) value * 1000));
                     }
                 });
 
-                chart.invalidate(); // refrescar gráfico
+                chart.invalidate();
             });
         }).start();
     }
 
-
-
-    @Override public void onStop() {
+    @Override
+    public void onStop() {
         super.onStop();
         if (vitalsJob != null) vitalsJob.cancel(null);
     }
 
-    @Override public void onDestroyView() {
+    @Override
+    public void onDestroyView() {
         super.onDestroyView();
-        try { requireContext().unregisterReceiver(permsGrantedReceiver); }
-        catch (IllegalArgumentException ignored) {}
+        try {
+            requireContext().unregisterReceiver(permsGrantedReceiver);
+        } catch (IllegalArgumentException ignored) {}
         binding = null;
     }
 
-    /* ──────────────────────── lógica ─────────────────────── */
-
-    /** Arranca listener y programa Worker sólo una vez */
-    private void ensureVitalsStarted() {
-        if (!permissionHelper.hasAllHcPermissionsSync()) return;
-
-        if (!workerScheduled) {
-            scheduleVitalsWorker();
-            workerScheduled = true;
-        }
-        if (vitalsJob == null || vitalsJob.isCancelled()) startVitalsListener();
-    }
-
-    private void scheduleVitalsWorker() {
-        /* uno inmediato */
-        WorkManager.getInstance(requireContext())
-                .enqueue(new OneTimeWorkRequest.Builder(VitalsWorker.class).build());
-
-        /* y periódico cada 15 min */
-        Constraints c = new Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .setRequiresBatteryNotLow(true)
-                .build();
-
-        PeriodicWorkRequest periodic = new PeriodicWorkRequest.Builder(
-                VitalsWorker.class,
-                15, TimeUnit.MINUTES)
-                .setConstraints(c)
-                .build();
-
-        WorkManager.getInstance(requireContext()).enqueueUniquePeriodicWork(
-                "vitals_upload",
-                ExistingPeriodicWorkPolicy.KEEP,
-                periodic);
+    private void readAndShowVitals() {
+        new Thread(() -> {
+            VitalData data =
+                    HealthReader.getLatestVitalsBlocking(requireContext(), userEmail);
+            if (data != null) {
+                requireActivity().runOnUiThread(() -> showVitals(data));
+            }
+        }).start();
     }
 
     private void startVitalsListener() {
@@ -249,9 +216,8 @@ public class HomeFragment extends Fragment {
                 VitalsChangesListener.INSTANCE.listen(
                         requireContext(),
                         cont2 -> {
-                            Long bpm =
-                                    HealthReader.getLastHeartRateBpmBlocking(requireContext());
-
+                            Long bpm = HealthReader
+                                    .getLastHeartRateBpmBlocking(requireContext());
                             requireActivity().runOnUiThread(() ->
                                     binding.textInfo.setText(
                                             bpm != null ? bpm + " bpm" : "—"));
@@ -259,17 +225,15 @@ public class HomeFragment extends Fragment {
                         }, cont));
     }
 
-    /* ──────────────────────── Broadcast ─────────────────────── */
-
     private final BroadcastReceiver permsGrantedReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context c, Intent i) {
-            Toast.makeText(c,
-                    "Permisos de salud concedidos 🎉", Toast.LENGTH_SHORT).show();
-            ensureVitalsStarted();
+            Toast.makeText(c, "Permisos de salud concedidos 🎉",
+                    Toast.LENGTH_SHORT).show();
+            readAndShowVitals();
+            startVitalsListener();
         }
     };
 
-    /* ──────────────────────── UI helpers ─────────────────────── */
     private void showVitals(VitalData vital) {
         FlexboxLayout card = binding.greenCard;
         card.removeAllViews();
@@ -277,15 +241,12 @@ public class HomeFragment extends Fragment {
         if (vital.getGlucoseValue() != null)
             card.addView(createVitalTextView(
                     String.valueOf(vital.getGlucoseValue()), "mg/dL"));
-
         if (vital.getHeartRate() != null)
             card.addView(createVitalTextView(
                     String.valueOf(vital.getHeartRate().intValue()), "bpm"));
-
         if (vital.getTemperature() != null)
             card.addView(createVitalTextView(
                     String.valueOf(vital.getTemperature()), "ºC"));
-
         if (vital.getOxygenSaturation() != null)
             card.addView(createVitalTextView(
                     String.valueOf(vital.getOxygenSaturation()), "% SpO₂"));
@@ -293,7 +254,6 @@ public class HomeFragment extends Fragment {
 
     private LinearLayout createVitalTextView(String value, String unit) {
         Context ctx = requireContext();
-
         LinearLayout box = new LinearLayout(ctx);
         box.setOrientation(LinearLayout.VERTICAL);
         box.setPadding(16, 0, 16, 0);
@@ -301,13 +261,15 @@ public class HomeFragment extends Fragment {
         TextView vTxt = new TextView(ctx);
         vTxt.setText(value);
         vTxt.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
-        vTxt.setTextColor(ContextCompat.getColor(ctx, android.R.color.black));
+        vTxt.setTextColor(
+                ContextCompat.getColor(ctx, android.R.color.black));
         vTxt.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
 
         TextView uTxt = new TextView(ctx);
         uTxt.setText(unit);
         uTxt.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-        uTxt.setTextColor(ContextCompat.getColor(ctx, android.R.color.darker_gray));
+        uTxt.setTextColor(
+                ContextCompat.getColor(ctx, android.R.color.darker_gray));
         uTxt.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
 
         box.addView(vTxt);
@@ -321,4 +283,3 @@ public class HomeFragment extends Fragment {
         return box;
     }
 }
-

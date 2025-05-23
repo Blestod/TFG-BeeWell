@@ -1,22 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/gradiant_bg"
-    android:padding="0dp">
+    android:background="@drawable/gradiant_bg">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingTop="0dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <!-- Achievements (Expandable) -->
+        <!-- ─────────────── ACHIEVEMENTS ─────────────── -->
         <androidx.cardview.widget.CardView
             android:id="@+id/achievementsCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="0dp"
             android:backgroundTint="@color/beeYellow"
             android:elevation="8dp"
             app:cardCornerRadius="0dp">
@@ -25,18 +23,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="12dp"
-                android:paddingTop="56dp">
+                android:padding="12dp">
 
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="72dp">
+                    android:paddingTop="64dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentStart="true"
+                        android:layout_alignTop="@+id/achievementsToggleBtn"
+                        android:layout_alignParentBottom="true"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="3dp"
                         android:text="Achievements"
                         android:textColor="@color/beeBlue"
                         android:textSize="20sp"
@@ -52,72 +52,68 @@
                         app:tint="@color/beeBlue" />
                 </RelativeLayout>
 
-                <!-- Achievements Content -->
-                <LinearLayout
-                    android:id="@+id/achievementsContent"
+                <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center|start"
-                    android:orientation="horizontal"
-                    android:paddingTop="8dp">
+                    android:layout_marginTop="16dp"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="0dp">
 
-                    <androidx.cardview.widget.CardView
-                        android:id="@+id/gotCard"
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvAchievements"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:backgroundTint="@color/beeWhite"
-                        app:cardCornerRadius="8dp"
-                        app:cardElevation="0dp">
+                        android:layout_height="80dp"
+                        android:background="@color/beeWhite"
+                        android:paddingTop="8dp"
+                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+                </androidx.cardview.widget.CardView>
 
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:layout_width="match_parent"
-                            android:layout_height="60dp" />
-                    </androidx.cardview.widget.CardView>
-
-                </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Observations -->
+        <!-- ─────────────── OBSERVATIONS ─────────────── -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="16dp"
             android:text="Observations"
             android:textColor="@color/beeBlue"
             android:textSize="20sp"
             android:textStyle="bold" />
 
-        <!-- Chart Pager -->
-        <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/chartViewPager"
+        <!-- Contenedor para gráfico o fallback -->
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="250dp"
-            android:layout_margin="8dp" />
+            android:layout_marginHorizontal="8dp">
 
-        <!-- Fallback if no charts -->
-        <TextView
-            android:id="@+id/noChartsText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:padding="16dp"
-            android:text="No glucose data available yet"
-            android:textColor="@color/beeGrey"
-            android:textSize="16sp"
-            android:visibility="gone" />
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/chartViewPager"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
 
-        <!-- Interpretation Text -->
+            <!-- Mensaje sin datos -->
+            <TextView
+                android:id="@+id/noChartsText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="No glucose data available yet"
+                android:textColor="@color/beeGrey"
+                android:textSize="16sp"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <!-- Interpretación generada por GPT -->
         <TextView
             android:id="@+id/interpretationText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
-            android:layout_marginTop="12dp"
-            android:padding="8dp"
+            android:paddingBottom="64dp"
             android:text="Lorem ipsum dolor sit amet...\nMore generated insights here..."
             android:textColor="@color/beeBlack"
-            android:textSize="16sp" />
+            android:textSize="16sp" />   <!-- margen para que no lo tape el FAB -->
     </LinearLayout>
 </ScrollView>

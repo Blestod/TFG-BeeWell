@@ -1,29 +1,42 @@
 package com.example.tfg_beewell_app.utils;
 
 import androidx.annotation.NonNull;
+import java.util.concurrent.TimeUnit;
+import okhttp3.OkHttpClient;
+import okhttp3.ResponseBody;                 // ➊ nuevo
+import okhttp3.logging.HttpLoggingInterceptor;
+import org.json.JSONObject;                 // ➋ nuevo
 import retrofit2.*;
 import retrofit2.converter.gson.GsonConverterFactory;
-import okhttp3.OkHttpClient;
-import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.http.Body;
 import retrofit2.http.POST;
 
-
+/** Repository que envía { "task": ... } a BeeWell-Core y devuelve la respuesta */
 public class ChatService {
 
-    private static final String BASE_URL = "http://10.0.2.2:8000/";   // emulador→PC
+    private static final String BASE_URL = "https://beewell.core.sciling.com/";
+
     private static ChatService INSTANCE;
     private final KBApi api;
 
     private ChatService() {
+
+        HttpLoggingInterceptor log = new HttpLoggingInterceptor();
+        log.setLevel(HttpLoggingInterceptor.Level.BODY);
+
+        OkHttpClient ok = new OkHttpClient.Builder()
+                .addInterceptor(log)
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout  (30, TimeUnit.SECONDS)
+                .readTimeout   (120, TimeUnit.SECONDS)   // 2 min de espera
+                .build();
+
         Retrofit r = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
+                .client(ok)
                 .addConverterFactory(GsonConverterFactory.create())
-                .client(new OkHttpClient.Builder()
-                        .addInterceptor(chain -> {          // opcional: log
-                            return chain.proceed(chain.request());
-                        }).build())
                 .build();
+
         api = r.create(KBApi.class);
     }
 
@@ -32,32 +45,46 @@ public class ChatService {
         return INSTANCE;
     }
 
-    /* ---------- API propia ---------- */
+    /* ------------ Retrofit interface ------------ */
     interface KBApi {
-        @POST("api/knowledgebase")
-        Call<KBAnswer> ask(@Body KBRequest req);
+        @POST("api/knowledgebase")                       // SIN barra final
+        Call<ResponseBody> ask(@Body KBRequest req);     // ➌ ahora ResponseBody
     }
 
-    /* ---------- DTO ---------- */
-    static class KBRequest {
+    /* ------------ DTO ------------ */
+    public static class KBRequest {
         final String task;
-        KBRequest(String t) { task = t; }
+        public KBRequest(String t){ task = t; }
     }
-    /* tu backend devuelve por ejemplo { "answer": "texto" } */
-    static class KBAnswer { String answer; }
 
-    /* ---------- fachada ---------- */
+    /* ------------ fachada pública ------------ */
     public interface BotCallback { void onAnswer(String txt); }
 
     public void askBot(String prompt, BotCallback cb) {
-        api.ask(new KBRequest(prompt)).enqueue(new Callback<KBAnswer>() {
-            @Override public void onResponse(Call<KBAnswer> c, Response<KBAnswer> r) {
-                if (r.isSuccessful() && r.body()!=null && r.body().answer!=null)
-                    cb.onAnswer(r.body().answer);
-                else cb.onAnswer("(sin respuesta)");
+
+        api.ask(new KBRequest(prompt)).enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(@NonNull Call<ResponseBody> call,
+                                   @NonNull Response<ResponseBody> resp) {
+
+                if (!resp.isSuccessful() || resp.body()==null) {
+                    cb.onAnswer("(sin respuesta)");
+                    return;
+                }
+                try {
+                    String raw = resp.body().string();         // JSON completo
+                    String ans = new JSONObject(raw)
+                            .optString("answer","(sin respuesta)");
+                    cb.onAnswer(ans);
+                } catch (Exception e) {
+                    cb.onAnswer("Error parse: "+e.getMessage());
+                }
             }
-            @Override public void onFailure(Call<KBAnswer> c, Throwable t) {
-                cb.onAnswer("Error: "+t.getMessage());
+
+            @Override
+            public void onFailure(@NonNull Call<ResponseBody> call,
+                                  @NonNull Throwable t) {
+                cb.onAnswer("Error: " + t.getMessage());
             }
         });
     }

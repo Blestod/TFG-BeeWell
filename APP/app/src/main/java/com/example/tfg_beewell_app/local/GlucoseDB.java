@@ -6,16 +6,16 @@ import androidx.room.Room;
 
 public class GlucoseDB {
     private static LocalGlucoseDatabase instance;
-
-    public static LocalGlucoseDatabase getInstance(Context context) {
+    public static LocalGlucoseDatabase getInstance(Context ctx) {
         if (instance == null) {
             instance = Room.databaseBuilder(
-                    context.getApplicationContext(),
-                    LocalGlucoseDatabase.class,
-                    "glucose_local_db"
-            ).build();
+                            ctx.getApplicationContext(),
+                            LocalGlucoseDatabase.class,
+                            "glucose_local_db"
+                    )
+                    .fallbackToDestructiveMigration()
+                    .build();
         }
         return instance;
     }
 }
-

@@ -6,7 +6,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
@@ -15,111 +14,93 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.tfg_beewell_app.R;
-import com.example.tfg_beewell_app.databinding.FragmentNotificationsBinding;
+import com.example.tfg_beewell_app.local.GlucoseDB;
+import com.example.tfg_beewell_app.local.LocalGlucoseHistoryDao;
+import com.example.tfg_beewell_app.local.LocalGlucoseHistoryEntry;
+import com.example.tfg_beewell_app.utils.GlucoseMonthAdapter;
 
-import java.util.Arrays;
+import java.time.Instant;
+import java.time.YearMonth;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class NotificationsFragment extends Fragment {
+    private static final int COLLAPSED_DP = 80, EXPANDED_DP = 300;
+    private ExecutorService bg;
+    private boolean expanded;
+    private ViewPager2 pager;
+    private List<YearMonth> months;
 
-    private FragmentNotificationsBinding binding;
-    private boolean isAchievementsExpanded = false;
-
-    private final int COLLAPSED_HEIGHT_DP = 80;
-    private final int EXPANDED_HEIGHT_DP = 300;
-
-    @Override
+    @Override @NonNull
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
+                             ViewGroup container,
+                             Bundle savedInstanceState) {
+        bg = Executors.newSingleThreadExecutor();
+        View root = inflater.inflate(R.layout.fragment_notifications, container, false);
 
-        binding = FragmentNotificationsBinding.inflate(inflater, container, false);
-        View root = binding.getRoot();
+        // ACHIEVEMENTS TOGGLE SETUP
+        CardView card = root.findViewById(R.id.achievementsCard);
+        ImageView toggle = root.findViewById(R.id.achievementsToggleBtn);
+        RecyclerView rvAchievements = root.findViewById(R.id.rvAchievements);
 
-        CardView achievementsCard = root.findViewById(R.id.gotCard);
-        ImageView toggleBtn = root.findViewById(R.id.achievementsToggleBtn);
+        // Initial collapsed state
+        setViewHeight(rvAchievements, COLLAPSED_DP);
 
-        // Set initial height
-        setCardHeight(achievementsCard, COLLAPSED_HEIGHT_DP);
-
-        toggleBtn.setOnClickListener(v -> {
-            if (!isAchievementsExpanded) {
-                setCardHeight(achievementsCard, EXPANDED_HEIGHT_DP);
-                toggleBtn.setImageResource(R.drawable.fold);
-            } else {
-                setCardHeight(achievementsCard, COLLAPSED_HEIGHT_DP);
-                toggleBtn.setImageResource(R.drawable.unfold);
-            }
-            isAchievementsExpanded = !isAchievementsExpanded;
+        toggle.setOnClickListener(v -> {
+            expanded = !expanded;
+            setViewHeight(rvAchievements, expanded ? EXPANDED_DP : COLLAPSED_DP);
+            toggle.setImageResource(expanded ? R.drawable.fold : R.drawable.unfold);
         });
 
-        // === Chart ViewPager2 Setup ===
-        ViewPager2 chartPager = root.findViewById(R.id.chartViewPager);
-        TextView noChartsText = root.findViewById(R.id.noChartsText);
-
-        List<Integer> charts = Arrays.asList(); // Empty for now
-
-        if (charts.isEmpty()) {
-            chartPager.setVisibility(View.GONE);
-            noChartsText.setVisibility(View.VISIBLE);
-        } else {
-            chartPager.setVisibility(View.VISIBLE);
-            noChartsText.setVisibility(View.GONE);
-            chartPager.setAdapter(new ChartPagerAdapter(charts));
-        }
+        // CHART SETUP
+        pager = root.findViewById(R.id.chartViewPager);
+        loadMonthRangeAndAdapter();
 
         return root;
     }
 
-    private void setCardHeight(CardView card, int heightDp) {
-        ViewGroup.LayoutParams params = card.getLayoutParams();
+    private void loadMonthRangeAndAdapter() {
+        bg.execute(() -> {
+            LocalGlucoseHistoryDao dao =
+                    GlucoseDB.getInstance(requireContext()).historyDao();
+            long minSec = dao.getMinTimestamp();  // seconds
+            long maxSec = dao.getMaxTimestamp();
+            if (minSec == 0 && maxSec == 0) return;
+
+            ZoneId zone = ZoneId.systemDefault();
+            YearMonth start = YearMonth.from(Instant.ofEpochSecond(minSec).atZone(zone));
+            YearMonth end   = YearMonth.from(Instant.ofEpochSecond(maxSec).atZone(zone));
+
+            List<YearMonth> list = new ArrayList<>();
+            YearMonth cur = start;
+            while (!cur.isAfter(end)) {
+                list.add(cur);
+                cur = cur.plusMonths(1);
+            }
+            months = list;
+
+            requireActivity().runOnUiThread(() -> {
+                pager.setAdapter(new GlucoseMonthAdapter(this, months));
+                pager.setOffscreenPageLimit(2);
+            });
+        });
+    }
+
+    private void setViewHeight(View view, int dp) {
+        ViewGroup.LayoutParams params = view.getLayoutParams();
         params.height = (int) TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP,
-                heightDp,
+                dp,
                 getResources().getDisplayMetrics()
         );
-        card.setLayoutParams(params);
+        view.setLayoutParams(params);
     }
 
-    @Override
-    public void onDestroyView() {
+    @Override public void onDestroyView() {
         super.onDestroyView();
-        binding = null;
-    }
-
-    // === ViewPager2 Adapter ===
-    public static class ChartPagerAdapter extends RecyclerView.Adapter<ChartPagerAdapter.ChartViewHolder> {
-        private final List<Integer> chartImages;
-
-        public ChartPagerAdapter(List<Integer> chartImages) {
-            this.chartImages = chartImages;
-        }
-
-        @NonNull
-        @Override
-        public ChartViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            ImageView imageView = new ImageView(parent.getContext());
-            imageView.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-            ));
-            imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            return new ChartViewHolder(imageView);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull ChartViewHolder holder, int position) {
-            ((ImageView) holder.itemView).setImageResource(chartImages.get(position));
-        }
-
-        @Override
-        public int getItemCount() {
-            return chartImages.size();
-        }
-
-        static class ChartViewHolder extends RecyclerView.ViewHolder {
-            public ChartViewHolder(@NonNull View itemView) {
-                super(itemView);
-            }
-        }
+        bg.shutdown();
     }
 }
