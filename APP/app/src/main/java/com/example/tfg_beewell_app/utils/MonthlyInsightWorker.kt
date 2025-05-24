@@ -73,17 +73,18 @@ class MonthlyInsightWorker(
 
         val client = OkHttpClient()
 
-        return try {
-            client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) {
-                    Log.e("MonthlyInsight", "❌ Error ${'$'}{response.code}")
-                    return "No se pudo generar resumen."
-                }
 
-                val body = response.body?.string()
-                val responseJson = JSONObject(body ?: "")
-                responseJson.getString("summary")
+        return try {
+            val response = client.newCall(request).execute()
+            val responseBody = response.body?.string()
+
+            if (!response.isSuccessful) {
+                Log.e("MonthlyInsight", "❌ Error ${response.code}:\n$responseBody")
+                return "No se pudo generar resumen."
             }
+
+            val json = JSONObject(responseBody ?: "")
+            json.getString("summary")
         } catch (e: Exception) {
             Log.e("MonthlyInsight", "❌ Error al contactar backend", e)
             "Error de conexión."
