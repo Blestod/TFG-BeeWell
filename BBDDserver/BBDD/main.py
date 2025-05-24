@@ -3,6 +3,7 @@ from tables import db, User, UserVariables, Meal, Ingredient, MealIngredient, Vi
 from flask import jsonify
 from flask import request
 from passlib.context import CryptContext
+import openai
 
 api: Flask=Flask(__name__)
 api.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://blestod:spyro123@blestod.mysql.eu.pythonanywhere-services.com/blestod$beewell"
@@ -213,6 +214,43 @@ def post_insulin():
     db.session.add(insulin)
     db.session.commit()
     return "ok", 201
+
+
+#---------------------CHATGPT----------------------
+openai.api_key = "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"  # tu token aquí, SOLO en backend
+
+@api.route("/generate_summary", methods=["POST"])
+def generate_summary():
+    data = request.get_json()
+    user_email = data.get("user_email")
+    values = data.get("values")  # esto es el texto de los datos de glucosa
+
+    if not user_email or not values:
+        return {"error": "Missing data"}, 400
+
+    try:
+        prompt = f"""
+        Analyze the following glucose data from the last 30 days:
+
+        {values}
+
+        Provide a medical-style summary of the patient's glucose progression.
+        Mention stability, fluctuations, possible causes, and advice.
+        """
+
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+
+        result = response["choices"][0]["message"]["content"]
+        return {"summary": result.strip()}, 200
+
+    except Exception as e:
+        print("❌ ChatGPT error:", e)
+        return {"error": "GPT request failed"}, 500
 
 
 #---------------------MAIN----------------------
