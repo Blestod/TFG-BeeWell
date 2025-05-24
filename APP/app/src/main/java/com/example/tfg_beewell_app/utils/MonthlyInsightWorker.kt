@@ -8,6 +8,7 @@ import com.example.tfg_beewell_app.local.GlucoseDB
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.Instant
+import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
 class MonthlyInsightWorker(
@@ -46,7 +47,9 @@ class MonthlyInsightWorker(
             val summary = ChatGPTClient(applicationContext).getInsight(prompt)
 
             val prefs = applicationContext.getSharedPreferences("monthly_summary", Context.MODE_PRIVATE)
-            prefs.edit().putString("latest_summary", summary).apply()
+            val currentMonth = LocalDate.now().withDayOfMonth(1).toString() // por ejemplo: "2025-05-01"
+            prefs.edit().putString("summary_$currentMonth", summary).apply()
+
 
             Log.d("InsightWorker", "✅ Resumen mensual generado.")
             Result.success()

@@ -36,6 +36,7 @@ public class NotificationsFragment extends Fragment {
     private boolean expanded;
     private ViewPager2 pager;
     private List<YearMonth> months;
+    private TextView interpretationText;
 
     @Override @NonNull
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -60,16 +61,8 @@ public class NotificationsFragment extends Fragment {
 
         // CHART SETUP
         pager = root.findViewById(R.id.chartViewPager);
+        interpretationText = root.findViewById(R.id.interpretationText);
         loadMonthRangeAndAdapter();
-
-        // CHATGPTER INTERPRETATION SETUP
-        TextView interp = root.findViewById(R.id.interpretationText);
-        SharedPreferences prefs = requireContext().getSharedPreferences("monthly_summary", Context.MODE_PRIVATE);
-        String summary = prefs.getString("latest_summary", null);
-        if (summary != null) {
-            interp.setText(summary);
-        }
-
 
         return root;
     }
@@ -95,10 +88,31 @@ public class NotificationsFragment extends Fragment {
             months = list;
 
             requireActivity().runOnUiThread(() -> {
-                pager.setAdapter(new GlucoseMonthAdapter(this, months));
+                GlucoseMonthAdapter adapter = new GlucoseMonthAdapter(this, months);
+                pager.setAdapter(adapter);
                 pager.setOffscreenPageLimit(2);
+
+                pager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        super.onPageSelected(position);
+                        updateMonthlySummary(position);
+                    }
+                });
+
+                pager.setCurrentItem(months.size() - 1, false);
+                updateMonthlySummary(months.size() - 1);
             });
         });
+    }
+
+    private void updateMonthlySummary(int position) {
+        if (months == null || position >= months.size()) return;
+        YearMonth ym = months.get(position);
+        String key = "summary_" + ym.atDay(1).toString(); // e.g., 2025-05-01
+        SharedPreferences prefs = requireContext().getSharedPreferences("monthly_summary", Context.MODE_PRIVATE);
+        String summary = prefs.getString(key, "No summary available for this month.");
+        interpretationText.setText(summary);
     }
 
     private void setViewHeight(View view, int dp) {
