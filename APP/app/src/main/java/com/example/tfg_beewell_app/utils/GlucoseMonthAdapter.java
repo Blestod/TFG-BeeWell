@@ -1,4 +1,3 @@
-// GlucoseMonthAdapter.java
 package com.example.tfg_beewell_app.utils;
 
 import android.graphics.Color;
@@ -26,6 +25,7 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import java.time.Instant;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -55,6 +55,8 @@ public class GlucoseMonthAdapter extends FragmentStateAdapter {
     public static class ChartHolderFragment extends Fragment {
         private LineChart chart;
         private YearMonth ym;
+        private long fromSec;
+        private long toSec;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -68,46 +70,65 @@ public class GlucoseMonthAdapter extends FragmentStateAdapter {
             chart = view.findViewById(R.id.chart);
             TextView title = view.findViewById(R.id.monthTitle);
 
-            // Capitalized month name
+            // Título en inglés (May 2025)
             String month = ym.getMonth().getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH);
-            month = month.substring(0, 1).toUpperCase() + month.substring(1);  // Ensure capitalized
+            month = month.substring(0, 1).toUpperCase() + month.substring(1);
             title.setText(month + " " + ym.getYear());
 
             chart.getDescription().setEnabled(false);
             chart.getAxisRight().setEnabled(false);
             chart.getLegend().setEnabled(false);
 
+            // Intervalo de tiempo
+            ZoneId zone = ZoneId.systemDefault();
+            fromSec = ym.atDay(1).atStartOfDay(zone).toEpochSecond();
+            toSec   = ym.plusMonths(1).atDay(1).atStartOfDay(zone).toEpochSecond();
+
             XAxis x = chart.getXAxis();
             x.setPosition(XAxis.XAxisPosition.BOTTOM);
             x.setDrawGridLines(false);
-            x.setGranularity(1f);
-            x.setAxisMinimum(1f);
-            x.setAxisMaximum(ym.lengthOfMonth());
-            x.setLabelCount(ym.lengthOfMonth(), true);
-            x.setValueFormatter(new ValueFormatter() {
-                @Override
-                public String getFormattedValue(float v) {
-                    return String.valueOf((int) v);
-                }
-            });
+            x.setGranularity(3600f); // 1 hora en segundos
+            x.setAxisMinimum(fromSec);
+            x.setAxisMaximum(toSec);
+            x.setValueFormatter(new AdaptiveDateFormatter(chart));
 
             loadChartData();
             return view;
         }
 
+        public class AdaptiveDateFormatter extends ValueFormatter {
+            private final LineChart chart;
+            private final ZoneId zone = ZoneId.systemDefault();
+
+            private final DateTimeFormatter fullFmt = DateTimeFormatter.ofPattern("dd HH'h'");
+            private final DateTimeFormatter dayOnlyFmt = DateTimeFormatter.ofPattern("dd");
+
+            public AdaptiveDateFormatter(LineChart chart) {
+                this.chart = chart;
+            }
+
+            @Override
+            public String getFormattedValue(float value) {
+                float range = chart.getVisibleXRange(); // en segundos
+                Instant instant = Instant.ofEpochSecond((long) value);
+
+                if (range < 3 * 24 * 3600f) { // si estás viendo menos de 3 días → mostrar hora
+                    return fullFmt.format(instant.atZone(zone));
+                } else {
+                    return dayOnlyFmt.format(instant.atZone(zone));
+                }
+            }
+        }
+
+
         private void loadChartData() {
             Executors.newSingleThreadExecutor().execute(() -> {
-                ZoneId zone = ZoneId.systemDefault();
-                long fromSec = ym.atDay(1).atStartOfDay(zone).toEpochSecond();
-                long toSec = ym.plusMonths(1).atDay(1).atStartOfDay(zone).toEpochSecond();
-
                 LocalGlucoseHistoryDao dao = GlucoseDB.getInstance(requireContext()).historyDao();
                 List<LocalGlucoseHistoryEntry> rows = dao.range(fromSec, toSec);
 
                 List<Entry> pts = new ArrayList<>();
                 for (LocalGlucoseHistoryEntry e : rows) {
-                    int day = Instant.ofEpochSecond(e.timestamp).atZone(zone).getDayOfMonth();
-                    pts.add(new Entry(day, e.glucoseValue));
+                    pts.add(new Entry(e.timestamp, e.glucoseValue)); // eje X = timestamp (segundos)
                 }
 
                 requireActivity().runOnUiThread(() -> {
@@ -122,4 +143,4 @@ public class GlucoseMonthAdapter extends FragmentStateAdapter {
             });
         }
     }
-    }
+}
