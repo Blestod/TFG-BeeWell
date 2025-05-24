@@ -3,6 +3,7 @@ package com.example.tfg_beewell_app.utils
 import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -73,6 +74,12 @@ class FullSyncWorker(
                 .replaceAll(rows)
 
             Log.d("FullSyncWorker", "✅ full sync: ${rows.size} entries")
+
+            // 🔁 Lanzar el resumen mensual tras sincronizar
+            val insightWork = androidx.work.OneTimeWorkRequestBuilder<MonthlyInsightWorker>()
+                .build()
+            WorkManager.getInstance(applicationContext).enqueue(insightWork)
+
             Result.success()
         } catch (je: JSONException) {
             Log.e("FullSyncWorker", "❌ JSON parse error", je)

@@ -1,11 +1,14 @@
 package com.example.tfg_beewell_app.ui.notifications;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
@@ -58,6 +61,15 @@ public class NotificationsFragment extends Fragment {
         // CHART SETUP
         pager = root.findViewById(R.id.chartViewPager);
         loadMonthRangeAndAdapter();
+
+        // CHATGPTER INTERPRETATION SETUP
+        TextView interp = root.findViewById(R.id.interpretationText);
+        SharedPreferences prefs = requireContext().getSharedPreferences("monthly_summary", Context.MODE_PRIVATE);
+        String summary = prefs.getString("latest_summary", null);
+        if (summary != null) {
+            interp.setText(summary);
+        }
+
 
         return root;
     }
