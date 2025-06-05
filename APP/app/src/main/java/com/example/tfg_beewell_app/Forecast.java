@@ -245,7 +245,7 @@ public class Forecast {
 
             final List<Double> polyxList = new ArrayList<>();
             final List<Double> polyyList = new ArrayList<>();
-            long avg1start = now - (1000 * 60 * 60 * 8); // 8 hours
+            long avg1start = now - (1000 * 60 * 30); // 1/2 hour
             double avg1value = 0;
             double avg2value = 0;
             int avg1counter = 0;
@@ -293,14 +293,14 @@ public class Forecast {
             try {
                 // Create prediction for the next hour
                 if (poly != null) {
-                    long currentTime = System.currentTimeMillis();
-                    long oneHourLater = currentTime + (60 * 60 * 1000); // 1 hour in milliseconds
+                    double currentTime = System.currentTimeMillis();
+                    double oneHourLater = currentTime + (60 * 60 * 1000); // 1 hour in milliseconds
 
                     List<PointValue> predictions = new ArrayList<>();
 
-                    for (long timestamp = currentTime; timestamp <= oneHourLater; timestamp += 5 * 60 * 1000) { // 5-minute intervals
+                    for (double timestamp = currentTime; timestamp <= oneHourLater; timestamp += 5 * 60 * 1000) { // 5-minute intervals
                         double predictedValue = poly.predict(timestamp);
-                        System.out.println("Prediction for " + Forecast.dateTimeText(timestamp) + ": " + Forecast.qs(predictedValue));
+                        System.out.println("Prediction for " + Forecast.dateTimeText((long) timestamp) + ": " + Forecast.qs(predictedValue));
 
                         PointValue point = new PointValue((float) (timestamp / FUZZER), (float) predictedValue);
                         predictions.add(point);
