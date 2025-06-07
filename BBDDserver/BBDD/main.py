@@ -201,6 +201,22 @@ def get_all_vitals(user_email):
 
 
 #---------------------MEAL----------------------
+@api.route("/food/search")
+def search_food():
+    query = request.args.get("q", "").lower().strip()
+    if not query:
+        return jsonify([]), 200
+
+    # Basic fuzzy match using LIKE
+    results = (Food.query
+               .filter(Food.food_name.ilike(f"%{query}%"))
+               .limit(10)
+               .all())
+
+    return jsonify([f.serialize() for f in results]), 200
+
+
+
 
 #-------------------INSULIN---------------------
 @api.route("/insulin", methods=["POST"])
