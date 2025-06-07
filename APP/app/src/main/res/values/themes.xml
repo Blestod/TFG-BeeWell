@@ -33,4 +33,25 @@
         <item name="background">@android:color/transparent</item>
     </style>
 
+    <style name="InsulinDropDown"
+        parent="Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu">
+
+        <item name="android:textAppearance">
+            @style/TextAppearance.MaterialComponents.Body1
+        </item>
+        <item name="boxStrokeColor">@color/teal_200</item>
+        <item name="android:textColor">@color/beeBlack</item>
+        <item name="colorOnSurface">@color/beeBlack</item>
+        <item name="android:textColorHint">@color/beeBlack</item>
+
+    </style>
+    <style name="ThemeOverlay.Bee.Dropdown" parent="ThemeOverlay.MaterialComponents.Light">
+        <item name="android:textColorPrimary">@color/beeBlack</item>
+    </style>
+
+
+
+
+
+
 </resources>

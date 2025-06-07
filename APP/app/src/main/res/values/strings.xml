@@ -5,7 +5,7 @@
     <string name="title_notifications">Notifications</string>
     <string name="info">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean euismod bibendum laoreet. Proin gravida dolor sit amet lacus.</string>
     <string name="appbar_scrolling_view_behavior">com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior</string>
-    <!-- TODO: Remove or change this placeholder text -->
+
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="sex_prompt">Select your sex</string>
     <string-array name="sex_options">
@@ -13,5 +13,22 @@
         <item>Male</item>
         <item>Female</item>
     </string-array>
+
+    <string-array name="insulin_types_array">
+        <item>FIASP (ultra fast acting)</item>
+        <item>Afrezza (inhaled, ultra-fast acting)</item>
+        <item>Apidra (ultra-fast acting)</item>
+        <item>Novorapid (rapid acting)</item>
+        <item>Humalog (rapid acting)</item>
+        <item>Lispro (rapid acting)</item>
+        <item>Actrapid (short acting)</item>
+        <item>Insulatard (NPH)</item>
+        <item>Toujeo (long acting)</item>
+        <item>Lantus (long acting)</item>
+        <item>Levemir (long acting)</item>
+        <item>Basaglar (long acting)</item>
+        <item>Tresiba (ultra-long acting)</item>
+    </string-array>
+
 
 </resources>

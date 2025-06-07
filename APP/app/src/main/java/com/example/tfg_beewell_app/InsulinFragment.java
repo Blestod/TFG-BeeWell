@@ -1,37 +1,142 @@
 package com.example.tfg_beewell_app;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import com.android.volley.Request;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONObject;
+
+/**
+ *  Fragment que permite registrar una dosis de insulina
+ *  • Desplegable y entrada de texto para unidades
+ *  • Envío a tu backend vía Volley
+ */
 public class InsulinFragment extends Fragment {
+
+    private EditText insulinInput;
+    private AutoCompleteTextView insulinTypeField;
+    private Button saveBtn;
+    private String email;
+
+    /*–––––––––––––––––––––––––––––––––––––––––––––––*/
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+        // Usa el layout con el Exposed Drop-down que te pasé
         return inflater.inflate(R.layout.fragment_insulin, container, false);
     }
 
+    /*–––––––––––––––––––––––––––––––––––––––––––––––*/
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view,
+                              @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        EditText input = view.findViewById(R.id.insulinInput);
-        input.requestFocus();
+        /* ▸ email en SharedPreferences */
+        SharedPreferences prefs =
+                requireContext().getSharedPreferences("user_session",
+                        Context.MODE_PRIVATE);
+        email = prefs.getString("user_email", null);
 
-        input.postDelayed(() -> {
-            InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (imm != null) {
-                imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
-            }
-        }, 200);
+        /* ▸ Vistas */
+        insulinInput = view.findViewById(R.id.insulinInput);
+        insulinTypeField = view.findViewById(R.id.insulinTypeField);
+        saveBtn = view.findViewById(R.id.saveInsulinBtn);
 
+        setupDropdown();
+
+        saveBtn.setOnClickListener(v -> sendInsulin());
+    }
+
+    /*-------------------------------------------------
+     *  Carga los tipos de insulina en el desplegable
+     *------------------------------------------------*/
+    private void setupDropdown() {
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                requireContext(),
+                R.array.insulin_types_array,
+                android.R.layout.simple_list_item_1);
+        insulinTypeField.setAdapter(adapter);
+
+    }
+
+    /*-------------------------------------------------
+     *  Envía la dosis al servidor
+     *------------------------------------------------*/
+    //-----------  Pega esto en tu fragment  -----------
+    private void sendInsulin() {
+
+        String unitsStr = insulinInput.getText().toString().trim();
+        String insulinType = insulinTypeField.getText().toString().trim();
+
+        if (unitsStr.isEmpty()) {
+            Toast.makeText(getContext(),
+                    "Introduce las unidades",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (insulinType.isEmpty()) {
+            Toast.makeText(getContext(),
+                    "Selecciona el tipo de insulina",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        try {
+            long epochSeconds = System.currentTimeMillis() / 1_000L; // INT
+            double units = Double.parseDouble(unitsStr);        // FLOAT
+
+            JSONObject body = new JSONObject();
+            body.put("user_email", email);         // String
+            body.put("insulin_time", epochSeconds);  // INT
+            body.put("insulin_value", units);         // FLOAT
+            body.put("insulin_type", insulinType);   // String
+
+            JsonObjectRequest req = new JsonObjectRequest(
+                    Request.Method.POST,
+                    Constants.BASE_URL + "/insulin",
+                    body,
+                    rsp -> Toast.makeText(getContext(),
+                            "Insulina guardada",
+                            Toast.LENGTH_SHORT).show(),
+                    err -> {
+                        if (err.networkResponse != null) {
+                            Log.e("INSULIN",
+                                    "HTTP " + err.networkResponse.statusCode + " → "
+                                            + new String(err.networkResponse.data));
+                        }
+                        Toast.makeText(getContext(),
+                                "Error al guardar",
+                                Toast.LENGTH_SHORT).show();
+                    });
+
+            Volley.newRequestQueue(requireContext()).add(req);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(getContext(),
+                    "Error preparando los datos",
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 }

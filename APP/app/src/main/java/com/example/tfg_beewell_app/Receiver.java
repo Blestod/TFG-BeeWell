@@ -134,10 +134,6 @@ static     String librelabel(float rate) {
 
                 List<LocalGlucoseEntry> all = dao.getLast8Hours(cutoff);
                 Log.d("Receiver", "📋 Current stored glucose values:");
-                for (LocalGlucoseEntry e : all) {
-                    Log.d("Receiver", "🩸 " + e.timestamp + " → " + e.glucoseValue + " mg/dL");
-                }
-
             } catch (Exception e) {
                 Log.e("Receiver", "❌ Error saving glucose to DB", e);
             }

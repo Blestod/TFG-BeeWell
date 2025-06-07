@@ -203,21 +203,23 @@ def get_all_vitals(user_email):
 #---------------------MEAL----------------------
 
 #-------------------INSULIN---------------------
-@api.route("/insulin", methods=["POST"])
+@app.route("/insulin", methods=["POST"])
 def post_insulin():
     user = db.session.get(User, request.json["user_email"])
     if user is None:
-        return "User not found", 404
+        return jsonify({"error": "User not found"}), 404
 
     insulin = InsulinInjected(
-        user_email = user.email,
-        in_time    = request.json["insulin_time"],
-        in_units   = request.json["insulin_value"],
-        insulin_type = request.json["insulin_type"]
+        user_email=user.email,
+        in_time=request.json["insulin_time"],
+        in_units=request.json["insulin_value"],
+        insulin_type=request.json["insulin_type"]
     )
     db.session.add(insulin)
     db.session.commit()
-    return "ok", 201
+
+    return jsonify({"status": "ok"}), 201
+
 
 
 #---------------------CHATGPT----------------------
