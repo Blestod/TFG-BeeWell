@@ -203,7 +203,7 @@ def get_all_vitals(user_email):
 #---------------------MEAL----------------------
 
 #-------------------INSULIN---------------------
-@app.route("/insulin", methods=["POST"])
+@api.route("/insulin", methods=["POST"])
 def post_insulin():
     user = db.session.get(User, request.json["user_email"])
     if user is None:
