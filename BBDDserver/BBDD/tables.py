@@ -89,11 +89,12 @@ class InsulinInjected(db.Model):
             "user_email": self.user_email
         }
 
+#---------------------MEAL----------------------
 class Meal(db.Model):
     __tablename__ = "meal"
 
     meal_id   = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    meal_time = db.Column(db.Integer,  nullable=False)
+    meal_time = db.Column(db.Integer,  nullable=False)      # consider DateTime in the future
     grams     = db.Column(db.Float,    nullable=False)
 
     user_email = db.Column(db.String(45),
@@ -108,39 +109,36 @@ class Meal(db.Model):
     )
 
     food = db.relationship("Food", back_populates="meals")
-    
+
     def __init__(self, user_email, meal_time, grams, food_id):
         self.user_email = user_email
-        self.meal_time = meal_time
-        self.grams = grams
-        self.food_id = food_id
-        self.food = Food.query.get(food_id) if food_id else None
+        self.meal_time  = meal_time
+        self.grams      = grams
+        self.food_id    = food_id
 
     def serialize(self):
         return {
-            "meal_id": self.meal_id,
+            "meal_id":   self.meal_id,
             "meal_time": self.meal_time,
-            "grams": self.grams,
+            "grams":     self.grams,
             "user_email": self.user_email,
-            "food_id": self.food_id,
-            "food_name": self.food.name if self.food else None
+            "food_id":   self.food_id
         }
-    
-    food = db.relationship("Food", back_populates="meals")
 
+#---------------------FOOD----------------------
 class Food(db.Model):
     __tablename__ = "food"
 
     food_id   = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name      = db.Column(db.String(255), unique=True, nullable=False)
+    food_name      = db.Column(db.String(255), unique=True, nullable=False)
 
     estim_carbs     = db.Column(db.Float)
     estim_protein   = db.Column(db.Float)
     estim_fats      = db.Column(db.Float)
     i_g        = db.Column(db.Float)
 
-    def __init__(self, name, estim_carbs=None, estim_protein=None, estim_fats=None, i_g=None):
-        self.name = name
+    def __init__(self, food_name, estim_carbs=None, estim_protein=None, estim_fats=None, i_g=None):
+        self.food_name = food_name
         self.estim_carbs = estim_carbs
         self.estim_protein = estim_protein
         self.estim_fats = estim_fats
@@ -149,7 +147,7 @@ class Food(db.Model):
     def serialize(self):
         return {
             "food_id": self.food_id,
-            "name": self.name,
+            "food_name": self.food_name,
             "estim_carbs": self.estim_carbs,
             "estim_protein": self.estim_protein,
             "estim_fats": self.estim_fats,
