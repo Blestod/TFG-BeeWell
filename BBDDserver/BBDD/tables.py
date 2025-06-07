@@ -68,11 +68,12 @@ class InsulinInjected(db.Model):
     __tablename__ = "insulin_injected"
 
     injected_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    in_time = db.Column(db.Integer, nullable=False)
-    in_units = db.Column(db.Float, nullable=False)
+    in_time     = db.Column(db.Integer, nullable=False)
+    in_units    = db.Column(db.Float,   nullable=False)
     insulin_type = db.Column(db.String(45), nullable=False)
 
     user_email = db.Column(db.String(45), db.ForeignKey("user.email"), nullable=False)
+
 
     def __init__(self, user_email, in_time, in_units, insulin_type):
         self.user_email = user_email
