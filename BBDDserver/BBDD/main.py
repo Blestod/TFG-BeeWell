@@ -1,10 +1,14 @@
 from flask import Flask
-from tables import db, User, UserVariables, Meal, Ingredient, MealIngredient, Vital, InsulinInjected, Prediction
+from tables import db, User, UserVariables, Meal, Food, Vital, InsulinInjected, Prediction
 from flask import jsonify
 from flask import request
 from passlib.context import CryptContext
 import openai
 import traceback
+from datetime import datetime, timezone
+import numpy as np
+from flask import abort
+
 
 api: Flask=Flask(__name__)
 api.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://blestod:spyro123@blestod.mysql.eu.pythonanywhere-services.com/blestod$beewell"
@@ -91,19 +95,18 @@ def post_user_variables():
         return "User not found", 404
 
     user_variable = UserVariables(
-        user_email=user.email,
-        change_date_time=request.json["change_date_time"],
-        height=request.json["height"],
-        weight=request.json["weight"]
+        user_email          = user.email,
+        change_date_time    = request.json["change_date_time"],
+        height              = request.json.get("height"),
+        weight              = request.json.get("weight"),
+        insulin_sensitivity = request.json.get("insulin_sensitivity"),
+        carb_ratio          = request.json.get("carb_ratio"),
+        carb_absorption_rate= request.json.get("carb_absorption_rate"),
     )
     db.session.add(user_variable)
     db.session.commit()
-    return jsonify({
-        "saved": {
-            "height": request.json.get("height"),
-            "weight": request.json.get("weight")
-        }
-    }), 201
+
+    return jsonify({"saved": user_variable.serialize()}), 201
 
 
 
@@ -253,6 +256,100 @@ def generate_summary():
         print("❌ ChatGPT error:", e)
         traceback.print_exc()
         return {"error": "GPT request failed"}, 500
+    
+
+#---------------------PREDICTION----------------------
+# ────────────────────────────────────────────────────────────────
+# 1 ·  ENDPOINT DE FEATURES ─ signos vitales agregados
+#    GET /features/vitals/<user_email>?from=<epoch_ms>&to=<epoch_ms>
+# ────────────────────────────────────────────────────────────────
+@api.route("/features/vitals/<string:user_email>")
+def features_vitals(user_email: str):
+    try:
+        start_ms = int(request.args.get("from", 0))
+        end_ms   = int(request.args.get("to",   0))
+        if end_ms == 0 or end_ms <= start_ms:
+            abort(400, "'from' y 'to' deben ser epoch-ms válidos")
+
+        WINDOW_MS = 5 * 60 * 1000          # 5 minutos
+        n_bins = (end_ms - start_ms) // WINDOW_MS
+
+        # 1️⃣  obtén todas las filas de Vital en ese intervalo
+        vitals = (Vital.query
+                  .filter_by(user_email=user_email)
+                  .filter(Vital.vital_time
+                          .between(start_ms // 1000, end_ms // 1000))
+                  .all())
+
+        # 2️⃣  prepara contenedores
+        hr_buckets = [[] for _ in range(n_bins)]
+        spo2_last  = [None] * n_bins
+        temp_last  = [None] * n_bins
+
+        for v in vitals:
+            idx = (v.vital_time * 1000 - start_ms) // WINDOW_MS
+            if 0 <= idx < n_bins:
+                if v.heart_rate is not None:
+                    hr_buckets[idx].append(v.heart_rate)
+                if v.oxygen_saturation is not None:
+                    spo2_last[idx] = v.oxygen_saturation
+                if v.temperature is not None:
+                    temp_last[idx] = v.temperature
+
+        hr_mean = [float(np.mean(b)) if b else None for b in hr_buckets]
+        hr_std  = [float(np.std(b))  if b else None for b in hr_buckets]
+
+        return jsonify({
+            "window_ms": WINDOW_MS,
+            "from":      start_ms,
+            "to":        end_ms,
+            "features": {
+                "hr_mean":   hr_mean,
+                "hr_std":    hr_std,
+                "spo2_last": spo2_last,
+                "temp_last": temp_last
+            }
+        }), 200
+
+    except Exception as e:
+        print("❌ /features/vitals error:", e)
+        abort(500, "internal-error")
+
+
+# ────────────────────────────────────────────────────────────────
+# 2 ·  ENDPOINT DE DATOS ESTÁTICOS DE USUARIO
+#    GET /user/static/<user_email>
+# ────────────────────────────────────────────────────────────────
+@api.route("/user/static/<string:user_email>")
+def static_user(user_email: str):
+    try:
+        user = User.query.get(user_email)
+        if user is None:
+            abort(404, "user-not-found")
+
+        # edad en años (redondeo simple)
+        age = None
+        if user.birth_date:
+            bd = datetime.fromtimestamp(user.birth_date, tz=timezone.utc)
+            today = datetime.now(tz=timezone.utc)
+            age = today.year - bd.year - ((today.month, today.day) < (bd.month, bd.day))
+
+        last_vars = (UserVariables.query
+                     .filter_by(user_email=user_email)
+                     .order_by(UserVariables.user_var.desc())
+                     .first())
+
+        return jsonify({
+            "age":    age,
+            "sex":    user.sex,                 # True = F, False = M, null = desconocido
+            "height": last_vars.height if last_vars else None,
+            "weight": last_vars.weight if last_vars else None
+        }), 200
+
+    except Exception as e:
+        print("❌ /user/static error:", e)
+        abort(500, "internal-error")
+
 
 #---------------------MAIN----------------------
 if __name__ == "__main__":

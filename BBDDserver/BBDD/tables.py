@@ -36,23 +36,32 @@ class UserVariables(db.Model):
 
         user_var = db.Column(db.Integer,primary_key = True, autoincrement = True)
         change_date_time = db.Column(db.Integer)
-        height = db.Column(db.Float)
-        weight = db.Column(db.Float)
+        height = db.Column(db.Float, nullable=True)
+        weight = db.Column(db.Float, nullable=True)
+        insulin_sensitivity = db.Column(db.Float, nullable=True)
+        carb_ratio = db.Column(db.Float, nullable=True)
+        carb_absorption_rate = db.Column(db.Float, nullable=True)
 
         user_email=db.Column(db.String(45),db.ForeignKey("user.email"))
 
-        def __init__(self, user_email, change_date_time, height, weight):
+        def __init__(self, user_email, change_date_time, height, weight, insulin_sensitivity, carb_ratio, carb_absorption_rate):
             self.user_email = user_email
             self.change_date_time = change_date_time
             self.height = height
             self.weight = weight
+            self.insulin_sensitivity = insulin_sensitivity
+            self.carb_ratio = carb_ratio
+            self.carb_absorption_rate = carb_absorption_rate
 
         def serialize(self):
             return {
                 "user_var": self.user_var,
                 "change_date_time": self.change_date_time,
                 "height": self.height,
-                "weight": self.weight
+                "weight": self.weight,
+                "insulin_sensitivity": self.insulin_sensitivity,
+                "carb_ratio": self.carb_ratio,
+                "carb_absorption_rate": self.carb_absorption_rate,
             }
 
 class InsulinInjected(db.Model):
@@ -83,43 +92,71 @@ class InsulinInjected(db.Model):
 class Meal(db.Model):
     __tablename__ = "meal"
 
-    meal_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    meal_time = db.Column(db.Integer)
-    description = db.Column(db.String(300))
+    meal_id   = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    meal_time = db.Column(db.Integer,  nullable=False)
+    grams     = db.Column(db.Float,    nullable=False)
 
-    user_email = db.Column(db.String(45), db.ForeignKey("user.email"))
+    user_email = db.Column(db.String(45),
+                           db.ForeignKey("user.email"),
+                           nullable=False)
 
-    # Relación con ingredientes
-    ingredients = db.relationship("MealIngredient", back_populates="meal", cascade="all, delete")
+    food_id = db.Column(
+        'food_food_id',
+        db.Integer,
+        db.ForeignKey("food.food_id"),
+        nullable=False
+    )
 
+    food = db.relationship("Food", back_populates="meals")
+    
+    def __init__(self, user_email, meal_time, grams, food_id):
+        self.user_email = user_email
+        self.meal_time = meal_time
+        self.grams = grams
+        self.food_id = food_id
+        self.food = Food.query.get(food_id) if food_id else None
 
-class Ingredient(db.Model):
-    __tablename__ = "ingredient"
+    def serialize(self):
+        return {
+            "meal_id": self.meal_id,
+            "meal_time": self.meal_time,
+            "grams": self.grams,
+            "user_email": self.user_email,
+            "food_id": self.food_id,
+            "food_name": self.food.name if self.food else None
+        }
+    
+    food = db.relationship("Food", back_populates="meals")
 
-    ingredient_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    ingredient_name = db.Column(db.String(255), unique=True, nullable=False)
-    estim_carbs = db.Column(db.Float, nullable=True)
-    estim_protein = db.Column(db.Float, nullable=True)
-    estim_fats = db.Column(db.Float, nullable=True)
-    i_g = db.Column(db.Float, nullable=True)
+class Food(db.Model):
+    __tablename__ = "food"
 
-    # Relación inversa con MealIngredient
-    meals = db.relationship("MealIngredient", back_populates="ingredient")
+    food_id   = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name      = db.Column(db.String(255), unique=True, nullable=False)
 
+    estim_carbs     = db.Column(db.Float)
+    estim_protein   = db.Column(db.Float)
+    estim_fats      = db.Column(db.Float)
+    i_g        = db.Column(db.Float)
 
-class MealIngredient(db.Model):
-    __tablename__ = "meal_ingredient"
+    def __init__(self, name, estim_carbs=None, estim_protein=None, estim_fats=None, i_g=None):
+        self.name = name
+        self.estim_carbs = estim_carbs
+        self.estim_protein = estim_protein
+        self.estim_fats = estim_fats
+        self.i_g = i_g
 
-    meal_meal_id = db.Column(db.Integer, db.ForeignKey("meal.meal_id"), primary_key=True)
-    ingredient_ingredient_id = db.Column(db.Integer, db.ForeignKey("ingredient.ingredient_id"), primary_key=True)
-
-    quantity = db.Column(db.Float, nullable=False)
-    unit = db.Column(db.String(20), nullable=False)
-
-    # Relaciones inversas
-    meal = db.relationship("Meal", back_populates="ingredients")
-    ingredient = db.relationship("Ingredient", back_populates="meals")
-
+    def serialize(self):
+        return {
+            "food_id": self.food_id,
+            "name": self.name,
+            "estim_carbs": self.estim_carbs,
+            "estim_protein": self.estim_protein,
+            "estim_fats": self.estim_fats,
+            "i_g": self.i_g
+        }
+    
+    meals = db.relationship("Meal", back_populates="food")  
 
 #---------------------VITAL----------------------
 class Vital(db.Model):
@@ -164,13 +201,36 @@ class Vital(db.Model):
         }
 
 
+#---------------------PREDICTION----------------------
+
 class Prediction(db.Model):
     __tablename__="prediction"
 
     prediction_id = db.Column(db.Integer,primary_key = True, autoincrement = True)
     predict_time = db.Column(db.Integer)
-    confidence_lvl = db.Column(db.Integer)
+    confidence_lvl = db.Column(db.Integer, nullable=True)
     forecast_time = db.Column(db.Integer)
-    forecast = db.Column(db.String(300))
+    forecast_desc = db.Column(db.String(300))
+    predict_type = db.Column(db.Integer)
+
 
     user_email=db.Column(db.String(45),db.ForeignKey("user.email"))
+
+    def __init__(self, user_email, predict_time, forecast_time, forecast_desc, predict_type, confidence_lvl=None):
+        self.user_email = user_email
+        self.predict_time = predict_time
+        self.confidence_lvl = confidence_lvl
+        self.forecast_time = forecast_time
+        self.forecast_desc = forecast_desc
+        self.predict_type = predict_type
+
+    def serialize(self):
+        return {
+            "prediction_id": self.prediction_id,
+            "predict_time": self.predict_time,
+            "confidence_lvl": self.confidence_lvl,
+            "forecast_time": self.forecast_time,
+            "forecast_desc": self.forecast_desc,
+            "predict_type": self.predict_type,
+            "user_email": self.user_email
+        }
