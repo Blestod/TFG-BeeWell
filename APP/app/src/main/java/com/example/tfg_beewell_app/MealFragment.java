@@ -64,13 +64,24 @@ public class MealFragment extends Fragment {
 
         foodSearchInput.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (searchRunnable != null) handler.removeCallbacks(searchRunnable);
                 searchRunnable = () -> searchFood(s.toString());
                 handler.postDelayed(searchRunnable, 300);
             }
-            @Override public void afterTextChanged(Editable s) {}
+
+            @Override public void afterTextChanged(Editable s) {
+                String typed = s.toString().trim();
+                if (foodMap.containsKey(typed)) {
+                    selectedFoodId = foodMap.get(typed);
+                    Log.d("FOOD_SELECT", "Auto-matched: " + typed + " → ID: " + selectedFoodId);
+                } else {
+                    selectedFoodId = null;
+                }
+            }
         });
+
 
         foodSearchInput.setOnItemClickListener((parent, view1, position, id) -> {
             String selected = adapter.getItem(position);
