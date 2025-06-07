@@ -14,7 +14,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 
@@ -23,8 +22,7 @@ import org.json.JSONObject;
 public class ProfileActivity extends AppCompatActivity {
     String email;
 
-    EditText heightInput, weightInput;
-
+    EditText heightInput, weightInput, insulinSensitivityInput, carbRatioInput, carbAbsorptionInput;
     EditText birthdateInput;
     Spinner sexSpinner;
     Button saveUserInfoButton, saveHeightWeightButton, changeEmailButton, changePasswordButton, deleteProfileButton;
@@ -35,15 +33,16 @@ public class ProfileActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
-        // ✅ Get email
         SharedPreferences prefs = getSharedPreferences("user_session", MODE_PRIVATE);
         email = prefs.getString("user_email", null);
 
-        // Bind views
         birthdateInput = findViewById(R.id.birthdate);
         sexSpinner = findViewById(R.id.sexSpinner);
         heightInput = findViewById(R.id.height);
         weightInput = findViewById(R.id.weight);
+        insulinSensitivityInput = findViewById(R.id.insulin_sensitivity);
+        carbRatioInput = findViewById(R.id.carb_ratio);
+        carbAbsorptionInput = findViewById(R.id.carb_absorption);
         saveUserInfoButton = findViewById(R.id.saveUserDataButton);
         saveHeightWeightButton = findViewById(R.id.saveUserVariablesButton);
         changeEmailButton = findViewById(R.id.changeEmailButton);
@@ -51,27 +50,23 @@ public class ProfileActivity extends AppCompatActivity {
         deleteProfileButton = findViewById(R.id.deleteProfileButton);
         backButton = findViewById(R.id.backButton);
 
-        // === Set up Spinner with custom dropdown ===
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
                 this,
                 R.array.sex_options,
-                R.layout.spinner_item // selected item view
+                R.layout.spinner_item
         );
-        adapter.setDropDownViewResource(R.layout.spinner_dropdown_item); // dropdown style
+        adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
         sexSpinner.setAdapter(adapter);
 
         birthdateInput.setText(prefs.getString("birthdate", ""));
-
-        // Restore sex (if saved)
         String savedSex = prefs.getString("sex", "");
         if (!savedSex.isEmpty()) {
             int spinnerPosition = adapter.getPosition(savedSex);
             if (spinnerPosition >= 0) sexSpinner.setSelection(spinnerPosition);
         } else {
-            sexSpinner.setSelection(0); // Hint "Select your sex"
+            sexSpinner.setSelection(0);
         }
 
-        // === Save profile data ===
         saveUserInfoButton.setOnClickListener(v -> {
             String birthdateStr = birthdateInput.getText().toString();
             String selectedSex = sexSpinner.getSelectedItem().toString();
@@ -101,23 +96,22 @@ public class ProfileActivity extends AppCompatActivity {
             }
 
             String url = Constants.BASE_URL + "/user/" + email;
-
             JsonObjectRequest request = new JsonObjectRequest(Request.Method.PUT, url, body,
-                    response -> {
-                        Toast.makeText(this, "User info updated", Toast.LENGTH_SHORT).show();
-                    },
+                    response -> Toast.makeText(this, "User info updated", Toast.LENGTH_SHORT).show(),
                     error -> Toast.makeText(this, "Error updating user info", Toast.LENGTH_SHORT).show()
             );
-
             Volley.newRequestQueue(this).add(request);
         });
-
 
         saveHeightWeightButton.setOnClickListener(v -> {
             String heightStr = heightInput.getText().toString();
             String weightStr = weightInput.getText().toString();
+            String sensitivityStr = insulinSensitivityInput.getText().toString();
+            String ratioStr = carbRatioInput.getText().toString();
+            String absorptionStr = carbAbsorptionInput.getText().toString();
 
-            if (heightStr.isEmpty() && weightStr.isEmpty()) {
+            if (heightStr.isEmpty() && weightStr.isEmpty() && sensitivityStr.isEmpty() &&
+                    ratioStr.isEmpty() && absorptionStr.isEmpty()) {
                 Toast.makeText(this, "Nothing to update", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -132,16 +126,27 @@ public class ProfileActivity extends AppCompatActivity {
                 if (!heightStr.isEmpty()) {
                     body.put("height", Double.parseDouble(heightStr));
                     updatedFields.append("Height ");
-                } else {
-                    body.put("height", JSONObject.NULL);
-                }
+                } else body.put("height", JSONObject.NULL);
 
                 if (!weightStr.isEmpty()) {
                     body.put("weight", Double.parseDouble(weightStr));
                     updatedFields.append("Weight ");
-                } else {
-                    body.put("weight", JSONObject.NULL);
-                }
+                } else body.put("weight", JSONObject.NULL);
+
+                if (!sensitivityStr.isEmpty()) {
+                    body.put("insulin_sensitivity", Double.parseDouble(sensitivityStr));
+                    updatedFields.append("Sensitivity ");
+                } else body.put("insulin_sensitivity", JSONObject.NULL);
+
+                if (!ratioStr.isEmpty()) {
+                    body.put("carb_ratio", Double.parseDouble(ratioStr));
+                    updatedFields.append("Ratio ");
+                } else body.put("carb_ratio", JSONObject.NULL);
+
+                if (!absorptionStr.isEmpty()) {
+                    body.put("carb_absorption_rate", Double.parseDouble(absorptionStr));
+                    updatedFields.append("Absorption ");
+                } else body.put("carb_absorption_rate", JSONObject.NULL);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -155,19 +160,14 @@ public class ProfileActivity extends AppCompatActivity {
                     response -> Toast.makeText(this, fieldsUpdated + " saved", Toast.LENGTH_SHORT).show(),
                     error -> Toast.makeText(this, "Error saving user variables", Toast.LENGTH_SHORT).show()
             );
-
             Volley.newRequestQueue(this).add(request);
         });
 
-
-        // === Placeholder logic for unimplemented features ===
         changeEmailButton.setOnClickListener(v ->
                 Toast.makeText(this, "Email change not implemented", Toast.LENGTH_SHORT).show());
-
         changePasswordButton.setOnClickListener(v ->
                 Toast.makeText(this, "Password change not implemented", Toast.LENGTH_SHORT).show());
 
-        // === Delete profile confirmation ===
         deleteProfileButton.setOnClickListener(v -> {
             new AlertDialog.Builder(this)
                     .setTitle("Delete Profile")
@@ -183,7 +183,6 @@ public class ProfileActivity extends AppCompatActivity {
                     .show();
         });
 
-        // === Back Button ===
         backButton.setOnClickListener(v -> finish());
 
         loadUserInfo(email);
@@ -195,30 +194,21 @@ public class ProfileActivity extends AppCompatActivity {
 
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
                 response -> {
-                    int birthDate = response.optInt("birth_date", 0); // 0 = null
+                    int birthDate = response.optInt("birth_date", 0);
                     boolean hasSex = response.has("sex") && !response.isNull("sex");
                     boolean sexValue = response.optBoolean("sex", false);
 
-                    if (birthDate > 0) {
-                        birthdateInput.setText(String.valueOf(birthDate));
-                    } else {
-                        birthdateInput.setText(""); // shows hint
-                    }
+                    if (birthDate > 0) birthdateInput.setText(String.valueOf(birthDate));
+                    else birthdateInput.setText("");
 
                     if (hasSex) {
-                        if (sexValue) {
-                            sexSpinner.setSelection(2); // Female
-                        } else {
-                            sexSpinner.setSelection(1); // Male
-                        }
+                        sexSpinner.setSelection(sexValue ? 2 : 1); // Female : Male
                     } else {
-                        sexSpinner.setSelection(0); // "Choose an option"
+                        sexSpinner.setSelection(0);
                     }
-
                 },
                 error -> Toast.makeText(this, "Error loading user data", Toast.LENGTH_SHORT).show()
         );
-
         Volley.newRequestQueue(this).add(request);
     }
 
@@ -229,23 +219,18 @@ public class ProfileActivity extends AppCompatActivity {
                 response -> {
                     int height = response.optInt("height", -1);
                     int weight = response.optInt("weight", -1);
+                    double sensitivity = response.optDouble("insulin_sensitivity", -1);
+                    double ratio = response.optDouble("carb_ratio", -1);
+                    double absorption = response.optDouble("carb_absorption_rate", -1);
 
-                    if (height > 0) {
-                        heightInput.setText(String.valueOf(height));
-                    } else {
-                        heightInput.setText("");
-                    }
-
-                    if (weight > 0) {
-                        weightInput.setText(String.valueOf(weight));
-                    } else {
-                        weightInput.setText("");
-                        }
+                    heightInput.setText(height > 0 ? String.valueOf(height) : "");
+                    weightInput.setText(weight > 0 ? String.valueOf(weight) : "");
+                    insulinSensitivityInput.setText(sensitivity > 0 ? String.valueOf(sensitivity) : "");
+                    carbRatioInput.setText(ratio > 0 ? String.valueOf(ratio) : "");
+                    carbAbsorptionInput.setText(absorption > 0 ? String.valueOf(absorption) : "");
                 },
                 error -> Toast.makeText(this, "Error loading user data", Toast.LENGTH_SHORT).show()
         );
-
         Volley.newRequestQueue(this).add(request);
     }
-
 }

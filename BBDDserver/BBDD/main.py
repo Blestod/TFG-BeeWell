@@ -95,35 +95,32 @@ def post_user_variables():
         return "User not found", 404
 
     user_variable = UserVariables(
-        user_email          = user.email,
-        change_date_time    = request.json["change_date_time"],
-        height              = request.json.get("height"),
-        weight              = request.json.get("weight"),
-        insulin_sensitivity = request.json.get("insulin_sensitivity"),
-        carb_ratio          = request.json.get("carb_ratio"),
-        carb_absorption_rate= request.json.get("carb_absorption_rate"),
+        user_email=request.json["user_email"],
+        change_date_time=request.json["change_date_time"],
+        height=request.json.get("height"),
+        weight=request.json.get("weight"),
+        insulin_sensitivity=request.json.get("insulin_sensitivity"),
+        carb_ratio=request.json.get("carb_ratio"),
+        carb_absorption_rate=request.json.get("carb_absorption_rate")
     )
     db.session.add(user_variable)
     db.session.commit()
-
     return jsonify({"saved": user_variable.serialize()}), 201
-
-
 
 @api.route("/user_variables/last/<string:user_email>", methods=["GET"])
 def get_last_user_variable(user_email):
-    user_variable = (
-        UserVariables.query
-        .filter_by(user_email=user_email)
-        .order_by(UserVariables.user_var.desc())
-        .first()
-    )
+    user_variable = (UserVariables.query
+                     .filter_by(user_email=user_email)
+                     .order_by(UserVariables.user_var.desc())
+                     .first())
     if user_variable is None:
         return jsonify({
             "height": None,
-            "weight": None
+            "weight": None,
+            "insulin_sensitivity": None,
+            "carb_ratio": None,
+            "carb_absorption_rate": None
         }), 200
-
     return user_variable.serialize(), 200
 
 #---------------------VITAL----------------------
@@ -215,6 +212,23 @@ def search_food():
 
     return jsonify([f.serialize() for f in results]), 200
 
+@api.route("/meal", methods=["POST"])
+def post_meal():
+    try:
+        data = request.get_json()
+        meal = Meal(
+            user_email=data["user_email"],
+            meal_time=data["meal_time"],
+            grams=data["grams"],
+            food_id=data["food_id"]
+        )
+        db.session.add(meal)
+        db.session.commit()
+        return "Meal saved", 201
+    except Exception as e:
+        db.session.rollback()
+        print("❌ Error saving meal:", e)
+        return "Error saving meal", 500
 
 
 

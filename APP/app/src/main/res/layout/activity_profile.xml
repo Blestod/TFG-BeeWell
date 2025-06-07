@@ -132,6 +132,42 @@
                         android:textColorHint="@color/material_dynamic_neutral40" />
 
 
+                    <EditText
+                        android:id="@+id/insulin_sensitivity"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginBottom="16dp"
+                        android:hint="Insulin Sensitivity"
+                        android:inputType="number|numberDecimal"
+                        android:textColor="@color/beeBlack"
+                        android:textColorHighlight="@color/material_dynamic_neutral40"
+                        android:textColorHint="@color/material_dynamic_neutral40" />
+
+                    <EditText
+                        android:id="@+id/carb_ratio"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginBottom="16dp"
+                        android:hint="Carb Ratio"
+                        android:inputType="number|numberDecimal"
+                        android:textColor="@color/beeBlack"
+                        android:textColorHighlight="@color/material_dynamic_neutral40"
+                        android:textColorHint="@color/material_dynamic_neutral40" />
+
+                    <EditText
+                        android:id="@+id/carb_absorption"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginBottom="16dp"
+                        android:hint="Carb Absorption"
+                        android:inputType="number|numberDecimal"
+                        android:textColor="@color/beeBlack"
+                        android:textColorHighlight="@color/material_dynamic_neutral40"
+                        android:textColorHint="@color/material_dynamic_neutral40" />
+
                     <Button
                         android:id="@+id/saveUserVariablesButton"
                         android:layout_width="wrap_content"
