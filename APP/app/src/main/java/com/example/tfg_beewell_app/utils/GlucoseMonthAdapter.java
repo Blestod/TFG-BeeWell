@@ -1,5 +1,7 @@
 package com.example.tfg_beewell_app.utils;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -123,7 +125,11 @@ public class GlucoseMonthAdapter extends FragmentStateAdapter {
 
         private void loadChartData() {
             Executors.newSingleThreadExecutor().execute(() -> {
-                LocalGlucoseHistoryDao dao = GlucoseDB.getInstance(requireContext()).historyDao();
+                SharedPreferences session = requireContext().getSharedPreferences("user_session", Context.MODE_PRIVATE);
+                String email = session.getString("user_email", null);
+                if (email == null) return;
+
+                LocalGlucoseHistoryDao dao = GlucoseDB.getInstance(requireContext(), email).historyDao();
                 List<LocalGlucoseHistoryEntry> rows = dao.range(fromSec, toSec);
 
                 List<Entry> pts = new ArrayList<>();
@@ -142,5 +148,6 @@ public class GlucoseMonthAdapter extends FragmentStateAdapter {
                 });
             });
         }
+
     }
 }

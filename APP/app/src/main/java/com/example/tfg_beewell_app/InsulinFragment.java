@@ -48,17 +48,18 @@ public class InsulinFragment extends Fragment {
 
     /*–––––––––––––––––––––––––––––––––––––––––––––––*/
     @Override
-    public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        /* ▸ email en SharedPreferences */
-        SharedPreferences prefs =
-                requireContext().getSharedPreferences("user_session",
-                        Context.MODE_PRIVATE);
+        SharedPreferences prefs = requireContext().getSharedPreferences("user_session", Context.MODE_PRIVATE);
         email = prefs.getString("user_email", null);
 
-        /* ▸ Vistas */
+        if (email == null) {
+            Toast.makeText(requireContext(), "No user session found.", Toast.LENGTH_SHORT).show();
+            requireActivity().finish(); // optional: close the screen if no user
+            return;
+        }
+
         insulinInput = view.findViewById(R.id.insulinInput);
         insulinTypeField = view.findViewById(R.id.insulinTypeField);
         saveBtn = view.findViewById(R.id.saveInsulinBtn);
@@ -67,6 +68,7 @@ public class InsulinFragment extends Fragment {
 
         saveBtn.setOnClickListener(v -> sendInsulin());
     }
+
 
     /*-------------------------------------------------
      *  Carga los tipos de insulina en el desplegable

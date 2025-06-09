@@ -31,7 +31,9 @@ class VitalsWorker(
                 return@withContext Result.failure()
             }
 
-            val lastSavedTime = prefs.getInt("last_vital_time", 0)
+            // ✅ Use per-user scoped key
+            val lastSavedTimeKey = "last_vital_time_$email"
+            val lastSavedTime = prefs.getInt(lastSavedTimeKey, 0)
 
             val vital = HealthReader.getLatestVitals(applicationContext, email)
             if (vital == null) {
@@ -66,19 +68,17 @@ class VitalsWorker(
                 put("oxygen_saturation", vital.oxygenSaturation ?: JSONObject.NULL)
             }
 
-
-
             Log.d("VitalsWorker", "📤 Enviando datos: $body")
 
             val queue = Volley.newRequestQueue(applicationContext)
 
-            return@withContext suspendCancellableCoroutine<Result> { continuation ->
+            return@withContext suspendCancellableCoroutine { continuation ->
                 val request = object : StringRequest(
                     Method.POST,
                     Constants.BASE_URL + "/vital",
                     Response.Listener { response ->
                         Log.d("VitalsWorker", "✅ Vitals enviados correctamente: $response")
-                        prefs.edit().putInt("last_vital_time", vitalTime).apply()
+                        prefs.edit().putInt(lastSavedTimeKey, vitalTime).apply()
                         continuation.resume(Result.success(), null)
                     },
                     Response.ErrorListener { error ->
@@ -110,5 +110,4 @@ class VitalsWorker(
                 (v.sleepDuration == null || v.sleepDuration == 0) &&
                 (v.oxygenSaturation == null || v.oxygenSaturation == 0f)
     }
-
 }

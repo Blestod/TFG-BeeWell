@@ -52,7 +52,7 @@ class HealthDataService : Service() {
         return NotificationCompat.Builder(this, channelId)
             .setContentTitle("BeeWell is running")
             .setContentText("Monitoring your health data...")
-            .setSmallIcon(R.drawable.beechar)
+            .setSmallIcon(R.drawable.beehealthylogohiteoutline)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_MIN)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)

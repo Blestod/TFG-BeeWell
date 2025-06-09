@@ -25,9 +25,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/beewelllogo"
+        android:icon="@mipmap/beehealthyappicon"
         android:label="BeeWell"
-        android:roundIcon="@mipmap/beewelllogo"
+        android:roundIcon="@mipmap/beehealthyappicon"
         android:supportsRtl="true"
         android:theme="@style/Theme.TFG_BeeWell_APP"
         android:usesCleartextTraffic="true"
@@ -36,7 +36,7 @@
             android:name=".utils.HealthDataService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="dataSync" /> <!-- ───── Lanzador ───── -->
+            android:foregroundServiceType="dataSync" />
         <activity
             android:name=".SplashActivity"
             android:exported="true">
@@ -45,7 +45,7 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity> <!-- Resto de tus pantallas normales -->
+        </activity>
         <activity
             android:name=".MainActivity"
             android:exported="true"

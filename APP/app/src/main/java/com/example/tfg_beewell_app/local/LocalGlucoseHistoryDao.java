@@ -35,4 +35,8 @@ public interface LocalGlucoseHistoryDao {
 
     @Query("SELECT MAX(timestamp) FROM local_glucose_history")
     long getMaxTimestamp();
+
+    @Query("SELECT * FROM local_glucose_history ORDER BY timestamp ASC")
+    List<LocalGlucoseHistoryEntry> getAll();
 }
+

@@ -11,10 +11,12 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.graphics.Insets;
@@ -33,6 +35,7 @@ import com.example.tfg_beewell_app.databinding.ActivityMainBinding;
 import com.example.tfg_beewell_app.local.GlucoseDB;
 import com.example.tfg_beewell_app.utils.FullSyncWorker;
 import com.example.tfg_beewell_app.utils.HealthConnectPermissionHelper;
+import com.example.tfg_beewell_app.utils.MonthlyInsightWorker;
 import com.example.tfg_beewell_app.utils.VitalsWorker;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -69,7 +72,6 @@ public class MainActivity extends AppCompatActivity {
         setupMenu();
         setupNavigation();
         setupFab();
-        hideSystemUI();
         logNextWorkerExecution();
 
         // ── Health Connect permissions ──
@@ -125,8 +127,7 @@ public class MainActivity extends AppCompatActivity {
                         vitalsReq
                 );
 
-        // ── 3) (Optional) monthly full‐history refresh ──
-        scheduleMonthlyFullSync();
+
     }
 
     @Override
@@ -172,30 +173,53 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupMenu() {
         ImageView menuButton = findViewById(R.id.menuButton);
-        FrameLayout overlay  = findViewById(R.id.menuOverlay);
+        FrameLayout overlay = findViewById(R.id.menuOverlay);
+
         menuButton.setOnClickListener(v -> {
             overlay.setVisibility(View.VISIBLE);
             overlay.setTranslationY(-1000f);
             overlay.animate().translationY(0f).setDuration(300).start();
             hideSystemUI();
         });
+
         findViewById(R.id.closeMenuBtn).setOnClickListener(v -> overlay.setVisibility(View.GONE));
         overlay.setOnClickListener(v -> overlay.setVisibility(View.GONE));
+
         findViewById(R.id.menu_profile).setOnClickListener(v -> {
             overlay.setVisibility(View.GONE);
             startActivity(new Intent(this, ProfileActivity.class));
         });
+
         findViewById(R.id.menu_terms).setOnClickListener(v -> {
             overlay.setVisibility(View.GONE);
             startActivity(new Intent(this, TermsReadActivity.class));
         });
+
         findViewById(R.id.menu_aboutus).setOnClickListener(v -> {
-            SharedPreferences prefs = getSharedPreferences("user_session", MODE_PRIVATE);
-            prefs.edit().clear().apply();
-            startActivity(new Intent(this, LoginActivity.class));
-            finish();
+            overlay.setVisibility(View.GONE);
+            // You can open an about screen here or remove this if unused
+            Toast.makeText(this, "About Us clicked", Toast.LENGTH_SHORT).show();
+        });
+
+        findViewById(R.id.menu_tutorial).setOnClickListener(v -> {
+            overlay.setVisibility(View.GONE);
+            // You can hook up your tutorial logic here
+            Toast.makeText(this, "Tutorial clicked", Toast.LENGTH_SHORT).show();
+        });
+
+        findViewById(R.id.menu_log_out).setOnClickListener(v -> {
+            overlay.setVisibility(View.GONE);
+            new AlertDialog.Builder(this)
+                    .setTitle("Log Out")
+                    .setMessage("Are you sure you want to log out?")
+                    .setPositiveButton("Yes", (dialog, which) -> {
+                        com.example.tfg_beewell_app.utils.SessionManager.logout(this);
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
         });
     }
+
 
     private void setupNavigation() {
         BottomNavigationView navView = findViewById(R.id.nav_view);
@@ -286,36 +310,8 @@ public class MainActivity extends AppCompatActivity {
         getWindow().setStatusBarColor     (android.graphics.Color.TRANSPARENT);
     }
 
-    private void scheduleMonthlyFullSync() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime next1st = now.withDayOfMonth(1)
-                .plusMonths(1)
-                .withHour(0)
-                .withMinute(0)
-                .withSecond(0)
-                .withNano(0);
-        long delayMs = Duration.between(now, next1st).toMillis();
-
-        PeriodicWorkRequest monthReq =
-                new PeriodicWorkRequest.Builder(FullSyncWorker.class, 30, TimeUnit.DAYS)
-                        .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
-                        .build();
-
-        WorkManager.getInstance(this)
-                .enqueueUniquePeriodicWork(
-                        "monthly_full_sync",
-                        ExistingPeriodicWorkPolicy.REPLACE,
-                        monthReq
-                );
-
-        // 📅 Log para confirmar la fecha y hora programada
-        Log.d("MonthlySync", "✅ Sync mensual programado para: " + next1st.toString());
-    }
-
-
     @Override protected void onResume()   { super.onResume();   hideSystemUI(); }
     @Override public    void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) hideSystemUI();
     }
 }

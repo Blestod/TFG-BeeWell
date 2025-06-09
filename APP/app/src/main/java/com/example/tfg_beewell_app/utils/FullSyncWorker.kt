@@ -3,6 +3,7 @@ package com.example.tfg_beewell_app.utils
 import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.android.volley.toolbox.StringRequest
@@ -25,13 +26,10 @@ class FullSyncWorker(
 
     @Suppress("LongLogTag")
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        // 1) read email
-        val prefs = applicationContext
-            .getSharedPreferences("user_session", Context.MODE_PRIVATE)
+        val prefs = applicationContext.getSharedPreferences("user_session", Context.MODE_PRIVATE)
         val email = prefs.getString("user_email", null)
             ?: return@withContext Result.failure()
 
-        // 2) fetch JSON array as raw String
         val jsonString: String = try {
             suspendCancellableCoroutine { cont ->
                 val url = "${Constants.BASE_URL}/vital/all/$email"
@@ -48,7 +46,6 @@ class FullSyncWorker(
             return@withContext Result.retry()
         }
 
-        // 3) parse and write to DB on this IO thread
         return@withContext try {
             val arr = JSONArray(jsonString)
             val rows = mutableListOf<LocalGlucoseHistoryEntry>()
@@ -68,17 +65,19 @@ class FullSyncWorker(
                 }
             }
 
-            // Replace old table with fresh, normalized data
-            GlucoseDB.getInstance(applicationContext)
+            GlucoseDB.getInstance(applicationContext, email)
                 .historyDao()
                 .replaceAll(rows)
 
             Log.d("FullSyncWorker", "✅ full sync: ${rows.size} entries")
 
-            // 🔁 Lanzar el resumen mensual tras sincronizar
-            val insightWork = androidx.work.OneTimeWorkRequestBuilder<MonthlyInsightWorker>()
+            // 🔁 Enqueue MonthlyInsightWorker with tag
+            val insightWork = OneTimeWorkRequestBuilder<MonthlyInsightWorker>()
+                .addTag("monthly_insight_worker_tag")
                 .build()
             WorkManager.getInstance(applicationContext).enqueue(insightWork)
+
+            Log.d("FullSyncWorker", "🚀 MonthlyInsightWorker enqueued after sync")
 
             Result.success()
         } catch (je: JSONException) {

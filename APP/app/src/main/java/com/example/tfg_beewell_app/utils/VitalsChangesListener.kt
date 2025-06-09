@@ -16,28 +16,26 @@ object VitalsChangesListener {
         context: Context,
         onUpsert: suspend () -> Unit
     ) {
-        /* ① cliente */
-        val hc  = HealthConnectClient.getOrCreate(context)
+        val hc = HealthConnectClient.getOrCreate(context)
 
-        /* ② token persistente */
-        val prefs = context.getSharedPreferences("hc_prefs", Context.MODE_PRIVATE)
+        val session = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
+        val email = session.getString("user_email", null) ?: return
+
+        val prefs = context.getSharedPreferences("hc_prefs_$email", Context.MODE_PRIVATE)
         var token = prefs.getString(PREF_TOKEN, null)
-            ?: hc.getChangesToken(                       // ← necesita ChangesTokenRequest
-                ChangesTokenRequest(
-                    setOf(HeartRateRecord::class)    // qué tipos vigilar
-                )
-            ).also { prefs.edit().putString(PREF_TOKEN, it).apply() }
+            ?: hc.getChangesToken(
+                ChangesTokenRequest(setOf(HeartRateRecord::class))
+            ).also {
+                prefs.edit().putString(PREF_TOKEN, it).apply()
+            }
 
-        /* ③ bucle */
         while (true) {
-
             val delta: ChangesResponse = hc.getChanges(token)
 
             for (change in delta.changes) {
-                if (change is UpsertionChange) {         // ← UpsertionChange en 1.1.x
+                if (change is UpsertionChange) {
                     onUpsert()
                 }
-                /* DeletionChange → se ignora */
             }
 
             if (delta.changes.isEmpty()) delay(5_000)

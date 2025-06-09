@@ -77,10 +77,32 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="24dp"
             android:gravity="center"
             android:paddingTop="8dp"
             android:text="About Us"
+            android:textColor="@color/beeBlack"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/menu_tutorial"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:text="Tutorial"
+            android:textColor="@color/beeBlack"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/menu_log_out"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="24dp"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:text="Log Out"
             android:textColor="@color/beeBlack"
             android:textSize="20sp" />
     </LinearLayout>

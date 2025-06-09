@@ -8,8 +8,8 @@ from tqdm import tqdm                     # pip install tqdm
 
 # ╭─────────────────────────── CONSTANTES ───────────────────────────╮
 API_BASE      = "https://beewell.blestod.com"     # dominio del backend
-CSV_PATH      = "/Users/thomas/Documents/GitHub/TFG-BeeWell/BBDDserver/BBDD/saved_data/vitals_dump_test.csv"            # ruta al CSV de entrada
-FORCE_EMAIL   = "user"             # ← el e-mail destino
+CSV_PATH      = "/Users/thomas/Documents/GitHub/TFG-BeeWell/BBDDserver/BBDD/saved_data/r@r_dot_com.csv"            # ruta al CSV de entrada
+FORCE_EMAIL   = "r@r.com "             # ← el e-mail destino
 BATCH_SIZE    = 500                               # filas entre commits
 # ╰──────────────────────────────────────────────────────────────────╯
 

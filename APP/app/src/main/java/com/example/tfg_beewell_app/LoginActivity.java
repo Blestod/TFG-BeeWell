@@ -17,6 +17,7 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.example.tfg_beewell_app.local.LocalGlucoseDatabase;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -75,10 +76,12 @@ public class LoginActivity extends AppCompatActivity {
                     try {
                         boolean loginSuccess = response.getBoolean("login");
                         if (loginSuccess) {
+                            // ✅ Destroy any previous DB instance
+                            LocalGlucoseDatabase.destroyInstance();
+
                             SharedPreferences prefs = getSharedPreferences("user_session", MODE_PRIVATE);
-                            SharedPreferences.Editor editor = prefs.edit();
-                            editor.putString("user_email", email);
-                            editor.apply();
+                            prefs.edit().putString("user_email", email).apply();
+
                             startActivity(new Intent(LoginActivity.this, MainActivity.class));
                             finish();
                         } else {
@@ -95,6 +98,7 @@ public class LoginActivity extends AppCompatActivity {
 
         queue.add(request);
     }
+
 
 
 }
