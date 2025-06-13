@@ -11,8 +11,8 @@ import requests
 # ─────────────────────────────────────────────────────────────
 # CONFIG – these three constants are all you usually change
 API_BASE   = "https://beewell.blestod.com"   # ← your backend URL (NO trailing slash)
-USER_EMAIL = "test"                          # ← user you want to export
-OUT_PATH   = Path("/Users/thomas/Documents/GitHub/TFG-BeeWell/BBDDserver/BBDD/saved_data/vitals_dump_test.csv")         # ← destination CSV file
+USER_EMAIL = "r@r.com"                          # ← user you want to export
+OUT_PATH   = Path("/Users/thomas/Documents/GitHub/TFG-BeeWell/BBDDserver/BBDD/saved_data/vitals_dump_user.csv")         # ← destination CSV file
 # ─────────────────────────────────────────────────────────────
 
 

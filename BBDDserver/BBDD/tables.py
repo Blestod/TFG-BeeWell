@@ -16,6 +16,7 @@ class User(db.Model):
     predictions = db.relationship("Prediction",backref="user",cascade="all,delete")
     user_variables = db.relationship("UserVariables",backref="user",cascade="all,delete")
     insulin_injections = db.relationship("InsulinInjected", backref="user", cascade="all, delete")
+    activities = db.relationship("Activity", backref="user", cascade="all,delete")
 
     def __init__(self, email, password, birth_date, sex):
         self.email = email
@@ -71,15 +72,17 @@ class InsulinInjected(db.Model):
     in_time     = db.Column(db.Integer, nullable=False)
     in_units    = db.Column(db.Float,   nullable=False)
     insulin_type = db.Column(db.String(45), nullable=False)
+    in_spot = db.Column(db.String(45), nullable=False)
 
     user_email = db.Column(db.String(45), db.ForeignKey("user.email"), nullable=False)
 
 
-    def __init__(self, user_email, in_time, in_units, insulin_type):
+    def __init__(self, user_email, in_time, in_units, insulin_type, in_spot):
         self.user_email = user_email
         self.in_time = in_time
         self.in_units = in_units
         self.insulin_type = insulin_type
+        self.in_spot = in_spot
 
     def serialize(self):
         return {
@@ -87,7 +90,8 @@ class InsulinInjected(db.Model):
             "in_time": self.in_time,
             "in_units": self.in_units,
             "insulin_type": self.insulin_type,
-            "user_email": self.user_email
+            "user_email": self.user_email,
+            "in_spot": self.in_spot
         }
 
 #---------------------MEAL----------------------
@@ -198,6 +202,40 @@ class Vital(db.Model):
             "sleep_duration":    self.sleep_duration,
             "oxygen_saturation": self.oxygen_saturation,
         }
+    
+#---------------------ACTIVITY----------------------
+
+class Activity(db.Model):
+    __tablename__ = "activity"
+
+    activity_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    act_name        = db.Column(db.String(100), nullable=True)
+    duration_min = db.Column(db.Integer, nullable=False)
+    intensity   = db.Column(db.String(20), nullable=False)  # "light", "moderate", "vigorous"
+    act_time   = db.Column(db.Integer, nullable=False)
+    activity_type = db.Column(db.String(50), nullable=True)  # "aerobic, anaerobic, flexibility, balance"
+
+    user_email  = db.Column(db.String(45), db.ForeignKey("user.email"), nullable=False)
+
+    def __init__(self, user_email, duration_min, intensity, act_time, activity_type=None, act_name= None):
+        self.user_email = user_email
+        self.act_name = act_name
+        self.duration_min = duration_min
+        self.intensity = intensity
+        self.act_time = act_time
+        self.activity_type = activity_type
+
+    def serialize(self):
+        return {
+            "activity_id": self.activity_id,
+            "user_email": self.user_email,
+            "act_name": self.act_name,
+            "duration_min": self.duration_min,
+            "intensity": self.intensity,
+            "act_time": self.act_time,
+            "activity_type": self.activity_type
+        }
+
 
 
 #---------------------PREDICTION----------------------
@@ -208,14 +246,14 @@ class Prediction(db.Model):
     prediction_id = db.Column(db.Integer,primary_key = True, autoincrement = True)
     predict_time = db.Column(db.Integer)
     confidence_lvl = db.Column(db.Integer, nullable=True)
-    forecast_time = db.Column(db.Integer)
+    forecast_time = db.Column(db.Integer,  nullable=True)
     forecast_desc = db.Column(db.String(300))
     predict_type = db.Column(db.Integer)
 
 
     user_email=db.Column(db.String(45),db.ForeignKey("user.email"))
 
-    def __init__(self, user_email, predict_time, forecast_time, forecast_desc, predict_type, confidence_lvl=None):
+    def __init__(self, user_email, predict_time, forecast_desc, predict_type, confidence_lvl=None, forecast_time=None):
         self.user_email = user_email
         self.predict_time = predict_time
         self.confidence_lvl = confidence_lvl
