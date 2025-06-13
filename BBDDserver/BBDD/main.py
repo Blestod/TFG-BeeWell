@@ -1,5 +1,5 @@
 from flask import Flask
-from tables import db, User, UserVariables, Meal, Food, Vital, InsulinInjected, Prediction
+from tables import Activity, db, User, UserVariables, Meal, Food, Vital, InsulinInjected, Prediction
 from flask import jsonify
 from flask import request
 from passlib.context import CryptContext
@@ -243,12 +243,40 @@ def post_insulin():
         user_email=user.email,
         in_time=request.json["insulin_time"],
         in_units=request.json["insulin_value"],
-        insulin_type=request.json["insulin_type"]
+        insulin_type=request.json["insulin_type"],
+        in_spot=request.json["in_spot"]
     )
     db.session.add(insulin)
     db.session.commit()
 
     return jsonify({"status": "ok"}), 201
+
+
+#---------------------ACTIVIY----------------------
+@api.route("/activity", methods=["POST"])
+def post_activity():
+    try:
+        user = db.session.get(User, request.json["user_email"])
+        if user is None:
+            return jsonify({"error": "User not found"}), 404
+
+        activity = Activity(
+            user_email=user.email,
+            act_name=request.json.get("act_name"),
+            duration_min=request.json["duration_min"],
+            intensity=request.json["intensity"],
+            act_time=request.json["act_time"],
+            activity_type=request.json.get("activity_type")
+        )
+        db.session.add(activity)
+        db.session.commit()
+
+        return jsonify({"status": "ok"}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        print("❌ Error saving activity:", e)
+        return jsonify({"error": "internal server error"}), 500
 
 
 
