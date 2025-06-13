@@ -1,21 +1,43 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/beeWhite"
-    android:padding="16dp">
+    android:layout_height="wrap_content"
+    android:padding="16dp"
+    android:background="@color/beeWhite">
 
     <LinearLayout
-        android:id="@+id/insulinFormContainer"
+        android:id="@+id/exerciseFormContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent">
 
+        <EditText
+            android:id="@+id/exerciseName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:padding="12dp"
+            android:hint="Activity name"
+            android:textColor="@color/beeBlack"
+            android:textColorHint="@color/beeBlack"
+            android:textSize="16sp" />
+
+        <EditText
+            android:id="@+id/exerciseDuration"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="0dp"
+            android:hint="Duration (minutes)"
+            android:padding="12dp"
+            android:inputType="number"
+            android:textColor="@color/beeBlack"
+            android:textColorHint="@color/beeBlack"
+            android:textSize="16sp" />
+
+        <!-- Intensity Dropdown -->
         <com.google.android.material.textfield.TextInputLayout
             style="@style/InsulinDropDown"
             android:layout_width="match_parent"
@@ -28,25 +50,22 @@
             app:hintTextColor="@color/beeBlack">
 
             <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/insulinTypeField"
+                android:id="@+id/exerciseIntensity"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:dropDownHeight="200dp"
-                android:hint="Insulin type"
+                android:hint="Intensity"
                 android:inputType="none"
                 android:popupBackground="@color/beeBlack"
                 android:textColor="@color/beeBlack"
                 app:popupTheme="@style/ThemeOverlay.Bee.Dropdown" />
         </com.google.android.material.textfield.TextInputLayout>
 
-
-
-        <!-- Injection Spot Dropdown -->
+        <!-- Activity Type Dropdown -->
         <com.google.android.material.textfield.TextInputLayout
             style="@style/InsulinDropDown"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="0dp"
+            android:layout_marginBottom="0dp"
             app:boxBackgroundColor="@color/beeWhite"
             app:boxBackgroundMode="filled"
             app:boxStrokeColor="@color/teal_200"
@@ -54,35 +73,20 @@
             app:hintTextColor="@color/beeBlack">
 
             <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/injectionSpotDropdown"
+                android:id="@+id/exerciseType"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:dropDownHeight="200dp"
-                android:hint="Injection spot"
+                android:hint="Type"
                 android:inputType="none"
                 android:popupBackground="@color/beeBlack"
                 android:textColor="@color/beeBlack"
                 app:popupTheme="@style/ThemeOverlay.Bee.Dropdown" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- ▸ Unidades -->
-        <EditText
-            android:id="@+id/insulinInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="Units (e.g., 6)"
-            android:inputType="numberDecimal"
-            android:padding="12dp"
-            android:textColor="@color/beeBlack"
-            android:textColorHint="@color/material_dynamic_neutral40"
-            android:textSize="16sp" />
-
-
     </LinearLayout>
 
     <Button
-        android:id="@+id/saveInsulinBtn"
+        android:id="@+id/saveExerciseButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"

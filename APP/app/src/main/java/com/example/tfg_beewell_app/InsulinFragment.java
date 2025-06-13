@@ -33,6 +33,8 @@ public class InsulinFragment extends Fragment {
 
     private EditText insulinInput;
     private AutoCompleteTextView insulinTypeField;
+    private AutoCompleteTextView injectionSpotDropdown;
+
     private Button saveBtn;
     private String email;
 
@@ -62,6 +64,8 @@ public class InsulinFragment extends Fragment {
 
         insulinInput = view.findViewById(R.id.insulinInput);
         insulinTypeField = view.findViewById(R.id.insulinTypeField);
+        injectionSpotDropdown = view.findViewById(R.id.injectionSpotDropdown);
+
         saveBtn = view.findViewById(R.id.saveInsulinBtn);
 
         setupDropdown();
@@ -80,7 +84,13 @@ public class InsulinFragment extends Fragment {
                 android.R.layout.simple_list_item_1);
         insulinTypeField.setAdapter(adapter);
 
+        ArrayAdapter<CharSequence> spotAdapter = ArrayAdapter.createFromResource(
+                requireContext(),
+                R.array.injection_spots_array,
+                android.R.layout.simple_list_item_1);
+        injectionSpotDropdown.setAdapter(spotAdapter);
     }
+
 
     /*-------------------------------------------------
      *  Envía la dosis al servidor
@@ -91,35 +101,46 @@ public class InsulinFragment extends Fragment {
         String unitsStr = insulinInput.getText().toString().trim();
         String insulinType = insulinTypeField.getText().toString().trim();
 
+
         if (unitsStr.isEmpty()) {
             Toast.makeText(getContext(),
-                    "Introduce las unidades",
+                    "Add Units",
                     Toast.LENGTH_SHORT).show();
             return;
         }
         if (insulinType.isEmpty()) {
             Toast.makeText(getContext(),
-                    "Selecciona el tipo de insulina",
+                    "Select Type",
                     Toast.LENGTH_SHORT).show();
             return;
         }
+
+        String injectionSpot = injectionSpotDropdown.getText().toString().trim();
+        if (injectionSpot.isEmpty()) {
+            Toast.makeText(getContext(), "Select injection spot", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+
 
         try {
             long epochSeconds = System.currentTimeMillis() / 1_000L; // INT
             double units = Double.parseDouble(unitsStr);        // FLOAT
 
             JSONObject body = new JSONObject();
-            body.put("user_email", email);         // String
-            body.put("insulin_time", epochSeconds);  // INT
+            body.put("user_email", email);              // String
+            body.put("insulin_time", epochSeconds);     // INT
             body.put("insulin_value", units);         // FLOAT
             body.put("insulin_type", insulinType);   // String
+            body.put("in_spot", injectionSpot);     // Where
+
 
             JsonObjectRequest req = new JsonObjectRequest(
                     Request.Method.POST,
                     Constants.BASE_URL + "/insulin",
                     body,
                     rsp -> Toast.makeText(getContext(),
-                            "Insulina guardada",
+                            "Insulin saved!",
                             Toast.LENGTH_SHORT).show(),
                     err -> {
                         if (err.networkResponse != null) {
@@ -128,7 +149,7 @@ public class InsulinFragment extends Fragment {
                                             + new String(err.networkResponse.data));
                         }
                         Toast.makeText(getContext(),
-                                "Error al guardar",
+                                "Error saving",
                                 Toast.LENGTH_SHORT).show();
                     });
 
@@ -137,8 +158,9 @@ public class InsulinFragment extends Fragment {
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(getContext(),
-                    "Error preparando los datos",
+                    "Error preparing data",
                     Toast.LENGTH_SHORT).show();
         }
     }
+
 }

@@ -49,7 +49,11 @@ public class AddEntryDialog extends DialogFragment {
         viewPager.setAdapter(new AddEntryPagerAdapter(requireActivity()));
 
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
-            tab.setText(position == 0 ? "Insulin" : "Meal");
+            switch (position) {
+                case 0: tab.setText("Insulin"); break;
+                case 1: tab.setText("Meal"); break;
+                case 2: tab.setText("Exercise"); break;
+            }
         }).attach();
     }
 }

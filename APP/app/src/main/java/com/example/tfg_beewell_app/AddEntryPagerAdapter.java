@@ -11,11 +11,13 @@ public class AddEntryPagerAdapter extends FragmentStateAdapter {
 
     @Override
     public Fragment createFragment(int position) {
-        return position == 0 ? new InsulinFragment() : new MealFragment();
+        if (position == 0) return new InsulinFragment();
+        else if (position == 1) return new MealFragment();
+        else return new ExerciseFragment();
     }
 
     @Override
     public int getItemCount() {
-        return 2;
+        return 3;
     }
 }

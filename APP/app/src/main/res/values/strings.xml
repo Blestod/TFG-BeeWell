@@ -30,5 +30,28 @@
         <item>Tresiba (ultra-long acting)</item>
     </string-array>
 
+    <string-array name="injection_spots_array">
+        <item>Left arm</item>
+        <item>Right arm</item>
+        <item>Left thigh</item>
+        <item>Right thigh</item>
+        <item>Abdomen</item>
+        <item>Buttocks</item>
+    </string-array>
+
+    <string-array name="exercise_intensity_options">
+        <item>light</item>
+        <item>moderate</item>
+        <item>vigorous</item>
+    </string-array>
+
+    <string-array name="exercise_type_options">
+        <item>aerobic</item>
+        <item>anaerobic</item>
+        <item>flexibility</item>
+        <item>balance</item>
+    </string-array>
+
+
 
 </resources>
