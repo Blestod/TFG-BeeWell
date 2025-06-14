@@ -101,7 +101,8 @@ def post_user_variables():
         weight=request.json.get("weight"),
         insulin_sensitivity=request.json.get("insulin_sensitivity"),
         carb_ratio=request.json.get("carb_ratio"),
-        carb_absorption_rate=request.json.get("carb_absorption_rate")
+        carb_absorption_rate=request.json.get("carb_absorption_rate"),
+        diabetes_type=request.json.get("diabetes_type"),
     )
     db.session.add(user_variable)
     db.session.commit()
@@ -119,7 +120,8 @@ def get_last_user_variable(user_email):
             "weight": None,
             "insulin_sensitivity": None,
             "carb_ratio": None,
-            "carb_absorption_rate": None
+            "carb_absorption_rate": None,
+            "diabetes_type": None
         }), 200
     return user_variable.serialize(), 200
 
@@ -230,6 +232,97 @@ def post_meal():
         print("❌ Error saving meal:", e)
         return "Error saving meal", 500
 
+#-----------rec
+@api.route("/meal_recommendation_data/<string:user_email>", methods=["GET"])
+def get_meal_recommendation_data(user_email):
+    try:
+        now = datetime.now(timezone.utc)
+        now_epoch = int(now.timestamp())
+        current_hour = now.hour
+
+        # Definir franjas horarias
+        if 6 <= current_hour < 12:
+            meal_name = "breakfast"
+            start_time = now.replace(hour=6, minute=0, second=0)
+        elif 12 <= current_hour < 17:
+            meal_name = "lunch"
+            start_time = now.replace(hour=12, minute=0, second=0)
+        else:
+            meal_name = "dinner"
+            if current_hour < 6:
+                start_time = now.replace(hour=17, minute=0, second=0) - timedelta(days=1)
+            else:
+                start_time = now.replace(hour=17, minute=0, second=0)
+
+        start_epoch = int(start_time.timestamp())
+
+        # Obtener todas las comidas registradas en la franja
+        meals = (Meal.query
+                 .filter_by(user_email=user_email)
+                 .filter(Meal.meal_time >= start_epoch)
+                 .filter(Meal.meal_time <= now_epoch)
+                 .all())
+
+        events = []
+
+        for meal in meals:
+            food = Food.query.get(meal.food_id)
+            if not food:
+                continue
+
+            grams = meal.grams
+
+            composition = {
+                "carbs": round((food.estim_carbs or 0.0) * grams / 100, 1),
+                "protein": round((food.estim_protein or 0.0) * grams / 100, 1),
+                "fat": round((food.estim_fats or 0.0) * grams / 100, 1),
+                "ingredients": [
+                    {
+                        "item": food.food_name,
+                        "quantity": f"{int(grams)} grams"
+                    }
+                ]
+            }
+
+            meal_time = meal.meal_time
+
+            # Glucosa ±3h respecto a esta comida
+            pre_glucose = []
+            post_glucose = []
+
+            vitals = (Vital.query
+                      .filter_by(user_email=user_email)
+                      .filter(Vital.glucose_value != None)
+                      .order_by(Vital.vital_time.asc())
+                      .all())
+
+            for v in vitals:
+                delta = v.vital_time - meal_time
+                if -3 * 3600 <= delta < 0:
+                    pre_glucose.append(v.glucose_value)
+                elif 0 <= delta <= 3 * 3600:
+                    post_glucose.append(v.glucose_value)
+
+            event = {
+                "type": "meal",
+                "name": meal_name,
+                "time": datetime.utcfromtimestamp(meal_time).isoformat(),
+                "duration": "20min",
+                "composition": composition,
+                "glucose_levels": {
+                    "pre_3h": pre_glucose,
+                    "post_3h": post_glucose
+                }
+            }
+
+            events.append(event)
+
+        return jsonify(events), 200
+
+    except Exception as e:
+        print("❌ Error en /meal_recommendation_data:", e)
+        traceback.print_exc()
+        return jsonify({"error": "internal server error"}), 500
 
 
 #-------------------INSULIN---------------------

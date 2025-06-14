@@ -42,10 +42,11 @@ class UserVariables(db.Model):
         insulin_sensitivity = db.Column(db.Float, nullable=True)
         carb_ratio = db.Column(db.Float, nullable=True)
         carb_absorption_rate = db.Column(db.Float, nullable=True)
+        diabetes_type = db.Column(db.Integer, nullable=True)
 
         user_email=db.Column(db.String(45),db.ForeignKey("user.email"))
 
-        def __init__(self, user_email, change_date_time, height, weight, insulin_sensitivity, carb_ratio, carb_absorption_rate):
+        def __init__(self, user_email, change_date_time, height, weight, insulin_sensitivity, carb_ratio, carb_absorption_rate, diabetes_type=None):
             self.user_email = user_email
             self.change_date_time = change_date_time
             self.height = height
@@ -53,6 +54,7 @@ class UserVariables(db.Model):
             self.insulin_sensitivity = insulin_sensitivity
             self.carb_ratio = carb_ratio
             self.carb_absorption_rate = carb_absorption_rate
+            self.diabetes_type = diabetes_type
 
         def serialize(self):
             return {
@@ -63,6 +65,7 @@ class UserVariables(db.Model):
                 "insulin_sensitivity": self.insulin_sensitivity,
                 "carb_ratio": self.carb_ratio,
                 "carb_absorption_rate": self.carb_absorption_rate,
+                "diabetes_type": self.diabetes_type,
             }
 
 class InsulinInjected(db.Model):
