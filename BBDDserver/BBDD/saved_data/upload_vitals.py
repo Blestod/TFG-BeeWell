@@ -3,9 +3,9 @@ import csv
 import requests
 from tqdm import tqdm
 
-API_BASE      = "https://beewell.blestod.com"
-CSV_PATH      = "/Users/thomas/Documents/GitHub/TFG-BeeWell/BBDDserver/BBDD/saved_data/vitals_cleaned.csv"
-BATCH_SIZE    = 500
+API_BASE   = "https://beewell.blestod.com"
+CSV_PATH   = "/Users/thomas/Documents/GitHub/TFG-BeeWell/BBDDserver/BBDD/saved_data/vitals_cleaned.csv"
+BATCH_SIZE = 500
 
 def clean_float(value: str):
     try:
@@ -36,26 +36,40 @@ def importar_csv():
     with open(CSV_PATH, newline="", encoding="utf-8") as fh:
         reader = csv.DictReader(fh)
         buffer = []
+
         for row in tqdm(reader, desc="⏩ Enviando"):
             total += 1
             try:
                 payload = build_payload(row)
                 buffer.append(payload)
+
                 if len(buffer) >= BATCH_SIZE:
-                    for p in buffer:
-                        post_vital(p)
-                    ok += len(buffer)
-                    buffer.clear()
+                    try:
+                        for p in buffer:
+                            post_vital(p)
+                        ok += len(buffer)
+                    except Exception as e:
+                        err += len(buffer)
+                        print(f"⚠️  Error lote en fila {total}: {e}")
+                    finally:
+                        buffer.clear()
+
             except Exception as e:
                 err += 1
                 print(f"⚠️  Error fila {total}: {e}")
-        for p in buffer:
+
+        # Enviar lo que quede en el buffer
+        if buffer:
             try:
-                post_vital(p)
-                ok += 1
+                for p in buffer:
+                    post_vital(p)
+                ok += len(buffer)
             except Exception as e:
-                err += 1
-                print(f"⚠️  Error fila {total - len(buffer) + 1}: {e}")
+                err += len(buffer)
+                print(f"⚠️  Error lote final: {e}")
+            finally:
+                buffer.clear()
+
     print(f"\n🏁 Terminado. Filas totales: {total}  ✔️ OK: {ok}  ❌ Errores: {err}")
 
 if __name__ == "__main__":

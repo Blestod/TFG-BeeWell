@@ -345,6 +345,96 @@ def post_insulin():
     return jsonify({"status": "ok"}), 201
 
 
+
+#-----------rec
+
+@api.route("/insulin_recommendation_data/<string:user_email>", methods=["GET"])
+def get_last_insulin_injection(user_email):
+    try:
+        now_epoch = int(datetime.now(timezone.utc).timestamp())
+
+        injection = (InsulinInjected.query
+                     .filter_by(user_email=user_email)
+                     .order_by(InsulinInjected.in_time.desc())
+                     .first())
+
+        if not injection:
+            return jsonify({}), 200
+
+        insulin_type = injection.insulin_type
+        in_time = injection.in_time
+        delta = now_epoch - in_time
+
+        # Filtro por tipo y ventana de tiempo
+        if insulin_type == "rapid-acting" and delta > 2 * 3600:
+            return jsonify({}), 200
+        if insulin_type == "slow-acting" and delta > 18 * 3600:
+            return jsonify({}), 200
+
+        # Convertimos epoch a hora UTC
+        injection_dt = datetime.utcfromtimestamp(in_time)
+        hour = injection_dt.hour
+
+        if 6 <= hour < 12:
+            name = "morning_dose"
+        elif 12 <= hour < 17:
+            name = "afternoon_dose"
+        elif 17 <= hour < 22:
+            name = "evening_dose"
+        else:
+            name = "night_dose"
+
+        # Valor de glucosa más cercano
+        glucose_value = None
+        closest_vital = (Vital.query
+                         .filter_by(user_email=user_email)
+                         .filter(Vital.glucose_value != None)
+                         .order_by(db.func.abs(Vital.vital_time - in_time))
+                         .first())
+
+        if closest_vital:
+            glucose_value = closest_vital.glucose_value
+
+        # Glucosa ±3h
+        pre_glucose = []
+        post_glucose = []
+
+        vitals = (Vital.query
+                  .filter_by(user_email=user_email)
+                  .filter(Vital.glucose_value != None)
+                  .order_by(Vital.vital_time.asc())
+                  .all())
+
+        for v in vitals:
+            delta_t = v.vital_time - in_time
+            if -3 * 3600 <= delta_t < 0:
+                pre_glucose.append(v.glucose_value)
+            elif 0 <= delta_t <= 3 * 3600:
+                post_glucose.append(v.glucose_value)
+
+        insulin_event = {
+            "type": "insulin_injection",
+            "name": name,
+            "time": injection_dt.isoformat(),
+            "insulin_type": insulin_type,
+            "insulin_dose": injection.in_units,
+            "injection_site": injection.in_spot,
+            "glucose_level_at_injection": glucose_value,
+            "glucose_levels": {
+                "pre_3h": pre_glucose,
+                "post_3h": post_glucose
+            }
+        }
+
+        return jsonify(insulin_event), 200
+
+    except Exception as e:
+        print("❌ Error en /insulin_recommendation_data:", e)
+        traceback.print_exc()
+        return jsonify({"error": "internal server error"}), 500
+
+
+
 #---------------------ACTIVIY----------------------
 @api.route("/activity", methods=["POST"])
 def post_activity():
@@ -371,6 +461,65 @@ def post_activity():
         print("❌ Error saving activity:", e)
         return jsonify({"error": "internal server error"}), 500
 
+
+#--------------rec
+@api.route("/exercise_recommendation_data/<string:user_email>", methods=["GET"])
+def get_exercise_events(user_email):
+    try:
+        now_epoch = int(datetime.now(timezone.utc).timestamp())
+        start_epoch = now_epoch - 24 * 3600  # Hace 24 horas sin usar timedelta
+
+        # Últimas 24h de actividades
+        activities = (
+            Activity.query
+            .filter_by(user_email=user_email)
+            .filter(Activity.act_time >= start_epoch)
+            .order_by(Activity.act_time.asc())
+            .all()
+        )
+
+        # Signos vitales ordenados
+        vitals = (
+            Vital.query
+            .filter_by(user_email=user_email)
+            .filter(Vital.glucose_value != None)
+            .order_by(Vital.vital_time.asc())
+            .all()
+        )
+
+        def get_glucose_window(ts):
+            pre, post = [], []
+            for v in vitals:
+                delta = v.vital_time - ts
+                if -3 * 3600 <= delta < 0:
+                    pre.append(v.glucose_value)
+                elif 0 <= delta <= 3 * 3600:
+                    post.append(v.glucose_value)
+            return pre, post
+
+        events = []
+
+        for a in activities:
+            pre_3h, post_3h = get_glucose_window(a.act_time)
+            event = {
+                "type": "exercise",
+                "name": a.act_name if a.act_name else (a.activity_type or "exercise"),
+                "time": datetime.utcfromtimestamp(a.act_time).isoformat(),
+                "duration": f"{a.duration_min}min",
+                "intensity": a.intensity,
+                "glucose_levels": {
+                    "pre_3h": pre_3h,
+                    "post_3h": post_3h
+                }
+            }
+            events.append(event)
+
+        return jsonify(events), 200
+
+    except Exception as e:
+        print("❌ Error en /exercise_recommendation_data:", e)
+        traceback.print_exc()
+        return jsonify({"error": "internal server error"}), 500
 
 
 #---------------------CHATGPT----------------------
@@ -409,7 +558,7 @@ def generate_summary():
         print("❌ ChatGPT error:", e)
         traceback.print_exc()
         return {"error": "GPT request failed"}, 500
-    
+
 
 #---------------------PREDICTION----------------------
 # ────────────────────────────────────────────────────────────────
