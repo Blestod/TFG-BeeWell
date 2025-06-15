@@ -30,7 +30,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
                 android:layout_marginLeft="8dp"
-                android:layout_marginTop="80dp"
+                android:layout_marginTop="72dp"
                 android:layout_marginRight="8dp"
                 app:cardBackgroundColor="@color/beeWhite"
                 app:cardCornerRadius="8dp"
@@ -158,7 +158,7 @@
                 app:cardElevation="8dp">
 
                 <TextView
-                    android:id="@+id/predictText2"
+                    android:id="@+id/predictText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="4dp"

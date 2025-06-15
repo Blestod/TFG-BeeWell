@@ -8,6 +8,7 @@ import traceback
 from datetime import datetime, timezone, timedelta
 import numpy as np
 from flask import abort
+import json
 
 
 api: Flask=Flask(__name__)
@@ -602,7 +603,74 @@ def generate_summary():
         print("❌ ChatGPT error:", e)
         traceback.print_exc()
         return {"error": "GPT request failed"}, 500
+    
 
+
+@api.route("/generate_insights", methods=["POST"])
+def generate_insights():
+    data        = request.get_json()
+    user_email  = data.get("user_email")
+    vitals      = data.get("vitals")
+    predictions = data.get("predictions")
+
+    if not user_email or vitals is None or predictions is None:
+        return jsonify(error="Missing data"), 400
+
+    # Prepara los strings para el prompt
+    lines = []
+    if vitals.get("glucose") is not None:
+        lines.append(f"Glucosa: {vitals['glucose']} mg/dL")
+    if vitals.get("heart_rate") is not None:
+        lines.append(f"Pulso: {vitals['heart_rate']} bpm")
+    if vitals.get("temperature") is not None:
+        lines.append(f"Temperatura: {vitals['temperature']} °C")
+    if vitals.get("oxygen_saturation") is not None:
+        lines.append(f"SpO₂: {vitals['oxygen_saturation']}%")
+
+    preds_str = "\n".join(
+        f"- {p['time']}: {p['value']} mg/dL"
+        for p in predictions
+    )
+
+    prompt = f"""
+    Eres un asistente médico. Recibes:
+    1) Datos recientes del paciente:
+       {'; '.join(lines)}.
+    2) Predicción de glucosa para la próxima hora:
+       {preds_str}
+
+    Genera DOS respuestas en ingles:
+    A) recommendation_vitals: 1–2 oraciones con un consejo inmediato.
+    B) recommendation_prediction: un párrafo detallado sobre la predicción.
+
+    Devuélveme solo este JSON:
+    {{
+      "recommendation_vitals": "...",
+      "recommendation_prediction": "..."
+    }}
+    """
+
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role":"user","content":prompt}],
+            temperature=0.7,
+            max_tokens=250
+        )
+        content = resp.choices[0].message.content.strip()
+        print("✅ GPT raw content:", content)
+
+        parsed = json.loads(content)
+        return jsonify(
+            recommendation_vitals     = parsed.get("recommendation_vitals", ""),
+            recommendation_prediction = parsed.get("recommendation_prediction", "")
+        ), 200
+
+    except Exception as e:
+        print("❌ GPT error in /generate_insights:", e)
+        traceback.print_exc()
+        # aseguramos JSON de error
+        return jsonify(error="GPT request failed"), 500
 
 #---------------------PREDICTION----------------------
 # ────────────────────────────────────────────────────────────────

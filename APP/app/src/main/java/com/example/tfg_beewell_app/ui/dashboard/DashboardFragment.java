@@ -180,7 +180,7 @@ public class DashboardFragment extends Fragment {
             return Collections.singletonList("(no data yet)");
 
         List<String> separated = new ArrayList<>();
-        for (String line : block.split("\\n")) {
+        for (String line : block.split("\\n")) { //TODO: correctly split on \n
             separated.add(line);
             separated.add("");
         }

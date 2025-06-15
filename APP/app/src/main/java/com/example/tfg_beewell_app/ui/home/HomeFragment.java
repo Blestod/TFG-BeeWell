@@ -5,8 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,67 +28,81 @@ import com.example.tfg_beewell_app.databinding.FragmentHomeBinding;
 import com.example.tfg_beewell_app.ui.VitalData;
 import com.example.tfg_beewell_app.utils.HealthConnectPermissionHelper;
 import com.example.tfg_beewell_app.utils.HealthReader;
-import com.example.tfg_beewell_app.utils.VitalsChangesListener;
-import com.google.android.flexbox.FlexboxLayout;
-
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import kotlinx.coroutines.Job;
-import kotlin.Unit;
-
 import com.example.tfg_beewell_app.utils.PredictionManager;
-import lecho.lib.hellocharts.model.PointValue;
+import com.example.tfg_beewell_app.utils.VitalsChangesListener;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.ValueFormatter;
-
-import com.example.tfg_beewell_app.local.GlucoseDB;
-import com.example.tfg_beewell_app.local.LocalGlucoseEntry;
+import com.google.android.flexbox.FlexboxLayout;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
+
+import kotlinx.coroutines.Job;
+import kotlin.Unit;
+import lecho.lib.hellocharts.model.PointValue;
+
+import com.example.tfg_beewell_app.local.GlucoseDB;
+import com.example.tfg_beewell_app.local.LocalGlucoseEntry;
 
 public class HomeFragment extends Fragment {
+    private static final String TAG = "HomeFragment";
 
     private FragmentHomeBinding binding;
     private HealthConnectPermissionHelper permissionHelper;
     private Job vitalsJob;
     private String userEmail;
 
-    @NonNull
+    // Para no pedir más de 1 vez por hora
+    private long lastInsightsFetch = 0L;
+
+    // Últimos datos
+    private VitalData currentVitals;
+    private List<Entry> currentPredictions = new ArrayList<>();
+
+    // ViewModel
+    private HomeViewModel viewModel;
+
     @Override
-    public View onCreateView(@NonNull LayoutInflater inf,
+    public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container,
                              Bundle savedInstanceState) {
 
-        binding = FragmentHomeBinding.inflate(inf, container, false);
+        binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        HomeViewModel vm = new ViewModelProvider(
+        // ➊ Instancia el ViewModel
+        viewModel = new ViewModelProvider(
                 requireActivity(),
-                new ViewModelProvider.AndroidViewModelFactory(requireActivity().getApplication()))
-                .get(HomeViewModel.class);
+                new ViewModelProvider.AndroidViewModelFactory(requireActivity().getApplication())
+        ).get(HomeViewModel.class);
 
-        vm.getText().observe(getViewLifecycleOwner(),
-                t -> binding.textInfo.setText(t == null ? "" : t));
+        // ➌ Observa las recomendaciones
+        viewModel.getInsights().observe(getViewLifecycleOwner(), insights -> {
+            Log.d(TAG, "🔔 got insights: " + insights);
+            binding.textInfo.setText(insights.getVitalsRecommendation());
+            binding.predictText.setText(insights.getPredictionRecommendation());
+        });
 
+        // Lee email de las prefs
         SharedPreferences sp = requireContext()
                 .getSharedPreferences("user_session", Context.MODE_PRIVATE);
         userEmail = sp.getString("user_email", null);
 
         permissionHelper = new HealthConnectPermissionHelper(requireContext());
 
-        // Register for HC_PERMS_GRANTED broadcast
+        // Registra receptor de permisos
         IntentFilter filter = new IntentFilter("HC_PERMS_GRANTED");
         requireContext().registerReceiver(permsGrantedReceiver,
                 filter, Context.RECEIVER_NOT_EXPORTED);
 
-        // If user already granted, read and listen now
         if (permissionHelper.hasAllHcPermissionsSync()) {
             readAndShowVitals();
         }
@@ -102,83 +116,95 @@ public class HomeFragment extends Fragment {
 
         binding.tipText.setText(TipManager.getDailyTip(requireContext()));
 
-        // only start listener if perms granted
         if (permissionHelper.hasAllHcPermissionsSync()) {
             startVitalsListener();
         }
 
-        // prediction + chart logic unchanged
+        // Dibuja gráfica y luego pide insights
         new Thread(() -> {
-            List<PointValue> predicciones;
-            List<Entry> predPoints = new ArrayList<>();
+            // 1) calcula predicciones
+            List<PointValue> predsPts;
+            List<Entry> preds = new ArrayList<>();
             try {
-                predicciones = PredictionManager.getPredictionForNextHour(requireContext());
-                if (predicciones != null) {
-                    for (PointValue p : predicciones) {
+                predsPts = PredictionManager.getPredictionForNextHour(requireContext());
+                if (predsPts != null) {
+                    for (PointValue p : predsPts) {
                         float x = (p.getX() * Forecast.FUZZER) / 1000f;
-                        predPoints.add(new Entry(x, p.getY()));
+                        preds.add(new Entry(x, p.getY()));
                     }
                 }
             } catch (Exception ex) {
-                predicciones = List.of();
+                predsPts = List.of();
             }
 
+            currentPredictions = preds;
+
+            // 2) obtiene reales
             List<LocalGlucoseEntry> reales = GlucoseDB.getInstance(requireContext())
                     .glucoseDao()
-                    .getLast8Hours(System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
+                    .getLast8Hours(System.currentTimeMillis()
+                            - TimeUnit.HOURS.toMillis(1));
 
-            List<Entry> realPoints = new ArrayList<>();
+            List<Entry> realEntries = new ArrayList<>();
             if (reales != null) {
                 for (LocalGlucoseEntry e : reales) {
-                    realPoints.add(new Entry(e.timestamp / 1000f, (float) e.glucoseValue));
+                    realEntries.add(new Entry(e.timestamp / 1000f,
+                            (float) e.glucoseValue));
                 }
             }
 
+            // 3) actualiza UI
             requireActivity().runOnUiThread(() -> {
                 LineChart chart = binding.glucoseChart;
-
-                if (realPoints.isEmpty() && predPoints.isEmpty()) {
+                if (realEntries.isEmpty() && preds.isEmpty()) {
                     chart.clear();
                     chart.setNoDataText("Aún no hay datos de glucosa");
                     chart.setNoDataTextColor(
-                            ContextCompat.getColor(requireContext(), android.R.color.darker_gray));
+                            ContextCompat.getColor(requireContext(),
+                                    android.R.color.darker_gray));
                     chart.invalidate();
-                    return;
+                } else {
+                    LineDataSet setReal = new LineDataSet(realEntries, "Historial");
+                    setReal.setColor(ContextCompat.getColor(requireContext(),
+                            android.R.color.holo_blue_dark));
+                    setReal.setLineWidth(2f);
+                    setReal.setDrawCircles(false);
+
+                    LineDataSet setPred = new LineDataSet(preds, "Predicción");
+                    setPred.setColor(ContextCompat.getColor(requireContext(),
+                            android.R.color.holo_red_dark));
+                    setPred.setLineWidth(2f);
+                    setPred.setDrawCircles(false);
+                    setPred.enableDashedLine(10, 10, 0);
+
+                    LineData lineData = new LineData();
+                    if (!realEntries.isEmpty()) lineData.addDataSet(setReal);
+                    if (!preds.isEmpty()) lineData.addDataSet(setPred);
+
+                    chart.setData(lineData);
+                    chart.getDescription().setEnabled(false);
+                    chart.setTouchEnabled(true);
+                    chart.setPinchZoom(true);
+
+                    XAxis xAxis = chart.getXAxis();
+                    xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+                    xAxis.setValueFormatter(new ValueFormatter() {
+                        private final SimpleDateFormat sdf =
+                                new SimpleDateFormat("HH:mm", Locale.getDefault());
+                        @Override public String getFormattedValue(float value) {
+                            return sdf.format(new Date((long) value * 1000));
+                        }
+                    });
+
+                    chart.invalidate();
                 }
 
-                LineDataSet setReal = new LineDataSet(realPoints, "Historial");
-                setReal.setColor(
-                        ContextCompat.getColor(requireContext(), android.R.color.holo_blue_dark));
-                setReal.setLineWidth(2f);
-                setReal.setDrawCircles(false);
-
-                LineDataSet setPred = new LineDataSet(predPoints, "Predicción");
-                setPred.setColor(
-                        ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark));
-                setPred.setLineWidth(2f);
-                setPred.setDrawCircles(false);
-                setPred.enableDashedLine(10, 10, 0);
-
-                LineData lineData = new LineData();
-                if (!realPoints.isEmpty()) lineData.addDataSet(setReal);
-                if (!predPoints.isEmpty()) lineData.addDataSet(setPred);
-
-                chart.setData(lineData);
-                chart.getDescription().setEnabled(false);
-                chart.setTouchEnabled(true);
-                chart.setPinchZoom(true);
-
-                XAxis xAxis = chart.getXAxis();
-                xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-                xAxis.setValueFormatter(new ValueFormatter() {
-                    private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
-                    @Override
-                    public String getFormattedValue(float value) {
-                        return sdf.format(new Date((long) value * 1000));
-                    }
-                });
-
-                chart.invalidate();
+                // ➍ Pregunta al ViewModel
+                if (currentVitals != null && !currentPredictions.isEmpty()) {
+                    Log.d(TAG, "📤 asking ViewModel for insights");
+                    viewModel.fetchInsightsIfNeeded(currentVitals,
+                            currentPredictions);
+                }
             });
         }).start();
     }
@@ -194,14 +220,15 @@ public class HomeFragment extends Fragment {
         super.onDestroyView();
         try {
             requireContext().unregisterReceiver(permsGrantedReceiver);
-        } catch (IllegalArgumentException ignored) {}
+        } catch (IllegalArgumentException ignored) { }
         binding = null;
     }
 
     private void readAndShowVitals() {
         new Thread(() -> {
             VitalData data =
-                    HealthReader.getLatestVitalsBlocking(requireContext(), userEmail);
+                    HealthReader.getLatestVitalsBlocking(requireContext(),
+                            userEmail);
             if (data != null) {
                 requireActivity().runOnUiThread(() -> showVitals(data));
             }
@@ -216,8 +243,8 @@ public class HomeFragment extends Fragment {
                 VitalsChangesListener.INSTANCE.listen(
                         requireContext(),
                         cont2 -> {
-                            Long bpm = HealthReader
-                                    .getLastHeartRateBpmBlocking(requireContext());
+                            Long bpm =
+                                    HealthReader.getLastHeartRateBpmBlocking(requireContext());
                             requireActivity().runOnUiThread(() ->
                                     binding.textInfo.setText(
                                             bpm != null ? bpm + " bpm" : "—"));
@@ -235,9 +262,10 @@ public class HomeFragment extends Fragment {
     };
 
     private void showVitals(VitalData vital) {
+        currentVitals = vital;
+        Log.d(TAG, "🔥 showVitals: nuevos vitals=" + vital);
         FlexboxLayout card = binding.greenCard;
         card.removeAllViews();
-
         if (vital.getGlucoseValue() != null)
             card.addView(createVitalTextView(
                     String.valueOf(vital.getGlucoseValue()), "mg/dL"));
@@ -250,6 +278,12 @@ public class HomeFragment extends Fragment {
         if (vital.getOxygenSaturation() != null)
             card.addView(createVitalTextView(
                     String.valueOf(vital.getOxygenSaturation()), "% SpO₂"));
+
+        // Dispara la petición al ViewModel tan pronto tengas datos
+        if (!currentPredictions.isEmpty()) {
+            Log.d(TAG, "📤 showVitals → asking ViewModel");
+            viewModel.fetchInsightsIfNeeded(currentVitals, currentPredictions);
+        }
     }
 
     private LinearLayout createVitalTextView(String value, String unit) {
@@ -275,9 +309,10 @@ public class HomeFragment extends Fragment {
         box.addView(vTxt);
         box.addView(uTxt);
 
-        FlexboxLayout.LayoutParams lp = new FlexboxLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
+        FlexboxLayout.LayoutParams lp =
+                new FlexboxLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(16, 0, 16, 4);
         box.setLayoutParams(lp);
         return box;

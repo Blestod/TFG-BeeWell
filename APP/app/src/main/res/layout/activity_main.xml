@@ -2,6 +2,7 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -33,23 +34,25 @@
             android:id="@+id/menuButton"
             android:layout_width="40dp"
             android:layout_height="40dp"
+            android:layout_marginTop="20dp"
             android:contentDescription="Menu"
-            app:layout_constraintBottom_toBottomOf="@+id/logo"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/logo"
+            app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/menu"
             app:tint="@color/beeBlue" />
 
 
-        <ImageView
-            android:id="@+id/logo"
-            android:layout_width="120dp"
-            android:layout_height="54dp"
-            android:layout_marginTop="16dp"
-            android:contentDescription="logoBeeWell"
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/nunitosemibold"
+            android:text="BeeWell"
+            android:textColor="@color/beeBlue"
+            android:textSize="26sp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/beewell" />
+            app:layout_constraintTop_toTopOf="@+id/menuButton" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
