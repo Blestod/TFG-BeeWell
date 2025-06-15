@@ -5,7 +5,7 @@ from flask import request
 from passlib.context import CryptContext
 import openai
 import traceback
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import numpy as np
 from flask import abort
 
@@ -366,9 +366,9 @@ def get_last_insulin_injection(user_email):
         delta = now_epoch - in_time
 
         # Filtro por tipo y ventana de tiempo
-        if insulin_type == "rapid-acting" and delta > 2 * 3600:
+        if insulin_type == "rapid-acting" and delta > 4 * 3600:
             return jsonify({}), 200
-        if insulin_type == "slow-acting" and delta > 18 * 3600:
+        if insulin_type == "slow-acting" and delta > 24 * 3600:
             return jsonify({}), 200
 
         # Convertimos epoch a hora UTC
@@ -395,22 +395,35 @@ def get_last_insulin_injection(user_email):
         if closest_vital:
             glucose_value = closest_vital.glucose_value
 
-        # Glucosa ±3h
+        vitals_window_before = []
+        vitals_window_after = []
         pre_glucose = []
         post_glucose = []
 
         vitals = (Vital.query
                   .filter_by(user_email=user_email)
-                  .filter(Vital.glucose_value != None)
                   .order_by(Vital.vital_time.asc())
                   .all())
 
         for v in vitals:
             delta_t = v.vital_time - in_time
+            vital_data = {
+                "timestamp": datetime.utcfromtimestamp(v.vital_time).isoformat(),
+                "heart_rate": v.heart_rate,
+                "temperature": v.temperature,
+                "oxygen_saturation": v.oxygen_saturation,
+                "calories": v.calories,
+                "sleep_duration": v.sleep_duration
+            }
+
             if -3 * 3600 <= delta_t < 0:
-                pre_glucose.append(v.glucose_value)
+                if v.glucose_value is not None:
+                    pre_glucose.append(v.glucose_value)
+                vitals_window_before.append(vital_data)
             elif 0 <= delta_t <= 3 * 3600:
-                post_glucose.append(v.glucose_value)
+                if v.glucose_value is not None:
+                    post_glucose.append(v.glucose_value)
+                vitals_window_after.append(vital_data)
 
         insulin_event = {
             "type": "insulin_injection",
@@ -423,6 +436,10 @@ def get_last_insulin_injection(user_email):
             "glucose_levels": {
                 "pre_3h": pre_glucose,
                 "post_3h": post_glucose
+            },
+            "vitals_window": {
+                "pre_3h": vitals_window_before,
+                "post_3h": vitals_window_after
             }
         }
 
@@ -432,7 +449,6 @@ def get_last_insulin_injection(user_email):
         print("❌ Error en /insulin_recommendation_data:", e)
         traceback.print_exc()
         return jsonify({"error": "internal server error"}), 500
-
 
 
 #---------------------ACTIVIY----------------------
@@ -466,8 +482,8 @@ def post_activity():
 @api.route("/exercise_recommendation_data/<string:user_email>", methods=["GET"])
 def get_exercise_events(user_email):
     try:
-        now_epoch = int(datetime.now(timezone.utc).timestamp())
-        start_epoch = now_epoch - 24 * 3600  # Hace 24 horas sin usar timedelta
+        today_6am = datetime.now(timezone.utc).replace(hour=6, minute=0, second=0, microsecond=0)
+        start_epoch = int(today_6am.timestamp())
 
         # Últimas 24h de actividades
         activities = (
@@ -500,7 +516,29 @@ def get_exercise_events(user_email):
         events = []
 
         for a in activities:
-            pre_3h, post_3h = get_glucose_window(a.act_time)
+            pre_glucose, post_glucose = [], []
+            vitals_window_before, vitals_window_after = [], []
+
+            for v in vitals:
+                delta = v.vital_time - a.act_time
+                vital_data = {
+                    "timestamp": datetime.utcfromtimestamp(v.vital_time).isoformat(),
+                    "heart_rate": v.heart_rate,
+                    "temperature": v.temperature,
+                    "oxygen_saturation": v.oxygen_saturation,
+                    "calories": v.calories,
+                    "sleep_duration": v.sleep_duration
+                }
+
+                if -3 * 3600 <= delta < 0:
+                    if v.glucose_value is not None:
+                        pre_glucose.append(v.glucose_value)
+                    vitals_window_before.append(vital_data)
+                elif 0 <= delta <= 3 * 3600:
+                    if v.glucose_value is not None:
+                        post_glucose.append(v.glucose_value)
+                    vitals_window_after.append(vital_data)
+
             event = {
                 "type": "exercise",
                 "name": a.act_name if a.act_name else (a.activity_type or "exercise"),
@@ -508,11 +546,17 @@ def get_exercise_events(user_email):
                 "duration": f"{a.duration_min}min",
                 "intensity": a.intensity,
                 "glucose_levels": {
-                    "pre_3h": pre_3h,
-                    "post_3h": post_3h
+                    "pre_3h": pre_glucose,
+                    "post_3h": post_glucose
+                },
+                "vitals_window": {
+                    "pre_3h": vitals_window_before,
+                    "post_3h": vitals_window_after
                 }
             }
+
             events.append(event)
+
 
         return jsonify(events), 200
 

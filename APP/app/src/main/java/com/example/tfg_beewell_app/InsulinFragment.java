@@ -38,17 +38,14 @@ public class InsulinFragment extends Fragment {
     private Button saveBtn;
     private String email;
 
-    /*–––––––––––––––––––––––––––––––––––––––––––––––*/
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        // Usa el layout con el Exposed Drop-down que te pasé
         return inflater.inflate(R.layout.fragment_insulin, container, false);
     }
 
-    /*–––––––––––––––––––––––––––––––––––––––––––––––*/
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -58,25 +55,19 @@ public class InsulinFragment extends Fragment {
 
         if (email == null) {
             Toast.makeText(requireContext(), "No user session found.", Toast.LENGTH_SHORT).show();
-            requireActivity().finish(); // optional: close the screen if no user
+            requireActivity().finish();
             return;
         }
 
         insulinInput = view.findViewById(R.id.insulinInput);
         insulinTypeField = view.findViewById(R.id.insulinTypeField);
         injectionSpotDropdown = view.findViewById(R.id.injectionSpotDropdown);
-
         saveBtn = view.findViewById(R.id.saveInsulinBtn);
 
         setupDropdown();
-
         saveBtn.setOnClickListener(v -> sendInsulin());
     }
 
-
-    /*-------------------------------------------------
-     *  Carga los tipos de insulina en el desplegable
-     *------------------------------------------------*/
     private void setupDropdown() {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
                 requireContext(),
@@ -91,76 +82,69 @@ public class InsulinFragment extends Fragment {
         injectionSpotDropdown.setAdapter(spotAdapter);
     }
 
-
-    /*-------------------------------------------------
-     *  Envía la dosis al servidor
-     *------------------------------------------------*/
-    //-----------  Pega esto en tu fragment  -----------
     private void sendInsulin() {
-
         String unitsStr = insulinInput.getText().toString().trim();
         String insulinType = insulinTypeField.getText().toString().trim();
-
+        String injectionSpot = injectionSpotDropdown.getText().toString().trim();
 
         if (unitsStr.isEmpty()) {
-            Toast.makeText(getContext(),
-                    "Add Units",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Add Units", Toast.LENGTH_SHORT).show();
             return;
         }
         if (insulinType.isEmpty()) {
-            Toast.makeText(getContext(),
-                    "Select Type",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Select Type", Toast.LENGTH_SHORT).show();
             return;
         }
-
-        String injectionSpot = injectionSpotDropdown.getText().toString().trim();
         if (injectionSpot.isEmpty()) {
             Toast.makeText(getContext(), "Select injection spot", Toast.LENGTH_SHORT).show();
             return;
         }
 
-
-
         try {
-            long epochSeconds = System.currentTimeMillis() / 1_000L; // INT
-            double units = Double.parseDouble(unitsStr);        // FLOAT
+            long epochSeconds = System.currentTimeMillis() / 1000L;
+            double units = Double.parseDouble(unitsStr);
 
             JSONObject body = new JSONObject();
-            body.put("user_email", email);              // String
-            body.put("insulin_time", epochSeconds);     // INT
-            body.put("insulin_value", units);         // FLOAT
-            body.put("insulin_type", insulinType);   // String
-            body.put("in_spot", injectionSpot);     // Where
-
+            body.put("user_email", email);
+            body.put("insulin_time", epochSeconds);
+            body.put("insulin_value", units);
+            body.put("insulin_type", simplifyInsulinType(insulinType)); // <- Usamos la versión simplificada
+            body.put("in_spot", injectionSpot);
 
             JsonObjectRequest req = new JsonObjectRequest(
                     Request.Method.POST,
                     Constants.BASE_URL + "/insulin",
                     body,
-                    rsp -> Toast.makeText(getContext(),
-                            "Insulin saved!",
-                            Toast.LENGTH_SHORT).show(),
+                    rsp -> Toast.makeText(getContext(), "Insulin saved!", Toast.LENGTH_SHORT).show(),
                     err -> {
                         if (err.networkResponse != null) {
-                            Log.e("INSULIN",
-                                    "HTTP " + err.networkResponse.statusCode + " → "
-                                            + new String(err.networkResponse.data));
+                            Log.e("INSULIN", "HTTP " + err.networkResponse.statusCode + " → " +
+                                    new String(err.networkResponse.data));
                         }
-                        Toast.makeText(getContext(),
-                                "Error saving",
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Error saving", Toast.LENGTH_SHORT).show();
                     });
 
             Volley.newRequestQueue(requireContext()).add(req);
 
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(getContext(),
-                    "Error preparing data",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Error preparing data", Toast.LENGTH_SHORT).show();
         }
     }
 
+    // 🎯 Clasifica en "rapid-acting" o "slow-acting"
+    private String simplifyInsulinType(String rawType) {
+        rawType = rawType.toLowerCase();
+
+        if (rawType.contains("fiasp") ||
+                rawType.contains("afrezza") ||
+                rawType.contains("apidra") ||
+                rawType.contains("novorapid") ||
+                rawType.contains("humalog") ||
+                rawType.contains("lispro")) {
+            return "rapid-acting";
+        }
+
+        return "slow-acting";
+    }
 }
