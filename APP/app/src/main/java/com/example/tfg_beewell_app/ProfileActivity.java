@@ -3,6 +3,7 @@ package com.example.tfg_beewell_app;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -13,224 +14,300 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.tfg_beewell_app.local.GlucoseDB;
+import com.example.tfg_beewell_app.local.LocalGlucoseDatabase;
 
 import org.json.JSONObject;
 
+import java.io.File;
+
 public class ProfileActivity extends AppCompatActivity {
-    String email;
 
-    EditText heightInput, weightInput, insulinSensitivityInput, carbRatioInput, carbAbsorptionInput;
-    EditText birthdateInput;
-    Spinner sexSpinner;
-    Button saveUserInfoButton, saveHeightWeightButton, changeEmailButton, changePasswordButton, deleteProfileButton;
-    ImageView backButton;
+    /* ────── FIELDS ────── */
+    private String email;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    private EditText heightInput, weightInput, insulinSensitivityInput,
+            carbRatioInput, carbAbsorptionInput, birthdateInput;
+    private Spinner  sexSpinner;
+    private Button   saveUserInfoButton, saveHeightWeightButton,
+            changeEmailButton, changePasswordButton, deleteProfileButton;
+    private ImageView backButton;
+
+    /* ────── LIFECYCLE ────── */
+    @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
+        /* session */
         SharedPreferences prefs = getSharedPreferences("user_session", MODE_PRIVATE);
         email = prefs.getString("user_email", null);
 
-        birthdateInput = findViewById(R.id.birthdate);
-        sexSpinner = findViewById(R.id.sexSpinner);
-        heightInput = findViewById(R.id.height);
-        weightInput = findViewById(R.id.weight);
+        /* wiring */
+        birthdateInput          = findViewById(R.id.birthdate);
+        sexSpinner              = findViewById(R.id.sexSpinner);
+        heightInput             = findViewById(R.id.height);
+        weightInput             = findViewById(R.id.weight);
         insulinSensitivityInput = findViewById(R.id.insulin_sensitivity);
-        carbRatioInput = findViewById(R.id.carb_ratio);
-        carbAbsorptionInput = findViewById(R.id.carb_absorption);
-        saveUserInfoButton = findViewById(R.id.saveUserDataButton);
-        saveHeightWeightButton = findViewById(R.id.saveUserVariablesButton);
-        changeEmailButton = findViewById(R.id.changeEmailButton);
-        changePasswordButton = findViewById(R.id.changePasswordButton);
-        deleteProfileButton = findViewById(R.id.deleteProfileButton);
-        backButton = findViewById(R.id.backButton);
+        carbRatioInput          = findViewById(R.id.carb_ratio);
+        carbAbsorptionInput     = findViewById(R.id.carb_absorption);
 
+        saveUserInfoButton      = findViewById(R.id.saveUserDataButton);
+        saveHeightWeightButton  = findViewById(R.id.saveUserVariablesButton);
+        changeEmailButton       = findViewById(R.id.changeEmailButton);
+        changePasswordButton    = findViewById(R.id.changePasswordButton);
+        deleteProfileButton     = findViewById(R.id.deleteProfileButton);
+        backButton              = findViewById(R.id.backButton);
+
+        /* spinner */
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
-                this,
-                R.array.sex_options,
-                R.layout.spinner_item
-        );
+                this, R.array.sex_options, R.layout.spinner_item);
         adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
         sexSpinner.setAdapter(adapter);
 
         birthdateInput.setText(prefs.getString("birthdate", ""));
         String savedSex = prefs.getString("sex", "");
-        if (!savedSex.isEmpty()) {
-            int spinnerPosition = adapter.getPosition(savedSex);
-            if (spinnerPosition >= 0) sexSpinner.setSelection(spinnerPosition);
-        } else {
-            sexSpinner.setSelection(0);
-        }
+        sexSpinner.setSelection(!savedSex.isEmpty()
+                ? adapter.getPosition(savedSex) : 0);
 
-        saveUserInfoButton.setOnClickListener(v -> {
-            String birthdateStr = birthdateInput.getText().toString();
-            String selectedSex = sexSpinner.getSelectedItem().toString();
-
-            JSONObject body = new JSONObject();
-            boolean isSomethingSent = false;
-
-            try {
-                if (!birthdateStr.isEmpty()) {
-                    body.put("birth_date", Integer.parseInt(birthdateStr));
-                    isSomethingSent = true;
-                }
-                if (selectedSex.equals("Male")) {
-                    body.put("sex", false);
-                    isSomethingSent = true;
-                } else if (selectedSex.equals("Female")) {
-                    body.put("sex", true);
-                    isSomethingSent = true;
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            if (!isSomethingSent) {
-                Toast.makeText(this, "Nothing to update", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            String url = Constants.BASE_URL + "/user/" + email;
-            JsonObjectRequest request = new JsonObjectRequest(Request.Method.PUT, url, body,
-                    response -> Toast.makeText(this, "User info updated", Toast.LENGTH_SHORT).show(),
-                    error -> Toast.makeText(this, "Error updating user info", Toast.LENGTH_SHORT).show()
-            );
-            Volley.newRequestQueue(this).add(request);
-        });
-
-        saveHeightWeightButton.setOnClickListener(v -> {
-            String heightStr = heightInput.getText().toString();
-            String weightStr = weightInput.getText().toString();
-            String sensitivityStr = insulinSensitivityInput.getText().toString();
-            String ratioStr = carbRatioInput.getText().toString();
-            String absorptionStr = carbAbsorptionInput.getText().toString();
-
-            if (heightStr.isEmpty() && weightStr.isEmpty() && sensitivityStr.isEmpty() &&
-                    ratioStr.isEmpty() && absorptionStr.isEmpty()) {
-                Toast.makeText(this, "Nothing to update", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            JSONObject body = new JSONObject();
-            StringBuilder updatedFields = new StringBuilder();
-
-            try {
-                body.put("user_email", email);
-                body.put("change_date_time", System.currentTimeMillis() / 1000);
-
-                if (!heightStr.isEmpty()) {
-                    body.put("height", Double.parseDouble(heightStr));
-                    updatedFields.append("Height ");
-                } else body.put("height", JSONObject.NULL);
-
-                if (!weightStr.isEmpty()) {
-                    body.put("weight", Double.parseDouble(weightStr));
-                    updatedFields.append("Weight ");
-                } else body.put("weight", JSONObject.NULL);
-
-                if (!sensitivityStr.isEmpty()) {
-                    body.put("insulin_sensitivity", Double.parseDouble(sensitivityStr));
-                    updatedFields.append("Sensitivity ");
-                } else body.put("insulin_sensitivity", JSONObject.NULL);
-
-                if (!ratioStr.isEmpty()) {
-                    body.put("carb_ratio", Double.parseDouble(ratioStr));
-                    updatedFields.append("Ratio ");
-                } else body.put("carb_ratio", JSONObject.NULL);
-
-                if (!absorptionStr.isEmpty()) {
-                    body.put("carb_absorption_rate", Double.parseDouble(absorptionStr));
-                    updatedFields.append("Absorption ");
-                } else body.put("carb_absorption_rate", JSONObject.NULL);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            final String fieldsUpdated = updatedFields.toString().trim();
-
-            JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST,
-                    Constants.BASE_URL + "/user_variables",
-                    body,
-                    response -> Toast.makeText(this, fieldsUpdated + " saved", Toast.LENGTH_SHORT).show(),
-                    error -> Toast.makeText(this, "Error saving user variables", Toast.LENGTH_SHORT).show()
-            );
-            Volley.newRequestQueue(this).add(request);
-        });
-
-        changeEmailButton.setOnClickListener(v ->
-                Toast.makeText(this, "Email change not implemented", Toast.LENGTH_SHORT).show());
-        changePasswordButton.setOnClickListener(v ->
-                Toast.makeText(this, "Password change not implemented", Toast.LENGTH_SHORT).show());
-
-        deleteProfileButton.setOnClickListener(v -> {
-            new AlertDialog.Builder(this)
-                    .setTitle("Delete Profile")
-                    .setMessage("Are you sure you want to permanently delete your profile?")
-                    .setPositiveButton("Yes", (dialog, which) -> {
-                        prefs.edit().clear().apply();
-                        SharedPreferences sessionPrefs = getSharedPreferences("user_session", MODE_PRIVATE);
-                        sessionPrefs.edit().clear().apply();
-                        startActivity(new Intent(this, LoginActivity.class));
-                        finish();
-                    })
-                    .setNegativeButton("Cancel", null)
-                    .show();
-        });
-
+        /* listeners */
+        saveUserInfoButton.setOnClickListener(v -> saveUserInfo());
+        saveHeightWeightButton.setOnClickListener(v -> saveUserVariables());
+        changeEmailButton.setOnClickListener(v -> showChangeEmailDialog());
+        changePasswordButton.setOnClickListener(v -> showChangePasswordDialog());
+        deleteProfileButton.setOnClickListener(v -> showDeleteDialog());
         backButton.setOnClickListener(v -> finish());
 
+        /* preload */
         loadUserInfo(email);
         loadUserVariables(email);
     }
 
-    private void loadUserInfo(String email) {
+    /* ────── SAVE → USER TABLE ────── */
+    private void saveUserInfo() {
+        String birthdateStr = birthdateInput.getText().toString();
+        String selectedSex  = sexSpinner.getSelectedItem().toString();
+
+        JSONObject body = new JSONObject();
+        boolean something = false;
+        try {
+            if (!birthdateStr.isEmpty()) {
+                body.put("birth_date", Integer.parseInt(birthdateStr));
+                something = true;
+            }
+            if (selectedSex.equals("Male"))   { body.put("sex", false); something = true; }
+            if (selectedSex.equals("Female")) { body.put("sex", true);  something = true; }
+        } catch (Exception ignore) {}
+
+        if (!something) { t("Nothing to update"); return; }
+
         String url = Constants.BASE_URL + "/user/" + email;
-
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
-                response -> {
-                    int birthDate = response.optInt("birth_date", 0);
-                    boolean hasSex = response.has("sex") && !response.isNull("sex");
-                    boolean sexValue = response.optBoolean("sex", false);
-
-                    if (birthDate > 0) birthdateInput.setText(String.valueOf(birthDate));
-                    else birthdateInput.setText("");
-
-                    if (hasSex) {
-                        sexSpinner.setSelection(sexValue ? 2 : 1); // Female : Male
-                    } else {
-                        sexSpinner.setSelection(0);
-                    }
-                },
-                error -> Toast.makeText(this, "Error loading user data", Toast.LENGTH_SHORT).show()
-        );
-        Volley.newRequestQueue(this).add(request);
+        sendJson(Request.Method.PUT, url, body,
+                () -> t("User info updated"),
+                () -> t("Error updating user info"));
     }
 
-    private void loadUserVariables(String email) {
-        String url = Constants.BASE_URL + "/user_variables/last/" + email;
+    /* ────── SAVE → USER_VARIABLES ────── */
+    private void saveUserVariables() {
+        String h = heightInput.getText().toString(),
+                w = weightInput.getText().toString(),
+                s = insulinSensitivityInput.getText().toString(),
+                r = carbRatioInput.getText().toString(),
+                a = carbAbsorptionInput.getText().toString();
 
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
-                response -> {
-                    int height = response.optInt("height", -1);
-                    int weight = response.optInt("weight", -1);
-                    double sensitivity = response.optDouble("insulin_sensitivity", -1);
-                    double ratio = response.optDouble("carb_ratio", -1);
-                    double absorption = response.optDouble("carb_absorption_rate", -1);
+        if (h.isEmpty() && w.isEmpty() && s.isEmpty() && r.isEmpty() && a.isEmpty()) {
+            t("Nothing to update"); return;
+        }
 
-                    heightInput.setText(height > 0 ? String.valueOf(height) : "");
-                    weightInput.setText(weight > 0 ? String.valueOf(weight) : "");
-                    insulinSensitivityInput.setText(sensitivity > 0 ? String.valueOf(sensitivity) : "");
-                    carbRatioInput.setText(ratio > 0 ? String.valueOf(ratio) : "");
-                    carbAbsorptionInput.setText(absorption > 0 ? String.valueOf(absorption) : "");
+        JSONObject body = new JSONObject();
+        StringBuilder updated = new StringBuilder();
+        try {
+            body.put("user_email", email);
+            body.put("change_date_time", System.currentTimeMillis() / 1000);
+
+            if (!h.isEmpty()) { body.put("height", Double.parseDouble(h)); updated.append("Height "); }
+            if (!w.isEmpty()) { body.put("weight", Double.parseDouble(w)); updated.append("Weight "); }
+            if (!s.isEmpty()) { body.put("insulin_sensitivity", Double.parseDouble(s)); updated.append("Sensitivity "); }
+            if (!r.isEmpty()) { body.put("carb_ratio", Double.parseDouble(r)); updated.append("Ratio "); }
+            if (!a.isEmpty()) { body.put("carb_absorption_rate", Double.parseDouble(a)); updated.append("Absorption "); }
+        } catch (Exception ignore) {}
+
+        String url = Constants.BASE_URL + "/user_variables";
+        sendJson(Request.Method.POST, url, body,
+                () -> t(updated.toString().trim() + " saved"),
+                () -> t("Error saving user variables"));
+    }
+
+    /* ────── CHANGE EMAIL ────── */
+    private void showChangeEmailDialog() {
+        EditText input = new EditText(this);
+        input.setHint("new@email.com");
+
+        new AlertDialog.Builder(this)
+                .setTitle("Change Email")
+                .setView(input)
+                .setPositiveButton("Save", (d, w) -> {
+                    String newEmail = input.getText().toString().trim();
+                    if (newEmail.isEmpty()) { t("Email can’t be empty"); return; }
+
+                    JSONObject body = new JSONObject();
+                    try { body.put("new_email", newEmail); } catch (Exception ignore) {}
+
+                    String url = Constants.BASE_URL + "/user/email/" + email;
+                    sendJson(Request.Method.PUT, url, body,
+                            () -> {
+                                renameLocalDb(email, newEmail);                     // ← local DB rename
+                                getSharedPreferences("user_session", MODE_PRIVATE)
+                                        .edit().putString("user_email", newEmail).apply();
+                                email = newEmail;
+                                t("Email updated");
+                            },
+                            () -> t("Error updating email"));
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /* ────── CHANGE PASSWORD ────── */
+    private void showChangePasswordDialog() {
+        View dlg = getLayoutInflater().inflate(R.layout.dialog_change_password, null);
+        EditText oldPw = dlg.findViewById(R.id.oldPassword);
+        EditText newPw = dlg.findViewById(R.id.newPassword);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Change Password")
+                .setView(dlg)
+                .setPositiveButton("Save", (d, w) -> {
+                    String o = oldPw.getText().toString();
+                    String n = newPw.getText().toString();
+                    if (o.isEmpty() || n.isEmpty()) { t("Fill both fields"); return; }
+
+                    JSONObject body = new JSONObject();
+                    try {
+                        body.put("old_password", o);
+                        body.put("new_password", n);
+                    } catch (Exception ignore) {}
+
+                    String url = Constants.BASE_URL + "/user/password/" + email;
+                    sendJson(Request.Method.PUT, url, body,
+                            () -> t("Password updated"),
+                            () -> t("Error updating password"));
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /* ────── DELETE PROFILE ────── */
+    private void showDeleteDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Profile")
+                .setMessage("This will permanently erase your account. Continue?")
+                .setPositiveButton("Yes", (d, w) -> {
+                    String url = Constants.BASE_URL + "/user/" + email;
+                    sendJson(Request.Method.DELETE, url, null,
+                            () -> {
+                                deleteLocalDb(email);                               // ← local DB delete
+                                getSharedPreferences("user_session", MODE_PRIVATE).edit().clear().apply();
+                                startActivity(new Intent(this, LoginActivity.class));
+                                t("Profile deleted");
+                                finish();
+                            },
+                            () -> t("Error deleting profile"));
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /* ────── LOADERS ────── */
+    private void loadUserInfo(String mail) {
+        String url = Constants.BASE_URL + "/user/" + mail;
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET, url, null,
+                res -> {
+                    int birth = res.optInt("birth_date", 0);
+                    boolean hasSex = res.has("sex") && !res.isNull("sex");
+                    boolean sexVal = res.optBoolean("sex", false);
+
+                    birthdateInput.setText(birth > 0 ? String.valueOf(birth) : "");
+                    sexSpinner.setSelection(hasSex ? (sexVal ? 2 : 1) : 0);
                 },
-                error -> Toast.makeText(this, "Error loading user data", Toast.LENGTH_SHORT).show()
-        );
-        Volley.newRequestQueue(this).add(request);
+                err -> t("Error loading user data"));
+        Volley.newRequestQueue(this).add(req);
+    }
+
+    private void loadUserVariables(String mail) {
+        String url = Constants.BASE_URL + "/user_variables/last/" + mail;
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET, url, null,
+                res -> {
+                    heightInput.setText(       res.optInt   ("height",               -1) > 0 ? res.optString("height")               : "");
+                    weightInput.setText(       res.optInt   ("weight",               -1) > 0 ? res.optString("weight")               : "");
+                    insulinSensitivityInput.setText(res.optDouble("insulin_sensitivity", -1) > 0 ? res.optString("insulin_sensitivity") : "");
+                    carbRatioInput.setText(    res.optDouble("carb_ratio",           -1) > 0 ? res.optString("carb_ratio")           : "");
+                    carbAbsorptionInput.setText(res.optDouble("carb_absorption_rate", -1) > 0 ? res.optString("carb_absorption_rate") : "");
+                },
+                err -> t("Error loading user data"));
+        Volley.newRequestQueue(this).add(req);
+    }
+
+    /* ────── HELPERS ────── */
+    /** Volley wrapper that treats 204 or empty bodies as success */
+    private void sendJson(int method, String url, JSONObject body,
+                          Runnable ok, Runnable err) {
+
+        JsonObjectRequest req = new JsonObjectRequest(method, url, body,
+                r -> ok.run(),
+                e -> err.run()) {
+
+            @Override
+            protected Response<JSONObject> parseNetworkResponse(NetworkResponse resp) {
+                if (resp != null && (resp.statusCode == 204 || resp.data == null || resp.data.length == 0)) {
+                    return Response.success(new JSONObject(), HttpHeaderParser.parseCacheHeaders(resp));
+                }
+                return super.parseNetworkResponse(resp);
+            }
+        };
+
+        Volley.newRequestQueue(this).add(req);
+    }
+
+    private void t(String msg) { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show(); }
+
+    /* ─────────── LOCAL-DB UTILITIES ─────────── */
+    private String dbNameFor(String mail) {
+        return "glucose_db_" + mail.replace("@", "_").replace(".", "_");
+    }
+
+    private void renameLocalDb(String oldEmail, String newEmail) {
+        try { GlucoseDB.getInstance(getApplicationContext(), oldEmail).close(); }
+        catch (Exception ignore) {}
+
+        GlucoseDB.clearAllInstances();
+
+        /* all three files share the same base path */
+        String oldBase = dbNameFor(oldEmail);
+        String newBase = dbNameFor(newEmail);
+
+        for (String suffix : new String[]{"", "-wal", "-shm"}) {
+            File oldF = getDatabasePath(oldBase + suffix);
+            if (oldF.exists()) {
+                File newF = getDatabasePath(newBase + suffix);
+                //noinspection ResultOfMethodCallIgnored
+                oldF.renameTo(newF);
+            }
+        }
+
+        /* warm-up: open new DB so future code sees the data */
+        GlucoseDB.getInstance(getApplicationContext(), newEmail);
+    }
+
+
+    private void deleteLocalDb(String mail) {
+        try { GlucoseDB.getInstance(getApplicationContext(), mail).close(); } catch (Exception ignore) {}
+        GlucoseDB.clearAllInstances();
+        deleteDatabase(dbNameFor(mail));                 // removes -wal / -shm too
     }
 }

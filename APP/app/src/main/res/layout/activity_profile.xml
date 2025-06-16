@@ -63,22 +63,34 @@
                     android:orientation="vertical"
                     android:padding="24dp">
 
+                    <TextView
+                        android:id="@+id/textView3"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Birth Date (DDMMYY)"
+                        android:textColor="@color/beeBlack" />
+
                     <EditText
                         android:id="@+id/birthdate"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="16dp"
-                        android:hint="Birth Date (DDMMYYYY)"
                         android:inputType="datetime|date"
                         android:textColor="@color/beeBlack"
                         android:textColorHighlight="@color/material_dynamic_neutral40"
                         android:textColorHint="@color/material_dynamic_neutral40" />
 
+                    <TextView
+                        android:id="@+id/textView4"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Sex"
+                        android:textColor="@color/beeBlack" />
+
                     <Spinner
                         android:id="@+id/sexSpinner"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp" />
+                        android:layout_height="wrap_content" />
 
 
                     <Button
@@ -108,61 +120,87 @@
                     android:orientation="vertical"
                     android:padding="24dp">
 
+                    <TextView
+                        android:id="@+id/textView5"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Height (cm)"
+                        android:textColor="@color/beeBlack" />
+
                     <EditText
                         android:id="@+id/height"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="16dp"
-                        android:hint="Height (cm)"
                         android:inputType="number|numberDecimal"
                         android:textColor="@color/beeBlack"
                         android:textColorHighlight="@color/material_dynamic_neutral40"
                         android:textColorHint="@color/material_dynamic_neutral40" />
+
+                    <TextView
+                        android:id="@+id/textView6"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Weight (Kg)"
+                        android:textColor="@color/beeBlack" />
 
                     <EditText
                         android:id="@+id/weight"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
                         android:layout_marginBottom="16dp"
-                        android:hint="Weight (kg)"
                         android:inputType="number|numberDecimal"
                         android:textColor="@color/beeBlack"
                         android:textColorHighlight="@color/material_dynamic_neutral40"
                         android:textColorHint="@color/material_dynamic_neutral40" />
 
+
+                    <TextView
+                        android:id="@+id/textView7"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Insulin Sensitivity"
+                        android:textColor="@color/beeBlack" />
 
                     <EditText
                         android:id="@+id/insulin_sensitivity"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
                         android:layout_marginBottom="16dp"
-                        android:hint="Insulin Sensitivity"
                         android:inputType="number|numberDecimal"
                         android:textColor="@color/beeBlack"
                         android:textColorHighlight="@color/material_dynamic_neutral40"
                         android:textColorHint="@color/material_dynamic_neutral40" />
+
+                    <TextView
+                        android:id="@+id/textView8"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Carb Ratio"
+                        android:textColor="@color/beeBlack" />
 
                     <EditText
                         android:id="@+id/carb_ratio"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
                         android:layout_marginBottom="16dp"
-                        android:hint="Carb Ratio"
                         android:inputType="number|numberDecimal"
                         android:textColor="@color/beeBlack"
                         android:textColorHighlight="@color/material_dynamic_neutral40"
                         android:textColorHint="@color/material_dynamic_neutral40" />
 
+                    <TextView
+                        android:id="@+id/textView9"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Carb Absorption"
+                        android:textColor="@color/beeBlack" />
+
                     <EditText
                         android:id="@+id/carb_absorption"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
                         android:layout_marginBottom="16dp"
-                        android:hint="Carb Absorption"
                         android:inputType="number|numberDecimal"
                         android:textColor="@color/beeBlack"
                         android:textColorHighlight="@color/material_dynamic_neutral40"

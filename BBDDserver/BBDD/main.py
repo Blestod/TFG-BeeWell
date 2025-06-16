@@ -88,6 +88,106 @@ def update_userinfo(user_email):
 
     return user.serialize(), 200
 
+
+# ─────────── PASSWORD CHANGE ───────────
+@api.route("/user/password/<string:user_email>", methods=["PUT"])
+def change_password(user_email):
+    """
+    Body JSON:
+    {
+      "old_password": "<current-plain-password>",
+      "new_password": "<new-plain-password>"
+    }
+    """
+    user = db.session.get(User, user_email)
+    if user is None:
+        return jsonify(error="User not found"), 404
+
+    data = request.get_json() or {}
+    old_pw = data.get("old_password")
+    new_pw = data.get("new_password")
+
+    if not old_pw or not new_pw:
+        return jsonify(error="Both old_password and new_password are required"), 400
+
+    # 1️⃣  verify current password
+    if not verify_password(old_pw, user.password):
+        return jsonify(error="Old password is incorrect"), 403
+
+    # 2️⃣  hash & store the new password
+    user.password = hash_password(new_pw)
+    db.session.commit()
+
+    return jsonify(success=True), 200
+
+# ─────────── CHANGE E-MAIL (copy-switch) ───────────
+@api.route("/user/email/<string:old_email>", methods=["PUT"])
+def change_email(old_email):
+    data = request.get_json() or {}
+    new_email = data.get("new_email")
+    if not new_email:
+        return {"error": "new_email is required"}, 400
+
+    # 1) sanity
+    old_u = db.session.get(User, old_email)
+    if old_u is None:
+        return {"error": "user-not-found"}, 404
+    if db.session.get(User, new_email):
+        return {"error": "new_email already exists"}, 409
+
+    try:
+        # 2) clone parent
+        new_u = User(email=new_email,
+                     password=old_u.password,
+                     birth_date=old_u.birth_date,
+                     sex=old_u.sex)
+        db.session.add(new_u)
+        db.session.flush()          # ← ensures INSERT happens right away
+
+        # 3) re-point children
+        for model in (Meal, Vital, Prediction,
+                      UserVariables, Activity, InsulinInjected):
+            (model.query
+                  .filter_by(user_email=old_email)
+                  .update({"user_email": new_email},
+                          synchronize_session=False))
+
+        # 4) delete old parent
+        db.session.delete(old_u)
+        db.session.commit()
+
+        return {"success": True, "new_email": new_email}, 200
+
+    except Exception as e:
+        db.session.rollback()
+        print("❌ change_email error:", e)
+        return {"error": "internal-error"}, 500
+
+# ─────────── DELETE USER BUT KEEP HISTORY ───────────
+@api.route("/user/<string:user_email>", methods=["DELETE"])
+def delete_user_keep_history(user_email):
+    """
+    Removes the user row and all its user_variables,
+    preserving meals / vitals / insulin / activities / predictions.
+    """
+    # 1️⃣  purge user_variables
+    UserVariables.query.filter_by(user_email=user_email)\
+                       .delete(synchronize_session=False)
+
+    # 2️⃣  delete the user row itself
+    #     Using .delete() avoids SQLAlchemy’s relationship-cascade logic
+    #     (because it emits raw SQL instead of session.delete(obj)).
+    rows = User.query.filter_by(email=user_email)\
+                     .delete(synchronize_session=False)
+
+    db.session.commit()
+
+    if rows == 0:
+        return jsonify(error="User not found"), 404
+    return "", 204
+
+
+
 #-----------------USER_VARIABLES-----------------
 @api.route("/user_variables", methods=["POST"])
 def post_user_variables():
@@ -581,12 +681,25 @@ def generate_summary():
 
     try:
         prompt = f"""
-        Analyze the following glucose data from the last 30 days:
+        You are the user’s personal health assistant.
 
+        Context – glucose readings for the last 30 days:
         {values}
 
-        Provide a medical-style summary of the patient's glucose progression.
-        Mention stability, fluctuations, possible causes, and advice.
+        ### Instructions
+        1. Write in ENGLISH and **second person** (“you”).
+        2. Be concise but precise; max ~300 words per section.
+        3. Use concrete numbers (ranges, averages, deviations) when possible.
+        4. Keep a neutral-positive tone – neither alarming nor over-hyping.
+        5. Return **only** this JSON:
+
+        {{
+        "overview":            "<2 sentences describing your overall status>",
+        "key_trends":          ["<trend 1>", "<trend 2>", "<trend 3>"],
+        "achievements":        ["<achievement 1>", "<achievement 2>", "<achievement 3>"],
+        "areas_to_improve":    ["<improve 1>", "<improve 2>", "<improve 3>"],
+        "next_steps":          "<1–2 concrete actions for the coming month>"
+        }}
         """
 
         response = client.chat.completions.create(
@@ -633,22 +746,26 @@ def generate_insights():
     )
 
     prompt = f"""
-    Eres un asistente médico. Recibes:
-    1) Datos recientes del paciente:
-       {'; '.join(lines)}.
-    2) Predicción de glucosa para la próxima hora:
-       {preds_str}
+    You are a medical assistant. Here are the current vitals and the 1-hour glucose forecast for the user:
 
-    Genera DOS respuestas en ingles:
-    A) recommendation_vitals: 1–2 oraciones con un consejo inmediato.
-    B) recommendation_prediction: un párrafo detallado sobre la predicción.
+    {'; '.join(lines)}
 
-    Devuélveme solo este JSON:
+    Forecast:
+    {preds_str}
+
+    ### Guidelines
+    1. Answer in ENGLISH, addressing the user as **“you”**.
+    2. Produce exactly this JSON ONLY:
+
     {{
-      "recommendation_vitals": "...",
-      "recommendation_prediction": "..."
+    "recommendation_vitals":     "<1–2 precise sentences based on live vitals (quote numbers) + 1 clear action>",
+    "recommendation_prediction": "<≤70-word paragraph on the forecast trend and ONE concrete next step>"
     }}
+
+    3. Avoid vague phrases like “be careful”. Give direct but calm advice.
+    4. If all metrics are healthy, acknowledge briefly (“Looks good—keep it up”) without over-enthusiasm.
     """
+
 
     try:
         resp = client.chat.completions.create(
@@ -673,6 +790,42 @@ def generate_insights():
         return jsonify(error="GPT request failed"), 500
 
 #---------------------PREDICTION----------------------
+
+@api.route("/prediction", methods=["POST"])
+def post_prediction():
+    data = request.get_json()
+    user = db.session.get(User, data["user_email"])
+    if user is None:
+        return jsonify(error="User not found"), 404
+
+    pred = Prediction(
+        user_email     = user.email,
+        predict_time   = data["predict_time"],      # epoch-sec **now**
+        forecast_time  = data.get("forecast_time"), # epoch-sec future point
+        confidence_lvl = data.get("confidence_lvl"),
+        forecast_desc  = data["forecast_desc"],
+        predict_type   = data["predict_type"]       # whatever enum you decided
+    )
+    db.session.add(pred)
+    db.session.commit()
+    return jsonify(pred.serialize()), 201
+
+
+#---------------------LogBook----------------------
+
+@api.route("/logbook/<string:user_email>", methods=["GET"])
+def get_full_log(user_email):
+    insulin     = InsulinInjected.query.filter_by(user_email=user_email).all()
+    meals       = Meal.query.filter_by(user_email=user_email).all()
+    activities  = Activity.query.filter_by(user_email=user_email).all()
+
+    return jsonify({
+        "insulin"    : [i.serialize() for i in insulin],
+        "meals"      : [m.serialize() for m in meals],
+        "activities" : [a.serialize() for a in activities],
+    }), 200
+
+
 # ────────────────────────────────────────────────────────────────
 # 1 ·  ENDPOINT DE FEATURES ─ signos vitales agregados
 #    GET /features/vitals/<user_email>?from=<epoch_ms>&to=<epoch_ms>

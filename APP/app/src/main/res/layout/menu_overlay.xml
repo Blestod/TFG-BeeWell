@@ -24,17 +24,18 @@
             android:layout_height="match_parent"
             android:padding="8dp">
 
-            <ImageView
-                android:id="@+id/menuLogo"
-                android:layout_width="120dp"
-                android:layout_height="60dp"
-                android:layout_gravity="center"
-                android:layout_marginTop="8dp"
-                android:contentDescription="Menu Logo"
-                android:paddingLeft="8dp"
-                android:src="@drawable/beewell"
+            <TextView
+                android:id="@+id/textView2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:fontFamily="@font/nunitosemibold"
+                android:text="BeeWell"
+                android:textColor="@color/beeBlue"
+                android:textSize="26sp"
+                app:layout_constraintBottom_toBottomOf="@+id/closeMenuBtn"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="@+id/closeMenuBtn" />
 
             <ImageView
                 android:id="@+id/closeMenuBtn"

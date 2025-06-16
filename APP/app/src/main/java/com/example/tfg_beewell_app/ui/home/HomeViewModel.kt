@@ -44,7 +44,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     ) {
         val now = System.currentTimeMillis()
         Log.d(TAG, "fetchInsightsIfNeeded called — now=$now, lastFetch=$lastFetch")
-        if (now - lastFetch < TimeUnit.HOURS.toMillis(1)) {
+        if (now - lastFetch < TimeUnit.MINUTES.toMillis(30)) {
             Log.d(TAG, "skip fetch — aún no ha pasado 1h")
             return
         }

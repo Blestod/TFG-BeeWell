@@ -1,142 +1,142 @@
 {
-  "Monitoreo de glucosa": [
-    "Un pequeño pinchazo hoy puede evitar una gran complicación mañana.",
-    "Cada medición es un paso hacia tu bienestar.",
-    "Tus números son mensajes; escúchalos, entiéndelos.",
-    "Mide, registra y aprende: tu cuerpo te enseña.",
-    "Ten siempre un plan B en tu kit de cuidado."
+  "Glucose Monitoring": [
+    "Check pre-meal, bedtime; CGM covers overnight gaps.",
+    "Target 70-130 fasting, under 180 post-meal.",
+    "Log readings with carbs, insulin, activity notes.",
+    "Confirm CGM alarms by finger-stick before treating.",
+    "Carry spare strips, batteries and lancets when travelling."
   ],
-  "Manejo de la insulina o medicación": [
-    "Tu cuerpo no olvida la insulina, tampoco lo hagas tú.",
-    "Cada dosis es una herramienta de vida.",
-    "Consulta siempre: la insulina es precisa, no adivina.",
-    "Actuar rápido sí, pero con cabeza y cálculo.",
-    "Fría, pero no congelada: así se cuida la insulina."
+  "Insulin or Medication Management": [
+    "Store unopened insulin 2-8 °C; 28 days at room.",
+    "Rotate sites every shot to avoid lipohypertrophy.",
+    "Dose meals using your insulin-carb ratio and corrections.",
+    "Change pen needle or syringe after each injection.",
+    "Plan basal shifts for flights across multiple time zones."
   ],
-  "Hipoglucemia": [
-    "Conoce tu cuerpo: el temblor y el sudor también hablan.",
-    "Una bolsita de azúcar puede salvar el día.",
-    "Tu seguridad va primero: prevé antes de salir.",
-    "Antes de dormir, una última revisión te cuida toda la noche.",
-    "Moverse es salud, pero sin glucosa es un riesgo."
+  "Hypoglycemia": [
+    "Treat <70 mg/dL with 15 g carbs; re-check 15 min.",
+    "Use glucagon if confusion or seizures occur.",
+    "Snack or cut basal after late-day exercise.",
+    "Check glucagon expiry monthly; replace promptly.",
+    "Teach friends tremor, sweat, irritability warning signs."
   ],
-  "Alimentación": [
-    "Comer bien no es privarse, es aprender a elegir.",
-    "Tu cuerpo necesita energía regular, no sorpresas.",
-    "Come con hambre, no con emociones.",
-    "Los carbohidratos no son enemigos, solo necesitan guía.",
-    "Light no siempre es sinónimo de sano."
+  "Nutrition": [
+    "Aim 45-50 % carbs, 30 % fat, 20 % protein.",
+    "Spread carbs over 4-5 meals to limit spikes.",
+    "Count carbs: Spanish serving ≈ 10 g available carbs.",
+    "Reserve sugary drinks strictly for hypo treatment.",
+    "Monitor alcohol—late lows common; pair with food."
   ],
-  "Ejercicio": [
-    "Cada paso cuenta: muévete por ti.",
-    "Ejercicio con control es una medicina sin receta.",
-    "Después de moverte, tus números también se mueven.",
-    "Hoy no necesitas correr, solo comenzar.",
-    "Antes de correr, escucha a tu glucómetro."
+  "Exercise": [
+    "Consume 10-20 g carbs per exercise hour.",
+    "Reduce pre-workout bolus 25-75 % for intensity.",
+    "Avoid strenuous sport if >250 mg/dL plus ketones.",
+    "Re-check glucose immediately and 2 h post-session.",
+    "Keep fast carbs and meter within easy reach."
   ],
-  "Salud mental y emocional": [
-    "No estás solo: vivir con diabetes también cansa.",
-    "Negar no cambia la realidad. Aceptar sí la transforma.",
-    "Piensa en hoy: lo que haces ahora cuida tu futuro.",
-    "Tu camino es tuyo, camínalo con compasión.",
-    "Errar no te define: lo que haces después, sí."
+  "Mental and Emotional Health": [
+    "Screen regularly for anxiety and diabetes distress.",
+    "Glucose swings affect mood; share logs with team.",
+    "Peer programmes lower HbA1c and stress burden.",
+    "Adequate sleep stabilises hormones and morning glucose.",
+    "Watch for insulin omission tied to body-image concerns."
   ],
-  "Relación con el equipo de salud": [
-    "Pregunta, insiste, comprende: es tu salud.",
-    "Tú y tu médico sois un equipo, no un tribunal.",
-    "Evitar al médico no evita los problemas.",
-    "Entender es parte de cuidar.",
-    "Construye confianza, no solo consultas."
+  "Relationship with the Healthcare Team": [
+    "Bring device downloads and questions to every visit.",
+    "Annual eye, foot and kidney assessments are essential.",
+    "Review sick-day insulin adjustments ahead of illnesses.",
+    "Discuss closed-loop tech to reduce hypoglycaemia.",
+    "Share written action plans with school or work."
   ],
-  "Cuidados generales": [
-    "Una herida sin atención puede convertirse en una batalla.",
-    "Tus pies también hablan: míralos cada día.",
-    "La boca también es parte del control.",
-    "Conocer los riesgos es la mejor forma de evitarlos.",
-    "Dormir también es parte del tratamiento."
+  "General Care": [
+    "Inspect feet daily for blisters or colour changes.",
+    "Brush and floss—gum disease worsens insulin resistance.",
+    "Stay current on flu, tetanus, pneumococcal vaccines.",
+    "Clean and dress cuts promptly; watch for redness.",
+    "Sleep 8-12 h; deprivation raises glucose and appetite."
   ],
-  "Apoyo familiar y social": [
-    "Querer no es controlar: acompaña, no dirijas.",
-    "Educar a los que te rodean alivia tu carga.",
-    "Tu diagnóstico no te define ante el mundo.",
-    "Hablar es cuidar la mente y el corazón.",
-    "Mostrarte como eres también es libertad."
+  "Family and Social Support": [
+    "Train caregivers in glucagon and carb counting basics.",
+    "Teach siblings to recognise hypo and hyper signs.",
+    "Regular family meals correlate with better control.",
+    "Use task charts to shift responsibility to teens.",
+    "Join camps or associations for peer modelling."
   ],
-  "Educación y conocimiento": [
-    "Aprender sobre diabetes es empoderarte cada día.",
-    "No todo lo que oyes es cierto: infórmate con rigor.",
-    "La ciencia avanza, tú también puedes hacerlo.",
-    "Una app puede ser tu aliada, no tu enemiga.",
-    "Aprender en grupo es crecer acompañado."
+  "Education and Knowledge": [
+    "Refresh carb-count skills at least yearly.",
+    "Verify online advice with certified educators.",
+    "Translate HbA1c to eAG for daily context.",
+    "Track time-in-range; aim above 70 %.",
+    "Learn basic CPR and first-aid for emergencies."
   ],
-  "Vida laboral y estudios": [
-    "Cuidarte no es debilidad, es valentía.",
-    "Prepararte en clase también es prevenir.",
-    "Tu salud no espera al recreo.",
-    "Tu rutina es tu aliada: adapta, no abandones.",
-    "Conocer tus derechos te da fuerza para defenderte."
+  "Work Life and Studies": [
+    "Maintain 90-140 mg/dL during exams or critical tasks.",
+    "Store insulin cool, away from direct heat.",
+    "Align boluses with planned breaks and meals.",
+    "Reduce basal for heavy manual labour shifts.",
+    "Know legal rights to reasonable diabetes accommodations."
   ],
-  "Situaciones especiales": [
-    "Tu pasaporte lleva insulina, glucómetro y previsión.",
-    "Adapta tus dosis al reloj, no al revés.",
-    "Disfrutar también es elegir con inteligencia.",
-    "Fe y salud pueden convivir con preparación.",
-    "Cuando el cuerpo enferma, la glucosa también se altera."
+  "Special Situations": [
+    "Pack double supplies for trips; split between bags.",
+    "Keep insulin, glucagon in carry-on—cargo may freeze.",
+    "Test ketones with illness plus high glucose.",
+    "Increase checks at altitude; adrenaline boosts glucose.",
+    "Bring fast carbs to competitions despite venue rules."
   ],
-  "Cuidado de menores con diabetes": [
-    "Convertirlo en rutina lo hace menos temible.",
-    "Tu seguridad se multiplica con tu serenidad.",
-    "Una llamada y un plan pueden marcar la diferencia.",
-    "Enseñar hábitos es sembrar salud futura.",
-    "Ser distinto no es debilidad, es fuerza silenciosa."
+  "Caring for Children with Diabetes": [
+    "Toddlers need 8-10 glucose checks or CGM alerts daily.",
+    "Use 4-5 mm needles with skinfold to avoid muscle.",
+    "Teach paediatric-weight glucagon dosing for caregivers.",
+    "Create simple words for child-reported hypo symptoms.",
+    "Reassess insulin ratios during rapid growth spurts."
   ],
-  "Tecnología y dispositivos": [
-    "La tecnología también necesita vigilancia.",
-    "Tu plan B también lleva cinta adhesiva.",
-    "Prioriza: cuidar hoy puede ahorrar mañana.",
-    "Cada curva en tu gráfico es una historia.",
-    "Paciencia digital: lo importante es seguir el control."
+  "Technology and Devices": [
+    "Change sensors and infusion sets as manufacturer recommends.",
+    "Secure sensors with tape for sweat and swimming.",
+    "Upload device data monthly for remote review.",
+    "Keep devices within six metres of smartphone receiver.",
+    "Carry pen backup; pump failure can trigger DKA."
   ],
-  "Autonomía y envejecimiento": [
-    "La diabetes no debe vivirse en soledad: pide ayuda.",
-    "Recordatorios, alarmas y rutinas son aliados fieles.",
-    "Pedir ayuda no te quita independencia, te da seguridad.",
-    "Cuando la memoria falla, los cuidadores brillan.",
-    "Pregunta siempre: lo que cambia debe entenderse."
+  "Autonomy and Aging": [
+    "Check vision, dexterity to tailor device choices.",
+    "Set phone reminders for doses and glucose checks.",
+    "Screen yearly for hypoglycaemia unawareness.",
+    "Enable remote alarms for caregiver peace of mind.",
+    "Adjust medications with kidney, liver or heart changes."
   ],
-  "Autoimagen y autoestima": [
-    "La diabetes marca una pauta, no un destino.",
-    "Ser distinto es tener una historia que contar.",
-    "Aceptar es abrazar tu fuerza.",
-    "Amar es también compartir lo que se es.",
-    "Tu cuerpo cuenta tu lucha, no tu debilidad."
+  "Self-image and Self-esteem": [
+    "Address body-image issues to prevent insulin omission.",
+    "Decorate pumps or sensors to boost confidence.",
+    "Sports and support groups build diabetes self-efficacy.",
+    "Celebrate time-in-range milestones, not only weight.",
+    "Prepare courteous facts to dispel diabetes myths."
   ],
-  "Economía y acceso a tratamiento": [
-    "El ahorro nunca debe costar tu salud.",
-    "Infórmate sobre tus derechos: existen apoyos.",
-    "Pide ayuda: tu salud no debe ser una elección imposible.",
-    "Insistir es parte de tu derecho a ser cuidado.",
-    "Buscar conocimiento es también un acto de resistencia."
+  "Economy and Access to Treatment": [
+    "Apply for manufacturer or government assistance programmes.",
+    "Consider biosimilar insulins to reduce costs.",
+    "Stock extra strips and sensors during shortages.",
+    "Use community clinics for low-cost HbA1c checks.",
+    "Treat hypos cheaply with glucose tablets or soda."
   ],
-  "Pareja, sexualidad y fertilidad": [
-    "La intimidad también merece cuidado y conversación.",
-    "Planificar es poder: sí puedes ser madre/padre con diabetes.",
-    "Lo hormonal también influye: ajústalo, no lo ignores.",
-    "Escucha tu cuerpo, habla con tu médico.",
-    "El amor también se construye con empatía."
+  "Couple, Sexuality and Fertility": [
+    "Aim HbA1c <6.5 % before conception.",
+    "Screen erectile issues—possible microvascular complication.",
+    "Hormonal contraception may slightly increase insulin need.",
+    "Pregnancy glucose target 63-140 mg/dL most of day.",
+    "Breastfeeding often lowers post-meal bolus requirements."
   ],
-  "Emergencias": [
-    "Tu pulsera o tarjeta médica puede hablar por ti.",
-    "Practica antes del susto: el glucagón no espera.",
-    "Formar a tu familia es parte del tratamiento.",
-    "Tener un plan es elegir vivir con seguridad.",
-    "Náuseas y confusión no se ignoran."
+  "Emergencies": [
+    "Wear a medical ID stating insulin-treated diabetes.",
+    "Keep meter, strips, glucagon, ketone strips in kit.",
+    "Practise glucagon injection every six months.",
+    "Use rapid insulin, fluids for sick-day ketones.",
+    "ER needed for confusion, fruity breath or rapid breathing."
   ],
-  "Espiritualidad y sentido de vida": [
-    "No elegiste la diabetes, pero eliges cómo vivirla.",
-    "Cada día que eliges cuidarte, eliges seguir.",
-    "No sabes lo que vendrá, pero puedes prepararte mejor.",
-    "Vivir con diabetes te hace más consciente. Usa esa fuerza.",
-    "Hoy también puede tener momentos de luz."
+  "Spirituality and Sense of Life": [
+    "Mindfulness can blunt stress-induced glucose spikes.",
+    "Seek medical exemptions for prolonged religious fasting.",
+    "View self-care as stewardship of health.",
+    "Mentor newcomers; shared experience builds resilience.",
+    "Set yearly wellbeing goals alongside glycaemic targets."
   ]
 }

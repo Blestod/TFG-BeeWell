@@ -5,8 +5,8 @@ from tqdm import tqdm
 
 # ╭─────────────────────────── CONFIG ───────────────────────────╮
 API_BASE      = "https://beewell.blestod.com"
-CSV_PATH      = "/Users/thomas/Documents/GitHub/TFG-BeeWell/BBDDserver/BBDD/saved_data/vitals_dump_user.csv"
-FORCE_EMAIL   = "user"
+CSV_PATH      = "/Users/thomas/Documents/GitHub/TFG-BeeWell/BBDDserver/BBDD/saved_data/vitals_dump_r@r_dot_com.csv"
+FORCE_EMAIL   = "r@r.com"
 BATCH_SIZE    = 500
 # ╰──────────────────────────────────────────────────────────────╯
 

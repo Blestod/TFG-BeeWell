@@ -1,6 +1,7 @@
 package com.example.tfg_beewell_app;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
@@ -44,6 +45,8 @@ public class MealFragment extends Fragment {
     private Map<String, Integer> foodMap = new HashMap<>();
     private Integer selectedFoodId = null;
 
+    private String email;
+
     private final Handler handler = new Handler();
     private Runnable searchRunnable;
 
@@ -58,6 +61,16 @@ public class MealFragment extends Fragment {
         foodSearchInput = view.findViewById(R.id.foodSearchInput);
         gramsInput = view.findViewById(R.id.gramsInput);
         saveBtn = view.findViewById(R.id.saveMealBtn);
+
+        SharedPreferences prefs = requireContext().getSharedPreferences("user_session", Context.MODE_PRIVATE);
+        email = prefs.getString("user_email", null);
+
+        if (email == null) {
+            Toast.makeText(requireContext(), "No user session found.", Toast.LENGTH_SHORT).show();
+            requireActivity().finish();
+            return;
+        }
+
 
         adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line);
         foodSearchInput.setAdapter(adapter);
@@ -183,7 +196,7 @@ public class MealFragment extends Fragment {
 
         JSONObject body = new JSONObject();
         try {
-            body.put("user_email", "user"); // hardcoded
+            body.put("user_email", email);
             body.put("meal_time", currentTime);
             body.put("grams", grams);
             body.put("food_id", selectedFoodId);

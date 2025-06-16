@@ -54,7 +54,7 @@
                         android:layout_margin="16dp"
                         android:layout_marginTop="8dp"
                         android:layout_marginBottom="8dp"
-                        android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean euismod bibendum laoreet. Proin gravida dolor sit amet lacus.Lorem ipsum dolor sit amet, consectetur."
+                        android:text="Connection failed – Vitals review unavailable."
                         android:textColor="@android:color/black"
                         android:textSize="16sp" />
 
@@ -112,8 +112,7 @@
                     android:id="@+id/imageView2"
                     android:layout_width="150dp"
                     android:layout_height="150dp"
-                    android:layout_marginLeft="16dp"
-                    app:srcCompat="@drawable/beechar" />
+                    app:srcCompat="@drawable/beehealthytransiconv2fliped" />
 
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
@@ -131,7 +130,7 @@
                         android:layout_height="wrap_content"
                         android:layout_margin="8dp"
                         android:padding="4dp"
-                        android:text="Lorem ipsum dolor sit amet, consectetur. Lorem ipsum dolor sit amet. Dolor sit le canarie."
+                        android:text="Tips of the day"
                         android:textColor="@color/beeBlack"
                         android:textSize="16sp" />
                 </androidx.cardview.widget.CardView>
@@ -163,7 +162,7 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="4dp"
                     android:padding="8dp"
-                    android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean euismod bibendum laoreet.  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean euismod bibendum laoreet. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean euismod bibendum laoreet. Proin gravida dolor sit amet lacus."
+                    android:text="Connection failed – Forecast review unavailable."
                     android:textColor="@color/beeBlack"
                     android:textSize="16sp" />
             </androidx.cardview.widget.CardView>
