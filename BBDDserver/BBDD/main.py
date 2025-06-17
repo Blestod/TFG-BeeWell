@@ -812,18 +812,59 @@ def post_prediction():
 
 
 #---------------------LogBook----------------------
+# ---- MEAL LIST FOR LOGBOOK ----
+@api.route("/meal/all/<string:user_email>")
+def list_meals(user_email):
+    meals = (Meal.query
+             .filter_by(user_email=user_email)
+             .order_by(Meal.meal_time.desc())
+             .all())
 
-@api.route("/logbook/<string:user_email>", methods=["GET"])
-def get_full_log(user_email):
-    insulin     = InsulinInjected.query.filter_by(user_email=user_email).all()
-    meals       = Meal.query.filter_by(user_email=user_email).all()
-    activities  = Activity.query.filter_by(user_email=user_email).all()
+    payload = []
+    for m in meals:
+        d = m.serialize()              # ← your usual dict
+        d["meal_id"]  = m.meal_id      # ➊ make sure the id travels
+        d["food_name"] = m.food.food_name
+        payload.append(d)
 
-    return jsonify({
-        "insulin"    : [i.serialize() for i in insulin],
-        "meals"      : [m.serialize() for m in meals],
-        "activities" : [a.serialize() for a in activities],
-    }), 200
+    return jsonify(payload), 200
+
+@api.route("/meal/<int:meal_id>", methods=["DELETE"])
+def delete_meal(meal_id):
+    meal = Meal.query.get_or_404(meal_id)
+    db.session.delete(meal)
+    db.session.commit()
+    return "", 204
+
+# ---- INSULIN ----
+@api.route("/insulin/all/<string:user_email>")
+def list_insulin(user_email):
+    shots = (InsulinInjected.query
+             .filter_by(user_email=user_email)
+             .order_by(InsulinInjected.in_time.desc())
+             .all())
+    return jsonify([s.serialize() for s in shots]), 200
+
+@api.route("/insulin/<int:injected_id>", methods=["DELETE"])
+def delete_insulin(injected_id):
+    inj = InsulinInjected.query.get_or_404(injected_id)
+    db.session.delete(inj); db.session.commit()
+    return "", 204
+
+# ---- ACTIVITY ----
+@api.route("/activity/all/<string:user_email>")
+def list_activity(user_email):
+    acts = (Activity.query
+            .filter_by(user_email=user_email)
+            .order_by(Activity.act_time.desc())
+            .all())
+    return jsonify([a.serialize() for a in acts]), 200
+
+@api.route("/activity/<int:activity_id>", methods=["DELETE"])
+def delete_activity(activity_id):
+    act = Activity.query.get_or_404(activity_id)
+    db.session.delete(act); db.session.commit()
+    return "", 204
 
 
 # ────────────────────────────────────────────────────────────────

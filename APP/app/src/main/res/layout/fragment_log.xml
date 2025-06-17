@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootLogs"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/beeWhite">
+
+    <!-- ▒▒▒ AppBar with tabs + close button ▒▒▒ -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/beeWhite">
+
+        <!-- Layout wrapper so we can pin the ImageButton -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- Tabs -->
+            <TextView
+                android:id="@+id/textView10"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Logs"
+                android:textColor="@color/beeBlue"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="@+id/btnCloseLogs"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/btnCloseLogs" />
+
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tabLayoutLogs"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@color/beeWhite"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView10"
+                app:tabBackground="@color/beeWhite"
+                app:tabGravity="fill"
+                app:tabIndicatorColor="@color/beeBlue"
+                app:tabIndicatorHeight="4dp"
+                app:tabMode="fixed"
+                app:tabRippleColor="@color/beeBlue"
+                app:tabSelectedTextColor="@color/beeBlue"
+                app:tabTextColor="@color/beeBlack" />
+
+            <!-- Small X button -->
+            <ImageButton
+                android:id="@+id/btnCloseLogs"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginTop="32dp"
+                android:layout_marginEnd="32dp"
+                android:background="@android:color/transparent"
+                android:contentDescription="close"
+                android:scaleType="fitCenter"
+                android:src="@drawable/x"
+                android:tint="@color/beeBlue"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Pages -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPagerLogs"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

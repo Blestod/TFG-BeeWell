@@ -66,6 +66,9 @@
         <activity
             android:name=".ProfileActivity"
             android:screenOrientation="portrait" />
+        <activity android:name=".ui.log.LogsActivity"
+            android:label="Logs"/>
+
         <!--
  ─────────────────────────────────────────────
              1) ACTIVITY de explicación de permisos

@@ -63,6 +63,17 @@
             android:textSize="20sp" />
 
         <TextView
+            android:id="@+id/menu_logs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:text="Logs"
+            android:textColor="@color/beeBlack"
+            android:textSize="20sp"/>
+
+        <TextView
             android:id="@+id/menu_terms"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

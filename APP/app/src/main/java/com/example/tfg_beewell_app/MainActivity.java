@@ -45,6 +45,8 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import com.example.tfg_beewell_app.ui.log.LogFragment;
+
 import androidx.health.connect.client.contracts.HealthPermissionsRequestContract;
 import kotlin.Unit;
 
@@ -189,6 +191,12 @@ public class MainActivity extends AppCompatActivity {
             overlay.setVisibility(View.GONE);
             startActivity(new Intent(this, ProfileActivity.class));
         });
+
+        findViewById(R.id.menu_logs).setOnClickListener(v -> {
+            overlay.setVisibility(View.GONE);
+            startActivity(new Intent(this, com.example.tfg_beewell_app.ui.log.LogsActivity.class));
+        });
+
 
         findViewById(R.id.menu_terms).setOnClickListener(v -> {
             overlay.setVisibility(View.GONE);

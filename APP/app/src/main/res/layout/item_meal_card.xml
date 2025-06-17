@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:strokeWidth="0dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bottom_nav_bg"
+        android:elevation="8dp"
+        android:padding="12dp">
+
+        <!-- Food description -->
+        <TextView
+            android:id="@+id/txtMealFood"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:elevation="8dp"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textColor="@color/beeBlue"
+            android:textSize="16sp"
+            app:layout_constraintEnd_toStartOf="@+id/btnDeleteMeal"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Meal Name" />
+
+        <!-- Time + grams -->
+        <TextView
+            android:id="@+id/txtMealInfo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="@color/beeBlue"
+            android:textSize="16sp"
+            app:layout_constraintEnd_toStartOf="@+id/btnDeleteMeal"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/txtMealFood"
+            tools:text="Meal Info" />
+
+        <!-- delete button -->
+        <ImageButton
+            android:id="@+id/btnDeleteMeal"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="delete_meal"
+            android:scaleType="fitXY"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/delete"
+            app:tint="@color/design_default_color_error" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>
