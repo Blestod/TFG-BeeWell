@@ -6,36 +6,49 @@ import android.preference.PreferenceManager;
 
 public class Prefs {
 
-    private static final String FILE = "beewell_prefs";
-    private static final String KEY_SHOWN = "hc_perm_dialog_shown";
+    /* small dialog-flag you already had --------------------------- */
+    private static final String FILE       = "beewell_prefs";
+    private static final String KEY_SHOWN  = "hc_perm_dialog_shown";
 
-    public static boolean wasShown(Context ctx) {
-        return ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
-                .getBoolean(KEY_SHOWN, false);
+    public static boolean wasShown(Context ctx){
+        return ctx.getSharedPreferences(FILE,Context.MODE_PRIVATE)
+                .getBoolean(KEY_SHOWN,false);
+    }
+    public static void markShown(Context ctx){
+        ctx.getSharedPreferences(FILE,Context.MODE_PRIVATE)
+                .edit().putBoolean(KEY_SHOWN,true).apply();
     }
 
-    public static void markShown(Context ctx) {
-        SharedPreferences.Editor ed =
-                ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit();
-        ed.putBoolean(KEY_SHOWN, true);
-        ed.apply();
-    }
+    /* user-variables (ISF, CR, CAR) ------------------------------- */
     private static final String KEY_INSULIN_SENSITIVITY = "insulin_sensitivity";
-    private static final String KEY_CARB_RATIO = "carb_ratio";
-    private static final String KEY_CARB_ABSORPTION_RATE = "carb_absorption_rate";
+    private static final String KEY_CARB_RATIO          = "carb_ratio";
+    private static final String KEY_CARB_ABS_RATE       = "carb_absorption_rate";
 
-    public static double getInsulinSensitivity(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        return prefs.getFloat(KEY_INSULIN_SENSITIVITY, 120.0f);  // Default 120 mg/dL per unit
+    /* ----- getters (unchanged defaults) ----- */
+    public static double getInsulinSensitivity(Context ctx){
+        SharedPreferences p = PreferenceManager.getDefaultSharedPreferences(ctx);
+        return p.getFloat(KEY_INSULIN_SENSITIVITY,120f);     // mg/dL · U⁻¹
+    }
+    public static double getCarbRatio(Context ctx){
+        SharedPreferences p = PreferenceManager.getDefaultSharedPreferences(ctx);
+        return p.getFloat(KEY_CARB_RATIO,20f);               // g CHO · U⁻¹
+    }
+    public static double getCarbAbsorptionRate(Context ctx){
+        SharedPreferences p = PreferenceManager.getDefaultSharedPreferences(ctx);
+        return p.getFloat(KEY_CARB_ABS_RATE,35f);            // g CHO · h⁻¹
     }
 
-    public static double getCarbRatio(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        return prefs.getFloat(KEY_CARB_RATIO, 20.0f);  // Default 20g carbs per unit insulin
+    /* ----- setters (NEW) ----- */
+    public static void setInsulinSensitivity(Context ctx,double v){
+        PreferenceManager.getDefaultSharedPreferences(ctx)
+                .edit().putFloat(KEY_INSULIN_SENSITIVITY,(float)v).apply();
     }
-
-    public static double getCarbAbsorptionRate(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        return prefs.getFloat(KEY_CARB_ABSORPTION_RATE, 35.0f);  // Default 35g per hour
+    public static void setCarbRatio(Context ctx,double v){
+        PreferenceManager.getDefaultSharedPreferences(ctx)
+                .edit().putFloat(KEY_CARB_RATIO,(float)v).apply();
+    }
+    public static void setCarbAbsorptionRate(Context ctx,double v){
+        PreferenceManager.getDefaultSharedPreferences(ctx)
+                .edit().putFloat(KEY_CARB_ABS_RATE,(float)v).apply();
     }
 }

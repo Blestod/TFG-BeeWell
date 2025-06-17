@@ -21,8 +21,7 @@ import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.tfg_beewell_app.local.GlucoseDB;
-import com.example.tfg_beewell_app.local.LocalGlucoseDatabase;
-
+import com.example.tfg_beewell_app.utils.Prefs;        // ← NEW
 import org.json.JSONObject;
 
 import java.io.File;
@@ -128,18 +127,25 @@ public class ProfileActivity extends AppCompatActivity {
         StringBuilder updated = new StringBuilder();
         try {
             body.put("user_email", email);
-            body.put("change_date_time", System.currentTimeMillis() / 1000);
+            body.put("change_date_time", System.currentTimeMillis() / 1_000);
 
-            if (!h.isEmpty()) { body.put("height", Double.parseDouble(h)); updated.append("Height "); }
-            if (!w.isEmpty()) { body.put("weight", Double.parseDouble(w)); updated.append("Weight "); }
-            if (!s.isEmpty()) { body.put("insulin_sensitivity", Double.parseDouble(s)); updated.append("Sensitivity "); }
-            if (!r.isEmpty()) { body.put("carb_ratio", Double.parseDouble(r)); updated.append("Ratio "); }
+            if (!h.isEmpty()) { body.put("height",               Double.parseDouble(h)); updated.append("Height "); }
+            if (!w.isEmpty()) { body.put("weight",               Double.parseDouble(w)); updated.append("Weight "); }
+            if (!s.isEmpty()) { body.put("insulin_sensitivity",  Double.parseDouble(s)); updated.append("Sensitivity "); }
+            if (!r.isEmpty()) { body.put("carb_ratio",           Double.parseDouble(r)); updated.append("Ratio "); }
             if (!a.isEmpty()) { body.put("carb_absorption_rate", Double.parseDouble(a)); updated.append("Absorption "); }
         } catch (Exception ignore) {}
 
+        final String sFinal = s, rFinal = r, aFinal = a;   // effectively-final for lambda
         String url = Constants.BASE_URL + "/user_variables";
         sendJson(Request.Method.POST, url, body,
-                () -> t(updated.toString().trim() + " saved"),
+                () -> {
+                    t(updated.toString().trim() + " saved");
+                    /* 🔄 update Prefs so PredictionManager reads fresh values */
+                    if (!sFinal.isEmpty()) Prefs.setInsulinSensitivity(this,  Double.parseDouble(sFinal));
+                    if (!rFinal.isEmpty()) Prefs.setCarbRatio(this,           Double.parseDouble(rFinal));
+                    if (!aFinal.isEmpty()) Prefs.setCarbAbsorptionRate(this,  Double.parseDouble(aFinal));
+                },
                 () -> t("Error saving user variables"));
     }
 
@@ -161,7 +167,7 @@ public class ProfileActivity extends AppCompatActivity {
                     String url = Constants.BASE_URL + "/user/email/" + email;
                     sendJson(Request.Method.PUT, url, body,
                             () -> {
-                                renameLocalDb(email, newEmail);                     // ← local DB rename
+                                renameLocalDb(email, newEmail);
                                 getSharedPreferences("user_session", MODE_PRIVATE)
                                         .edit().putString("user_email", newEmail).apply();
                                 email = newEmail;
@@ -211,7 +217,7 @@ public class ProfileActivity extends AppCompatActivity {
                     String url = Constants.BASE_URL + "/user/" + email;
                     sendJson(Request.Method.DELETE, url, null,
                             () -> {
-                                deleteLocalDb(email);                               // ← local DB delete
+                                deleteLocalDb(email);
                                 getSharedPreferences("user_session", MODE_PRIVATE).edit().clear().apply();
                                 startActivity(new Intent(this, LoginActivity.class));
                                 t("Profile deleted");
@@ -243,11 +249,21 @@ public class ProfileActivity extends AppCompatActivity {
         String url = Constants.BASE_URL + "/user_variables/last/" + mail;
         JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET, url, null,
                 res -> {
-                    heightInput.setText(       res.optInt   ("height",               -1) > 0 ? res.optString("height")               : "");
-                    weightInput.setText(       res.optInt   ("weight",               -1) > 0 ? res.optString("weight")               : "");
-                    insulinSensitivityInput.setText(res.optDouble("insulin_sensitivity", -1) > 0 ? res.optString("insulin_sensitivity") : "");
-                    carbRatioInput.setText(    res.optDouble("carb_ratio",           -1) > 0 ? res.optString("carb_ratio")           : "");
-                    carbAbsorptionInput.setText(res.optDouble("carb_absorption_rate", -1) > 0 ? res.optString("carb_absorption_rate") : "");
+                    /* text fields */
+                    heightInput.setText( res.optInt("height", -1) > 0 ? res.optString("height") : "" );
+                    weightInput.setText( res.optInt("weight", -1) > 0 ? res.optString("weight") : "" );
+                    insulinSensitivityInput.setText( res.optDouble("insulin_sensitivity",-1) > 0 ? res.optString("insulin_sensitivity") : "" );
+                    carbRatioInput.setText( res.optDouble("carb_ratio",-1) > 0 ? res.optString("carb_ratio") : "" );
+                    carbAbsorptionInput.setText( res.optDouble("carb_absorption_rate",-1) > 0 ? res.optString("carb_absorption_rate") : "" );
+
+                    /* prefs sync */
+                    double isf = res.optDouble("insulin_sensitivity", -1);
+                    double cr  = res.optDouble("carb_ratio",           -1);
+                    double car = res.optDouble("carb_absorption_rate", -1);
+
+                    if (isf > 0) Prefs.setInsulinSensitivity(this, isf);
+                    if (cr  > 0) Prefs.setCarbRatio(this, cr);
+                    if (car > 0) Prefs.setCarbAbsorptionRate(this, car);
                 },
                 err -> t("Error loading user data"));
         Volley.newRequestQueue(this).add(req);
@@ -274,40 +290,37 @@ public class ProfileActivity extends AppCompatActivity {
         Volley.newRequestQueue(this).add(req);
     }
 
-    private void t(String msg) { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show(); }
+    private void t(String msg){ Toast.makeText(this, msg, Toast.LENGTH_SHORT).show(); }
 
     /* ─────────── LOCAL-DB UTILITIES ─────────── */
-    private String dbNameFor(String mail) {
-        return "glucose_db_" + mail.replace("@", "_").replace(".", "_");
+    private String dbNameFor(String mail){
+        return "glucose_db_" + mail.replace("@","_").replace(".","_");
     }
 
-    private void renameLocalDb(String oldEmail, String newEmail) {
-        try { GlucoseDB.getInstance(getApplicationContext(), oldEmail).close(); }
-        catch (Exception ignore) {}
+    private void renameLocalDb(String oldEmail, String newEmail){
+        try{ GlucoseDB.getInstance(getApplicationContext(), oldEmail).close(); }
+        catch(Exception ignore){}
 
         GlucoseDB.clearAllInstances();
 
-        /* all three files share the same base path */
         String oldBase = dbNameFor(oldEmail);
         String newBase = dbNameFor(newEmail);
 
-        for (String suffix : new String[]{"", "-wal", "-shm"}) {
-            File oldF = getDatabasePath(oldBase + suffix);
-            if (oldF.exists()) {
-                File newF = getDatabasePath(newBase + suffix);
+        for(String sfx : new String[]{"", "-wal", "-shm"}){
+            File oldF = getDatabasePath(oldBase + sfx);
+            if(oldF.exists()) {
+                File newF = getDatabasePath(newBase + sfx);
                 //noinspection ResultOfMethodCallIgnored
                 oldF.renameTo(newF);
             }
         }
-
-        /* warm-up: open new DB so future code sees the data */
-        GlucoseDB.getInstance(getApplicationContext(), newEmail);
+        GlucoseDB.getInstance(getApplicationContext(), newEmail); // warm-up
     }
 
-
-    private void deleteLocalDb(String mail) {
-        try { GlucoseDB.getInstance(getApplicationContext(), mail).close(); } catch (Exception ignore) {}
+    private void deleteLocalDb(String mail){
+        try{ GlucoseDB.getInstance(getApplicationContext(), mail).close(); }
+        catch(Exception ignore){}
         GlucoseDB.clearAllInstances();
-        deleteDatabase(dbNameFor(mail));                 // removes -wal / -shm too
+        deleteDatabase(dbNameFor(mail));    // removes -wal / -shm too
     }
 }

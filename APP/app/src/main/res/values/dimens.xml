@@ -3,4 +3,6 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="collapsed_card_height">80dp</dimen>
+    <dimen name="dots_min_bottom">24dp</dimen>
+
 </resources>

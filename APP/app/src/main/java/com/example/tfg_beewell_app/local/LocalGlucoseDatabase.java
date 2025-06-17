@@ -10,9 +10,12 @@ import androidx.room.RoomDatabase;
 @Database(
         entities = {
                 LocalGlucoseEntry.class,
-                LocalGlucoseHistoryEntry.class
+                LocalGlucoseHistoryEntry.class,
+                LocalInsulinEntry.class,
+                LocalMealEntry.class,
+                LocalActivityEntry.class
         },
-        version = 3,
+        version = 4,
         exportSchema = false
 )
 public abstract class LocalGlucoseDatabase extends RoomDatabase {
@@ -21,6 +24,7 @@ public abstract class LocalGlucoseDatabase extends RoomDatabase {
 
     public abstract LocalGlucoseDao glucoseDao();
     public abstract LocalGlucoseHistoryDao historyDao();
+    public abstract LogbookDao      logbookDao();
 
     public static synchronized LocalGlucoseDatabase getInstance(Context context) {
         if (instance == null) {

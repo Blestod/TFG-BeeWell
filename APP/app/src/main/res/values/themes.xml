@@ -50,7 +50,20 @@
     </style>
 
 
+    <style name="Theme.BeeWell" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- … existing attributes … -->
+    </style>
 
+    <style name="Theme.BeeWell.Fullscreen" parent="Theme.BeeWell">
+        <!-- draw under status / nav bars -->
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+
+        <!-- remove action-bar placeholder if using AppCompat -->
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
 
 
 

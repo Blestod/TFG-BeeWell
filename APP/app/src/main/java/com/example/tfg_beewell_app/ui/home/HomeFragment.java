@@ -1,58 +1,39 @@
+/* HomeFragment.java */
 package com.example.tfg_beewell_app.ui.home;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
+import android.content.*;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.view.*;
+import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.LifecycleCoroutineScope;
-import androidx.lifecycle.LifecycleOwnerKt;
-import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.*;
 
-import com.example.tfg_beewell_app.Forecast;
-import com.example.tfg_beewell_app.TipManager;
+import com.example.tfg_beewell_app.*;
 import com.example.tfg_beewell_app.databinding.FragmentHomeBinding;
+import com.example.tfg_beewell_app.local.*;
 import com.example.tfg_beewell_app.ui.VitalData;
-import com.example.tfg_beewell_app.utils.HealthConnectPermissionHelper;
-import com.example.tfg_beewell_app.utils.HealthReader;
-import com.example.tfg_beewell_app.utils.PredictionManager;
-import com.example.tfg_beewell_app.utils.VitalsChangesListener;
+import com.example.tfg_beewell_app.utils.*;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.data.*;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.google.android.flexbox.FlexboxLayout;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import kotlinx.coroutines.Job;
 import kotlin.Unit;
 import lecho.lib.hellocharts.model.PointValue;
 
-import com.example.tfg_beewell_app.local.GlucoseDB;
-import com.example.tfg_beewell_app.local.LocalGlucoseEntry;
-
 public class HomeFragment extends Fragment {
+
     private static final String TAG = "HomeFragment";
 
     private FragmentHomeBinding binding;
@@ -60,16 +41,13 @@ public class HomeFragment extends Fragment {
     private Job vitalsJob;
     private String userEmail;
 
-    // Para no pedir más de 1 vez por hora
-    private long lastInsightsFetch = 0L;
-
-    // Últimos datos
-    private VitalData currentVitals;
+    /* cache */
+    private VitalData  currentVitals;
     private List<Entry> currentPredictions = new ArrayList<>();
 
-    // ViewModel
     private HomeViewModel viewModel;
 
+    /* ─────────────────────────── LIFECYCLE ─────────────────────────── */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container,
@@ -78,243 +56,269 @@ public class HomeFragment extends Fragment {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        // ➊ Instancia el ViewModel
+        /* ViewModel */
         viewModel = new ViewModelProvider(
                 requireActivity(),
                 new ViewModelProvider.AndroidViewModelFactory(requireActivity().getApplication())
         ).get(HomeViewModel.class);
 
-        // ➌ Observa las recomendaciones
-        viewModel.getInsights().observe(getViewLifecycleOwner(), insights -> {
-            Log.d(TAG, "🔔 got insights: " + insights);
-            binding.textInfo.setText(insights.getVitalsRecommendation());
-            binding.predictText.setText(insights.getPredictionRecommendation());
+        viewModel.getInsights().observe(getViewLifecycleOwner(), ins -> {
+            binding.textInfo.setText(ins.getVitalsRecommendation());
+            binding.predictText.setText(ins.getPredictionRecommendation());
         });
 
-        // Lee email de las prefs
+        /* e-mail */
         SharedPreferences sp = requireContext()
                 .getSharedPreferences("user_session", Context.MODE_PRIVATE);
         userEmail = sp.getString("user_email", null);
 
+        /* HC perms */
         permissionHelper = new HealthConnectPermissionHelper(requireContext());
-
-        // Registra receptor de permisos
-        IntentFilter filter = new IntentFilter("HC_PERMS_GRANTED");
-        requireContext().registerReceiver(permsGrantedReceiver,
-                filter, Context.RECEIVER_NOT_EXPORTED);
+        IntentFilter f = new IntentFilter("HC_PERMS_GRANTED");
+        requireContext().registerReceiver(permsGrantedReceiver, f,
+                Context.RECEIVER_NOT_EXPORTED);
 
         if (permissionHelper.hasAllHcPermissionsSync()) {
             readAndShowVitals();
         }
-
         return root;
     }
 
-    @Override
-    public void onStart() {
+    @Override public void onStart() {
         super.onStart();
-
         binding.tipText.setText(TipManager.getDailyTip(requireContext()));
+        if (permissionHelper.hasAllHcPermissionsSync()) startVitalsListener();
+        drawChartAsync();               // ← build chart & markers
+    }
 
-        if (permissionHelper.hasAllHcPermissionsSync()) {
-            startVitalsListener();
-        }
+    @Override public void onStop() {
+        super.onStop();
+        if (vitalsJob!=null) vitalsJob.cancel(null);
+    }
 
-        // Dibuja gráfica y luego pide insights
+    @Override public void onDestroyView() {
+        super.onDestroyView();
+        try { requireContext().unregisterReceiver(permsGrantedReceiver); }
+        catch (IllegalArgumentException ignore){}
+        binding=null;
+    }
+
+    /* ─────────────────────────── CHART ─────────────────────────── */
+    private void drawChartAsync(){
         new Thread(() -> {
-            // 1) calcula predicciones
-            List<PointValue> predsPts;
-            List<Entry> preds = new ArrayList<>();
-            try {
-                predsPts = PredictionManager.getPredictionForNextHour(requireContext());
-                if (predsPts != null) {
-                    for (PointValue p : predsPts) {
-                        float x = (p.getX() * Forecast.FUZZER) / 1000f;
-                        preds.add(new Entry(x, p.getY()));
-                    }
-                }
-            } catch (Exception ex) {
-                predsPts = List.of();
-            }
 
+            /* 1️⃣  prediction curve ---------------------------------- */
+            List<PointValue> predPts = PredictionManager
+                    .getPredictionForNextHour(requireContext());
+
+            List<Entry> preds = new ArrayList<>();
+            if (predPts!=null){
+                for(PointValue p:predPts)
+                    preds.add(new Entry((p.getX()*Forecast.FUZZER)/1000f, p.getY()));
+            }
             currentPredictions = preds;
 
-            // 2) obtiene reales
-            List<LocalGlucoseEntry> reales = GlucoseDB.getInstance(requireContext())
-                    .glucoseDao()
-                    .getLast8Hours(System.currentTimeMillis()
-                            - TimeUnit.HOURS.toMillis(1));
+            /* 2️⃣  real glucose (last hour) -------------------------- */
+            long now = System.currentTimeMillis();
+            long oneHrAgo = now - TimeUnit.HOURS.toMillis(1);
+            List<LocalGlucoseEntry> realRows = GlucoseDB.getInstance(requireContext())
+                    .glucoseDao().getLast8Hours(oneHrAgo);
 
-            List<Entry> realEntries = new ArrayList<>();
-            if (reales != null) {
-                for (LocalGlucoseEntry e : reales) {
-                    realEntries.add(new Entry(e.timestamp / 1000f,
-                            (float) e.glucoseValue));
-                }
-            }
+            List<Entry> real = new ArrayList<>();
+            for(LocalGlucoseEntry e: realRows)
+                real.add(new Entry(e.timestamp/1000f, (float)e.glucoseValue));
 
-            // 3) actualiza UI
-            requireActivity().runOnUiThread(() -> {
-                LineChart chart = binding.glucoseChart;
-                if (realEntries.isEmpty() && preds.isEmpty()) {
-                    chart.clear();
-                    chart.setNoDataText("Aún no hay datos de glucosa");
-                    chart.setNoDataTextColor(
-                            ContextCompat.getColor(requireContext(),
-                                    android.R.color.darker_gray));
-                    chart.invalidate();
-                } else {
-                    LineDataSet setReal = new LineDataSet(realEntries, "Historial");
-                    setReal.setColor(ContextCompat.getColor(requireContext(),
-                            android.R.color.holo_blue_dark));
-                    setReal.setLineWidth(2f);
-                    setReal.setDrawCircles(false);
+            /* 3️⃣  markers: meals / insulin / activity --------------- */
+            long fromSec = oneHrAgo/1000;
+            long toSec   = (now + TimeUnit.HOURS.toMillis(1))/1000;   // include forecast span
 
-                    LineDataSet setPred = new LineDataSet(preds, "Predicción");
-                    setPred.setColor(ContextCompat.getColor(requireContext(),
-                            android.R.color.holo_red_dark));
-                    setPred.setLineWidth(2f);
-                    setPred.setDrawCircles(false);
-                    setPred.enableDashedLine(10, 10, 0);
+            LogbookDao dao = GlucoseDB.getInstance(requireContext()).logbookDao();
+            List<Entry> mealDots     = new ArrayList<>();
+            List<Entry> insulinDots  = new ArrayList<>();
+            List<Entry> actDots      = new ArrayList<>();
 
-                    LineData lineData = new LineData();
-                    if (!realEntries.isEmpty()) lineData.addDataSet(setReal);
-                    if (!preds.isEmpty()) lineData.addDataSet(setPred);
+            double minY = Double.MAX_VALUE;
+            double maxY = Double.MIN_VALUE;
+            for(Entry e:real){ minY=Math.min(minY,e.getY()); maxY=Math.max(maxY,e.getY()); }
+            for(Entry e:preds){ minY=Math.min(minY,e.getY()); maxY=Math.max(maxY,e.getY()); }
+            if(minY==Double.MAX_VALUE){ minY=80; maxY=200; }   // fallback
 
-                    chart.setData(lineData);
-                    chart.getDescription().setEnabled(false);
-                    chart.setTouchEnabled(true);
-                    chart.setPinchZoom(true);
+            float dotY = (float)(minY + (maxY-minY)*0.1);      // 10 % up from bottom
 
-                    XAxis xAxis = chart.getXAxis();
-                    xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-                    xAxis.setValueFormatter(new ValueFormatter() {
-                        private final SimpleDateFormat sdf =
-                                new SimpleDateFormat("HH:mm", Locale.getDefault());
-                        @Override public String getFormattedValue(float value) {
-                            return sdf.format(new Date((long) value * 1000));
-                        }
-                    });
+            for(LocalMealEntry m : dao.mealsBetween(fromSec,toSec))
+                mealDots.add(new Entry(m.timestampSec, dotY));
 
-                    chart.invalidate();
-                }
+            for(LocalInsulinEntry ins : dao.insulinBetween(fromSec,toSec))
+                insulinDots.add(new Entry(ins.timestampSec, dotY));
 
-                // ➍ Pregunta al ViewModel
-                if (currentVitals != null && !currentPredictions.isEmpty()) {
-                    Log.d(TAG, "📤 asking ViewModel for insights");
-                    viewModel.fetchInsightsIfNeeded(currentVitals,
-                            currentPredictions);
-                }
-            });
+            for(LocalActivityEntry a : dao.actsBetween(fromSec,toSec))
+                actDots.add(new Entry(a.timestampSec, dotY));
+
+            /* 4️⃣  UI ------------------------------------------------- */
+            requireActivity().runOnUiThread(() -> renderChart(real,preds,
+                    mealDots,insulinDots,actDots));
         }).start();
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (vitalsJob != null) vitalsJob.cancel(null);
+    private void renderChart(List<Entry> real,
+                             List<Entry> preds,
+                             List<Entry> mealDots,
+                             List<Entry> insulinDots,
+                             List<Entry> actDots){
+
+        LineChart chart = binding.glucoseChart;
+        chart.clear();
+
+        if(real.isEmpty() && preds.isEmpty()){
+            chart.setNoDataText("Aún no hay datos de glucosa");
+            chart.invalidate();
+            return;
+        }
+
+        LineData data = new LineData();
+
+        if(!real.isEmpty()){
+            LineDataSet ds = new LineDataSet(real,"Historial");
+            ds.setColor(ContextCompat.getColor(requireContext(), android.R.color.holo_blue_dark));
+            ds.setLineWidth(2f);
+            ds.setDrawCircles(false);
+            ds.setDrawValues(false);
+            data.addDataSet(ds);
+        }
+
+        if(!preds.isEmpty()){
+            LineDataSet ds = new LineDataSet(preds,"Predicción");
+            ds.setColor(ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark));
+            ds.setLineWidth(2f);
+            ds.setDrawCircles(false);
+            ds.setDrawValues(false);
+            ds.enableDashedLine(10,10,0);
+            data.addDataSet(ds);
+        }
+
+        /* dots – meals (green) */
+        if(!mealDots.isEmpty()){
+            LineDataSet ds = new LineDataSet(mealDots,"Comidas");
+            ds.setColor(ContextCompat.getColor(requireContext(), android.R.color.holo_green_dark));
+            ds.setCircleColor(ContextCompat.getColor(requireContext(), android.R.color.holo_green_dark));
+            ds.setCircleRadius(4f);
+            ds.setLineWidth(0f);
+            ds.setDrawValues(false);
+            data.addDataSet(ds);
+        }
+
+        /* dots – insulin (grey) */
+        if(!insulinDots.isEmpty()){
+            LineDataSet ds = new LineDataSet(insulinDots,"Insulina");
+            ds.setColor(ContextCompat.getColor(requireContext(), android.R.color.darker_gray));
+            ds.setCircleColor(ContextCompat.getColor(requireContext(), android.R.color.darker_gray));
+            ds.setCircleRadius(4f);
+            ds.setLineWidth(0f);
+            ds.setDrawValues(false);
+            data.addDataSet(ds);
+        }
+
+        /* dots – activity (blue) */
+        if(!actDots.isEmpty()){
+            LineDataSet ds = new LineDataSet(actDots,"Ejercicio");
+            ds.setColor(ContextCompat.getColor(requireContext(), android.R.color.holo_blue_light));
+            ds.setCircleColor(ContextCompat.getColor(requireContext(), android.R.color.holo_blue_light));
+            ds.setCircleRadius(4f);
+            ds.setLineWidth(0f);
+            ds.setDrawValues(false);
+            data.addDataSet(ds);
+        }
+
+        chart.setData(data);
+        chart.getDescription().setEnabled(false);
+        chart.setTouchEnabled(true);
+        chart.setPinchZoom(true);
+
+        XAxis x = chart.getXAxis();
+        x.setPosition(XAxis.XAxisPosition.BOTTOM);
+        x.setValueFormatter(new ValueFormatter(){
+            private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            @Override public String getFormattedValue(float v){
+                return sdf.format(new Date((long)v*1000));
+            }
+        });
+
+        chart.invalidate();
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        try {
-            requireContext().unregisterReceiver(permsGrantedReceiver);
-        } catch (IllegalArgumentException ignored) { }
-        binding = null;
-    }
-
-    private void readAndShowVitals() {
+    /* ─────────────────────────── VITALS ─────────────────────────── */
+    private void readAndShowVitals(){
         new Thread(() -> {
-            VitalData data =
-                    HealthReader.getLatestVitalsBlocking(requireContext(),
-                            userEmail);
-            if (data != null) {
-                requireActivity().runOnUiThread(() -> showVitals(data));
-            }
+            VitalData d = HealthReader.getLatestVitalsBlocking(requireContext(), userEmail);
+            if(d!=null) requireActivity().runOnUiThread(() -> showVitals(d));
         }).start();
     }
 
-    private void startVitalsListener() {
+    private void startVitalsListener(){
         LifecycleCoroutineScope scope =
                 LifecycleOwnerKt.getLifecycleScope(getViewLifecycleOwner());
-
-        vitalsJob = scope.launchWhenStarted((coScope, cont) ->
+        vitalsJob = scope.launchWhenStarted((co,ct)->
                 VitalsChangesListener.INSTANCE.listen(
                         requireContext(),
-                        cont2 -> {
-                            Long bpm =
-                                    HealthReader.getLastHeartRateBpmBlocking(requireContext());
+                        cont -> { Long bpm=HealthReader.getLastHeartRateBpmBlocking(requireContext());
                             requireActivity().runOnUiThread(() ->
-                                    binding.textInfo.setText(
-                                            bpm != null ? bpm + " bpm" : "—"));
-                            return Unit.INSTANCE;
-                        }, cont));
+                                    binding.textInfo.setText(bpm!=null?bpm+" bpm":"—"));
+                            return Unit.INSTANCE; }, ct));
     }
 
-    private final BroadcastReceiver permsGrantedReceiver = new BroadcastReceiver() {
-        @Override public void onReceive(Context c, Intent i) {
-            Toast.makeText(c, "Permisos de salud concedidos 🎉",
-                    Toast.LENGTH_SHORT).show();
-            readAndShowVitals();
-            startVitalsListener();
+    private final BroadcastReceiver permsGrantedReceiver = new BroadcastReceiver(){
+        @Override public void onReceive(Context c, Intent i){
+            Toast.makeText(c,"Permisos de salud concedidos 🎉",Toast.LENGTH_SHORT).show();
+            readAndShowVitals(); startVitalsListener();
         }
     };
 
-    private void showVitals(VitalData vital) {
-        currentVitals = vital;
-        Log.d(TAG, "🔥 showVitals: nuevos vitals=" + vital);
+    /* ─────────────────────────── UI helpers ─────────────────────────── */
+    private void showVitals(VitalData v){
+        currentVitals = v;
         FlexboxLayout card = binding.greenCard;
         card.removeAllViews();
-        if (vital.getGlucoseValue() != null)
-            card.addView(createVitalTextView(
-                    String.valueOf(vital.getGlucoseValue()), "mg/dL"));
-        if (vital.getHeartRate() != null)
-            card.addView(createVitalTextView(
-                    String.valueOf(vital.getHeartRate().intValue()), "bpm"));
-        if (vital.getTemperature() != null)
-            card.addView(createVitalTextView(
-                    String.valueOf(vital.getTemperature()), "ºC"));
-        if (vital.getOxygenSaturation() != null)
-            card.addView(createVitalTextView(
-                    String.valueOf(vital.getOxygenSaturation()), "% SpO₂"));
+        addTxt(card, v.getGlucoseValue(),"mg/dL");
+        addTxt(card, v.getHeartRate(),"bpm");
+        addTxt(card, v.getTemperature(),"ºC");
+        addTxt(card, v.getOxygenSaturation(),"% SpO₂");
 
-        // Dispara la petición al ViewModel tan pronto tengas datos
-        if (!currentPredictions.isEmpty()) {
-            Log.d(TAG, "📤 showVitals → asking ViewModel");
-            viewModel.fetchInsightsIfNeeded(currentVitals, currentPredictions);
-        }
+        if(!currentPredictions.isEmpty())
+            viewModel.fetchInsightsIfNeeded(currentVitals,currentPredictions);
     }
 
-    private LinearLayout createVitalTextView(String value, String unit) {
+    private void addTxt(FlexboxLayout box, Number val, String unit) {
+        if (val == null) return;
+
         Context ctx = requireContext();
-        LinearLayout box = new LinearLayout(ctx);
-        box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(16, 0, 16, 0);
+        int beeBlack = ContextCompat.getColor(ctx, R.color.beeBlack);
+
+        LinearLayout col = new LinearLayout(ctx);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setPadding(16, 0, 16, 0);
 
         TextView vTxt = new TextView(ctx);
-        vTxt.setText(value);
+        vTxt.setText(String.valueOf(val));
         vTxt.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
-        vTxt.setTextColor(
-                ContextCompat.getColor(ctx, android.R.color.black));
+        vTxt.setTextColor(beeBlack);
         vTxt.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
 
         TextView uTxt = new TextView(ctx);
         uTxt.setText(unit);
         uTxt.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-        uTxt.setTextColor(
-                ContextCompat.getColor(ctx, android.R.color.darker_gray));
+        uTxt.setTextColor(beeBlack);
         uTxt.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
 
-        box.addView(vTxt);
-        box.addView(uTxt);
+        col.addView(vTxt);
+        col.addView(uTxt);
 
-        FlexboxLayout.LayoutParams lp =
-                new FlexboxLayout.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT);
+        FlexboxLayout.LayoutParams lp = new FlexboxLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(16, 0, 16, 4);
-        box.setLayoutParams(lp);
-        return box;
+        col.setLayoutParams(lp);
+
+        box.addView(col);
     }
+
 }

@@ -68,6 +68,9 @@
             android:screenOrientation="portrait" />
         <activity android:name=".ui.log.LogsActivity"
             android:label="Logs"/>
+        <activity android:name=".TutorialActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BeeWell.Fullscreen"/>
 
         <!--
  ─────────────────────────────────────────────

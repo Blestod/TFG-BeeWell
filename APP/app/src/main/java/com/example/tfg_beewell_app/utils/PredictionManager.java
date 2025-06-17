@@ -1,144 +1,122 @@
 package com.example.tfg_beewell_app.utils;
 
-
 import android.content.Context;
+import android.util.Log;
 
 import com.example.tfg_beewell_app.Forecast;
-import com.example.tfg_beewell_app.local.GlucoseDB;
-import com.example.tfg_beewell_app.local.LocalGlucoseEntry;
+import com.example.tfg_beewell_app.local.*;
 import com.example.tfg_beewell_app.models.BgReading;
 
-import java.util.Map;
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import android.util.Log;
+import java.util.*;
+
 import lecho.lib.hellocharts.model.PointValue;
-import com.example.tfg_beewell_app.utils.Prefs;
 
-public class PredictionManager {
+/** 1-hour glucose forecast, adjusted with latest local events. */
+public final class PredictionManager {
 
-    public static double getActivityEffect(int activityLevel, int duration) {
-        // Coeficiente base de reducción de glucosa (mg/dL por minuto)
-        Map<Integer, Double> baseReduction = new HashMap<>();
-        baseReduction.put(0, 0.0);   // Baja intensidad
-        baseReduction.put(1, 0.5);   // Moderada
-        baseReduction.put(2, 1.0);   // Alta
-        baseReduction.put(3, 2.0);   // Muy alta
+    /* ───── physiology constants ───── */
+    private static final int RAPID_PEAK_MIN = 60,  RAPID_DUR_MIN = 240;
+    private static final int BASAL_PEAK_MIN = 120, BASAL_DUR_MIN = 720;
 
-        // Efecto acumulativo basado en duración e intensidad
-        double activityEffect = baseReduction.getOrDefault(activityLevel, 0.0) * duration;
+    private static final int MEAL_WINDOW_H     = 5;
+    private static final int ACTIVITY_WINDOW_H = 12;
 
-        return activityEffect;
+    /* ───── helpers ───── */
+    private static double activityEffect(String intensity, int durMin) {
+        int lvl;   // 0-3 → maps to 0, 0.5, 1.0, 2.0 mg/dL·min⁻¹
+        if (intensity == null) {
+            lvl = 1;                            // default “moderate”
+        } else {
+            switch (intensity.toLowerCase()) {
+                case "low":        lvl = 0; break;
+                case "moderate":   lvl = 1; break;
+                case "high":       lvl = 2; break;
+                case "very high":
+                case "very_high":  lvl = 3; break;
+                default:           lvl = 1;     // treat unknown as moderate
+            }
+        }
+        double[] base = {0.0, 0.5, 1.0, 2.0};
+        return base[lvl] * durMin;
     }
 
-    public static double getActiveInsulin(String insulinType, double insulinDose, double elapsedTime, Double effect, int[] duration, double insulinSensitivity) {
-        double RAPID_INSULIN_EFFECT = insulinSensitivity;
-        double SLOW_INSULIN_EFFECT = insulinSensitivity * 0.6;
-        int[] RAPID_INSULIN_DURATION = {60, 240};
-        int[] SLOW_INSULIN_DURATION = {120, 720};
-
-        if (effect == null) {
-            effect = insulinType.equals("rapid") ? RAPID_INSULIN_EFFECT : SLOW_INSULIN_EFFECT;
-        }
-        if (duration == null) {
-            duration = insulinType.equals("rapid") ? RAPID_INSULIN_DURATION : SLOW_INSULIN_DURATION;
-        }
-
-        int peakTime = duration[0];
-        int effectDuration = duration[1];
-
-        if (0 <= elapsedTime && elapsedTime <= peakTime) {
-            return Math.max(insulinDose * (effect * (elapsedTime / peakTime)), 0);  // Pico lineal hasta el tiempo de pico
-        } else if (peakTime < elapsedTime && elapsedTime <= effectDuration) {
-            return Math.max(insulinDose * (effect * (1 - (elapsedTime - peakTime) / (effectDuration - peakTime))), 0);  // Disminución lineal hasta la duración del efecto
-        }
-        return 0;
+    private static double activeIns(String kind,double u,double min,double isf){
+        int pk  = kind.startsWith("rapid")? RAPID_PEAK_MIN : BASAL_PEAK_MIN;
+        int dur = kind.startsWith("rapid")? RAPID_DUR_MIN  : BASAL_DUR_MIN;
+        double eff = kind.startsWith("rapid")? isf : isf*0.6;
+        if(min<0||min>dur) return 0;
+        return (min<=pk)? u*eff*(min/pk)
+                : u*eff*(1-(min-pk)/(double)(dur-pk));
     }
 
-    public static double simulateFoodEffect(double carbs, double fats, double proteins, double elapsedTime, double carbRatio, double carbAbsorptionRate) {
-        double carbsEffect = 0;
-        double fatsEffect = 0;
-        double proteinsEffect = 0;
-
-        double carbsPerHour = Math.min(carbs, carbAbsorptionRate);
-        double carbDuration = carbs / carbsPerHour * 60;
-        if (0 <= elapsedTime && elapsedTime <= carbDuration) {
-            carbsEffect = (carbsPerHour / 60 * elapsedTime) / carbRatio * 50;  // Assuming 50 mg/dL per unit of insulin
-        }
-
-        // Grasas (lento)
-        if (0 <= elapsedTime && elapsedTime <= 240) {
-            fatsEffect = fats * (1 * (elapsedTime / 240));  // Incremento gradual hasta 4 horas
-        } else if (240 < elapsedTime && elapsedTime <= 480) {
-            fatsEffect = fats * (1 * (1 - (elapsedTime - 240) / 240));  // Disminución entre 4-8 horas
-        }
-
-        // Proteínas (sostenido)
-        if (0 <= elapsedTime && elapsedTime <= 120) {
-            proteinsEffect = proteins * (1 * (elapsedTime / 120));  // Incremento hasta 2 horas
-        } else if (120 < elapsedTime && elapsedTime <= 240) {
-            proteinsEffect = proteins * (1 * (1 - (elapsedTime - 120) / 120));  // Disminución entre 2-4 horas
-        }
-
-        // Sumar todos los efectos y retornar el resultado en mg/dL
-        return carbsEffect + fatsEffect + proteinsEffect;
+    /* meals – we only know grams, so use carbs≈grams */
+    private static double mealEffect(float grams,double min,double cr,double carbh){
+        double gPerHr = Math.min(grams, carbh);
+        double dur    = grams/gPerHr*60.0;
+        if(min<0||min>dur) return 0;
+        return (gPerHr/60*min)/cr*50.0;
     }
 
-    public static List<PointValue> getPredictionForNextHour(Context context) {
-        long cutoff = System.currentTimeMillis() - 8 * 60 * 60 * 1000;
+    /* ───── public ───── */
+    public static List<PointValue> getPredictionForNextHour(Context ctx){
+        long now = System.currentTimeMillis();
 
-        // 1. Leer desde Room
-        List<LocalGlucoseEntry> entries = GlucoseDB.getInstance(context)
+        /* 1️⃣  last 8-hour CGM ---------------------------------------- */
+        List<LocalGlucoseEntry> rows = GlucoseDB.getInstance(ctx)
                 .glucoseDao()
-                .getLast8Hours(cutoff);
-
-        // 2. Convertir a BgReading
-        List<BgReading> readings = new ArrayList<>();
-        for (LocalGlucoseEntry e : entries) {
-            BgReading r = new BgReading();
-            r.timestamp = e.timestamp;
-            r.calculated_value = e.glucoseValue;
-            readings.add(r);
-            System.out.println("time: " + e.timestamp + " bg: "+ e.glucoseValue);
+                .getLast8Hours(now-8*3600_000L);
+        List<BgReading> cgm = new ArrayList<>();
+        for(LocalGlucoseEntry e:rows){
+            BgReading r=new BgReading();
+            r.timestamp=e.timestamp;
+            r.calculated_value=e.glucoseValue;
+            cgm.add(r);
         }
 
-        // 3. Usar el modelo para predecir
-        Log.d("PredictionManager", "Get prediction");
-        Forecast.GlucoseForecast model = new Forecast.GlucoseForecast();
-        List<PointValue> results = model.predictNextHour(readings);
+        /* 2️⃣  raw polynomial forecast -------------------------------- */
+        List<PointValue> curve = new Forecast.GlucoseForecast()
+                .predictNextHour(cgm);
+        if(curve==null||curve.isEmpty()) return curve;
 
-        double rapidInsulinDose = 5; // Ejemplo: dosis de insulina rápida
-        double slowInsulinDose = 10; // Ejemplo: dosis de insulina lenta
-        double carbsIntake = 30; // Ejemplo: ingesta de carbohidratos
-        double fatsIntake = 10; // Ejemplo: ingesta de grasas
-        double proteinsIntake = 20; // Ejemplo: ingesta de proteinas
-        int activityLevel = 1; // Ejemplo: nivel de activad
-        int activityDuration = 0; // Ejemplo: duración de la actividad en minutos
-        long rapidInsulinTime = System.currentTimeMillis() - 30 * 60 * 1000; // Ejemplo: insulina rápida administrada hace 30 minutos
-        long slowInsulinTime = System.currentTimeMillis() - 120 * 60 * 1000; // Ejemplo: insulina lenta administrada hace 2 horas
-        long foodIntakeTime = System.currentTimeMillis() - 45 * 60 * 1000; // Ejemplo: comida ingerida hace 45 minutos
+        /* 3️⃣  latest local events ------------------------------------ */
+        LocalMealEntry    meal  = Persist.getLastMeal (ctx, now-MEAL_WINDOW_H*3600_000L);
+        LocalInsulinEntry rapid = Persist.getLastRapid(ctx, now-4*3600_000L);
+        LocalInsulinEntry basal = Persist.getLastBasal(ctx, now-24*3600_000L);
+        LocalActivityEntry act  = Persist.getLastAct  (ctx, now-ACTIVITY_WINDOW_H*3600_000L);
 
-        double insulinSensitivity = Prefs.getInsulinSensitivity(context);
-        double carbRatio = Prefs.getCarbRatio(context);
-        double carbAbsorptionRate = Prefs.getCarbAbsorptionRate(context);
-        for (int i = 0; i < results.size(); i++) {
-            PointValue value = results.get(i);
-            float elapsedTime = value.getX() - results.get(0).getX();
+        /* 4️⃣  user factors ------------------------------------------- */
+        double isf = Prefs.getInsulinSensitivity(ctx);
+        double cr  = Prefs.getCarbRatio(ctx);
+        double carbh = Prefs.getCarbAbsorptionRate(ctx);
 
-            double foodEffect = simulateFoodEffect(carbsIntake, fatsIntake, proteinsIntake, foodIntakeTime + elapsedTime, carbRatio, carbAbsorptionRate);
-            double rapidInsulinEffect = getActiveInsulin("rapid", rapidInsulinDose, rapidInsulinTime + elapsedTime, null, null, insulinSensitivity);
-            double slowInsulinEffect = getActiveInsulin("slow", slowInsulinDose, slowInsulinTime + elapsedTime, null, null, insulinSensitivity);
+        /* 5️⃣  adjust every point ------------------------------------- */
+        for(PointValue p:curve){
+            long tMs   = (long)(p.getX()*Forecast.FUZZER);
+            double y   = p.getY();
 
-            // Calcular efecto del ejercicio
-            double activityEffect = getActivityEffect(activityLevel, activityDuration);
-            // Aplicar ajustes
-            System.out.println("Predicción no ajustada: " + value.toString());
-            value.set(value.getX(), (float) (value.getY() + foodEffect - rapidInsulinEffect - slowInsulinEffect - activityEffect));
-            System.out.println("Predicción ajustada: " + value.toString());
+            if(meal!=null){
+                double dt = (tMs - meal.timestampSec*1000L)/60_000.0;
+                y += mealEffect(meal.grams, dt, cr, carbh);
+            }
+            if(rapid!=null){
+                double dt = (tMs - rapid.timestampSec*1000L)/60_000.0;
+                y -= activeIns(rapid.kind, rapid.units, dt, isf);
+            }
+            if(basal!=null){
+                double dt = (tMs - basal.timestampSec*1000L)/60_000.0;
+                y -= activeIns(basal.kind, basal.units, dt, isf);
+            }
+            if(act!=null){
+                double dt = (tMs - act.timestampSec*1000L)/60_000.0;
+                if(dt>=0 && dt<=ACTIVITY_WINDOW_H*60)
+                    y -= activityEffect(act.intensity, act.durationMin);
+            }
+            p.set(p.getX(), (float)y);
         }
-        Log.d("PredictionManager", "Predicción ajustada obtenida");
-        return results;
+
+        Log.d("PredManager","Forecast adjusted ✔");
+        return curve;
     }
+
+    private PredictionManager(){}
 }

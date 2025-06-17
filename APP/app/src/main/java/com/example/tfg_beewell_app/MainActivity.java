@@ -211,9 +211,9 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.menu_tutorial).setOnClickListener(v -> {
             overlay.setVisibility(View.GONE);
-            // You can hook up your tutorial logic here
-            Toast.makeText(this, "Tutorial clicked", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, com.example.tfg_beewell_app.TutorialActivity.class));
         });
+
 
         findViewById(R.id.menu_log_out).setOnClickListener(v -> {
             overlay.setVisibility(View.GONE);
