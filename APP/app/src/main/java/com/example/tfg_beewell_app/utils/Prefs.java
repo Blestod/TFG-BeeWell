@@ -51,4 +51,19 @@ public class Prefs {
         PreferenceManager.getDefaultSharedPreferences(ctx)
                 .edit().putFloat(KEY_CARB_ABS_RATE,(float)v).apply();
     }
+
+    // Turorial flag
+    private static final String KEY_TUTORIAL_SHOWN = "tutorial_shown";
+
+    public static boolean wasTutorialShown(Context ctx) {
+        return ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+                .getBoolean(KEY_TUTORIAL_SHOWN, false);
+    }
+
+    public static void markTutorialShown(Context ctx) {
+        ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+                .edit().putBoolean(KEY_TUTORIAL_SHOWN, true).apply();
+    }
+
+
 }

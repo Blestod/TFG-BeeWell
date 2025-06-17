@@ -36,6 +36,7 @@ import com.example.tfg_beewell_app.local.GlucoseDB;
 import com.example.tfg_beewell_app.utils.FullSyncWorker;
 import com.example.tfg_beewell_app.utils.HealthConnectPermissionHelper;
 import com.example.tfg_beewell_app.utils.MonthlyInsightWorker;
+import com.example.tfg_beewell_app.utils.Prefs;
 import com.example.tfg_beewell_app.utils.VitalsWorker;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -164,12 +165,18 @@ public class MainActivity extends AppCompatActivity {
 
     private void notifyPermsGranted() {
         sendBroadcast(new Intent("HC_PERMS_GRANTED"));
+
         Intent svc = new Intent(this,
                 com.example.tfg_beewell_app.utils.HealthDataService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(svc);
         } else {
             startService(svc);
+        }
+
+        if (!Prefs.wasTutorialShown(this)) {
+            startActivity(new Intent(this, TutorialActivity.class));
+            Prefs.markTutorialShown(this);
         }
     }
 
