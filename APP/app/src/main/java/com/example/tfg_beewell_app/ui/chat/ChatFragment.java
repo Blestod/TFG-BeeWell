@@ -16,29 +16,26 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.tfg_beewell_app.R;
 import com.example.tfg_beewell_app.databinding.FragmentChatBinding;
 import com.example.tfg_beewell_app.utils.ChatAdapter;
+import com.example.tfg_beewell_app.utils.ChatMessage;
 import com.example.tfg_beewell_app.utils.ChatViewModel;
+import com.example.tfg_beewell_app.utils.PredictionPoster;
 
-import java.util.Collections;
-import java.util.Objects;
+import java.util.List;
 
 /**
- * Fragmento de chat (Usuario  ↔  IA)
+ * Fragmento de chat (Usuario ↔ IA)
+ * UI only; persists last AI reply directly here using ChatMessage.
  */
 public class ChatFragment extends Fragment {
 
     private FragmentChatBinding binding;
-    private ChatViewModel      viewModel;
-    private ChatAdapter        adapter;
-
-    /* --------------------------------------------------------------------- */
-    /* CICLO DE VIDA                                                         */
-    /* --------------------------------------------------------------------- */
+    private ChatViewModel       viewModel;
+    private ChatAdapter         adapter;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-
         binding = FragmentChatBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -47,54 +44,68 @@ public class ChatFragment extends Fragment {
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
 
-        /* 1. ViewModel ---------------------------------------------- */
+        // 1. ViewModel
         viewModel = new ViewModelProvider(requireActivity())
                 .get(ChatViewModel.class);
 
-        /* 2. RecyclerView ------------------------------------------- */
-        // 👉  PONEMOS EL LAYOUT-MANAGER **con** su parámetro
+        // 2. RecyclerView setup
         binding.chatRecyclerView.setLayoutManager(
                 new LinearLayoutManager(requireContext()));
-
-        // 👉  El adapter **sin** argumentos
         adapter = new ChatAdapter();
         binding.chatRecyclerView.setAdapter(adapter);
         binding.chatRecyclerView.setHasFixedSize(true);
 
-        /* 3. Observa la lista para refrescar ------------------------ */
+        // 3. Observe chat list and persist last AI answer
         viewModel.getChat().observe(getViewLifecycleOwner(), msgs -> {
-            adapter.submitList(msgs);                       // DiffUtil animado
+            adapter.submitList(msgs);
+            scrollToBottom();
+
+            // Persist only the last AI reply
             if (msgs != null && !msgs.isEmpty()) {
-                binding.chatRecyclerView.scrollToPosition(msgs.size() - 1);
+                ChatMessage last = msgs.get(msgs.size() - 1);
+                if (!last.isUser()) {
+                    PredictionPoster.post(
+                            requireContext(),
+                            last.getMessage(),
+                            "chat",
+                            null,
+                            null
+                    );
+                }
             }
         });
-        // dentro de onViewCreated(), después del observer de chat:
 
+        // 4. Loading spinner & button state
         viewModel.isLoading().observe(getViewLifecycleOwner(), isLoading -> {
             binding.sendButton.setEnabled(!isLoading);
             binding.messageInput.setEnabled(!isLoading);
 
-            int color = isLoading ? getResources().getColor(R.color.beeGrey)
-                    : getResources().getColor(R.color.beeBlue);   // tu azul
+            int tint = requireContext().getColor(
+                    isLoading ? R.color.beeGrey : R.color.beeBlue);
             binding.sendButton.setBackgroundTintList(
-                    ColorStateList.valueOf(color));
+                    ColorStateList.valueOf(tint));
         });
 
-
-        /* 4. Enviar mensaje ---------------------------------------- */
+        // 5. Send message
         binding.sendButton.setOnClickListener(v -> {
             String txt = binding.messageInput.getText().toString().trim();
-            if (!txt.isEmpty()) {
+            if (!TextUtils.isEmpty(txt)) {
                 viewModel.sendMessage(txt);
                 binding.messageInput.setText("");
             }
         });
     }
 
-
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null;                         // evita fugas de memoria
+        binding = null;  // avoid memory leaks
+    }
+
+    private void scrollToBottom() {
+        int count = adapter.getItemCount();
+        if (count > 0) {
+            binding.chatRecyclerView.scrollToPosition(count - 1);
+        }
     }
 }

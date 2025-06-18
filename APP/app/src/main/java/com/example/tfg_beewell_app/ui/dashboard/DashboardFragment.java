@@ -25,6 +25,7 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
 import com.example.tfg_beewell_app.R;
+import com.example.tfg_beewell_app.utils.PredictionPoster;
 import com.example.tfg_beewell_app.utils.RecoWorker;
 
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ public class DashboardFragment extends Fragment {
     private final BroadcastReceiver updateReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context c, Intent i) {
             loadFromPrefsAndFill();
+            persistCurrentRecommendations();
         }
     };
 
@@ -157,9 +159,35 @@ public class DashboardFragment extends Fragment {
         String diet = sp.getString(RecoWorker.KEY_DIET, "");
         String exer = sp.getString(RecoWorker.KEY_EXER, "");
 
-        dietRv.setAdapter(new SimpleStringAdapter(splitLines(diet)));
-        exerRv.setAdapter(new SimpleStringAdapter(splitLines(exer)));
+        // 1) Split into lines…
+        List<String> dietLines = splitLines(diet);
+        List<String> exerLines = splitLines(exer);
+
+        // 2) Set adapters as before
+        dietRv.setAdapter(new SimpleStringAdapter(dietLines));
+        exerRv.setAdapter(new SimpleStringAdapter(exerLines));
+
+
     }
+
+    /**
+     * Persist the full diet & exercise blocks once, when new data arrives.
+     */
+    private void persistCurrentRecommendations() {
+        SharedPreferences sp = requireContext()
+                .getSharedPreferences(RecoWorker.PREFS, Context.MODE_PRIVATE);
+
+        String diet = sp.getString(RecoWorker.KEY_DIET, "");
+        String exer = sp.getString(RecoWorker.KEY_EXER, "");
+
+        if (!diet.isEmpty()) {
+            PredictionPoster.post(requireContext(), diet, "diet", null, null);
+        }
+        if (!exer.isEmpty()) {
+            PredictionPoster.post(requireContext(), exer, "exercise", null, null);
+        }
+    }
+
 
     /** Fire a one-shot work if nothing is stored yet (e.g. fresh install). */
     private void ensureNotEmpty() {
