@@ -1,20 +1,13 @@
 package com.example.tfg_beewell_app.ui.dashboard;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
+import android.content.*;
 import android.os.Bundle;
 import android.util.TypedValue;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import androidx.annotation.*;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -28,27 +21,22 @@ import com.example.tfg_beewell_app.R;
 import com.example.tfg_beewell_app.utils.PredictionPoster;
 import com.example.tfg_beewell_app.utils.RecoWorker;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
- * Dashboard with diet & exercise recommendation cards.
- * Receives updates that RecoWorker broadcasts and reloads the lists.
+ * • One card collapses to 80 dp (content height).
+ * • The other card gets the remainder of the LinearLayout _after subtracting both cards’ margins_.
+ * • Second tap on the same button returns to an even split.
  */
 public class DashboardFragment extends Fragment {
 
-    /* --------------------------------------------------  UI config  */
-    private static final int NORMAL_HEIGHT_DP    = 320;
-    private static final int EXPANDED_HEIGHT_DP  = 560;
-    private static final int COLLAPSED_HEIGHT_DP =  80;
-
-    /* --------------------------------------------------  view refs  */
+    // ────────── views & state ──────────
+    private CardView dietCard, exerciseCard;
+    private ImageView dietBtn, exerBtn;
     private RecyclerView dietRv, exerRv;
-    private boolean isDietExpanded    = false;
-    private boolean isExerciseExpanded = false;
+    private boolean dietOpen = false, exerOpen = false;
 
-    /* --------------------------------------------------  lifecycle  */
+    // ────────── broadcast from RecoWorker ──────────
     private final BroadcastReceiver updateReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context c, Intent i) {
             loadFromPrefsAndFill();
@@ -56,185 +44,189 @@ public class DashboardFragment extends Fragment {
         }
     };
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        // listen for broadcasts that RecoWorker sends after finishing
+    // ────────── lifecycle ──────────
+    @Override public void onCreate(@Nullable Bundle s) {
+        super.onCreate(s);
         LocalBroadcastManager.getInstance(requireContext())
                 .registerReceiver(updateReceiver,
                         new IntentFilter(RecoWorker.BROADCAST));
     }
 
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container,
-                             Bundle savedInstanceState) {
+    @Nullable @Override
+    public View onCreateView(@NonNull LayoutInflater inf,
+                             ViewGroup parent,
+                             Bundle s) {
 
-        View root = inflater.inflate(R.layout.fragment_dashboard, container, false);
+        View root = inf.inflate(R.layout.fragment_dashboard, parent, false);
 
-        /* ----------  get handles to widgets present in your layout  */
-        CardView dietCard        = root.findViewById(R.id.dietCard);
-        CardView exerciseCard    = root.findViewById(R.id.exerciseCard);
-        ImageView dietToggleBtn  = root.findViewById(R.id.dietToggleBtn);
-        ImageView exerciseToggleBtn = root.findViewById(R.id.exerciseToggleBtn);
-
-        dietRv = root.findViewById(R.id.dietRecyclerView);
-        exerRv = root.findViewById(R.id.exerciseRecyclerView);
+        dietCard  = root.findViewById(R.id.dietCard);
+        exerciseCard = root.findViewById(R.id.exerciseCard);
+        dietBtn   = root.findViewById(R.id.dietToggleBtn);
+        exerBtn   = root.findViewById(R.id.exerciseToggleBtn);
+        dietRv    = root.findViewById(R.id.dietRecyclerView);
+        exerRv    = root.findViewById(R.id.exerciseRecyclerView);
 
         dietRv.setLayoutManager(new LinearLayoutManager(getContext()));
         exerRv.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        /* ----------  original toggle-height logic  */
-        setCardHeight(dietCard, NORMAL_HEIGHT_DP);
-        setCardHeight(exerciseCard, NORMAL_HEIGHT_DP);
+        // equal split after first layout pass
+        root.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override public void onGlobalLayout() {
+                        root.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        expandBothNormal();
+                    }
+                });
 
-        dietToggleBtn.setOnClickListener(v -> {
-            if (!isDietExpanded) {
-                setCardHeight(dietCard,     EXPANDED_HEIGHT_DP);
-                setCardHeight(exerciseCard, COLLAPSED_HEIGHT_DP);
-                dietToggleBtn.setImageResource(R.drawable.fold);
-                exerciseToggleBtn.setImageResource(R.drawable.unfold);
-                isDietExpanded = true;
-                isExerciseExpanded = false;
-            } else {
-                resetCardHeights(dietCard, exerciseCard,
-                        dietToggleBtn, exerciseToggleBtn);
-            }
-        });
+        dietBtn.setOnClickListener(v -> toggleDiet());
+        exerBtn.setOnClickListener(v -> toggleExercise());
 
-        exerciseToggleBtn.setOnClickListener(v -> {
-            if (!isExerciseExpanded) {
-                setCardHeight(exerciseCard, EXPANDED_HEIGHT_DP);
-                setCardHeight(dietCard,     COLLAPSED_HEIGHT_DP);
-                exerciseToggleBtn.setImageResource(R.drawable.fold);
-                dietToggleBtn.setImageResource(R.drawable.unfold);
-                isExerciseExpanded = true;
-                isDietExpanded = false;
-            } else {
-                resetCardHeights(dietCard, exerciseCard,
-                        dietToggleBtn, exerciseToggleBtn);
-            }
-        });
-
-        /* ----------  first paint + trigger if empty  */
         loadFromPrefsAndFill();
         ensureNotEmpty();
-
         return root;
     }
 
-    @Override
-    public void onDestroy() {
+    @Override public void onDestroy() {
         LocalBroadcastManager.getInstance(requireContext())
                 .unregisterReceiver(updateReceiver);
         super.onDestroy();
     }
 
-    /* --------------------------------------------------  helper  */
-    private void setCardHeight(CardView card, int heightDp) {
-        ViewGroup.LayoutParams params = card.getLayoutParams();
-        params.height = (int) TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP,
-                heightDp,
-                getResources().getDisplayMetrics());
-        card.setLayoutParams(params);
+    // ────────── expand / collapse logic ──────────
+    private void toggleDiet() {
+        if (dietOpen) {
+            expandBothNormal();
+            dietOpen = exerOpen = false;
+        } else {
+            expandOneCollapseOther(dietCard, exerciseCard);
+            dietOpen = true;  exerOpen = false;
+        }
+        updateIcons();
     }
 
-    private void resetCardHeights(CardView dietCard, CardView exerciseCard,
-                                  ImageView dietBtn, ImageView exerciseBtn) {
-        setCardHeight(dietCard,     NORMAL_HEIGHT_DP);
-        setCardHeight(exerciseCard, NORMAL_HEIGHT_DP);
-        dietBtn.setImageResource(R.drawable.unfold);
-        exerciseBtn.setImageResource(R.drawable.unfold);
-        isDietExpanded    = false;
-        isExerciseExpanded = false;
+    private void toggleExercise() {
+        if (exerOpen) {
+            expandBothNormal();
+            dietOpen = exerOpen = false;
+        } else {
+            expandOneCollapseOther(exerciseCard, dietCard);
+            exerOpen = true;  dietOpen = false;
+        }
+        updateIcons();
     }
 
-    /** Reads the last recommendations from SharedPreferences and fills the lists. */
+    /**
+     * big card = remaining height, small card = 80 dp (content),
+     * everything margin-aware.
+     */
+    private void expandOneCollapseOther(CardView big, CardView small) {
+        View parent = (View) big.getParent();
+        int parentH = parent.getHeight();
+
+        // 1) small card visible height
+        int collapsedContent = dpToPx(80);
+        ViewGroup.MarginLayoutParams smlLp = (ViewGroup.MarginLayoutParams) small.getLayoutParams();
+        int smallVisible = collapsedContent + smlLp.topMargin + smlLp.bottomMargin;
+
+        // 2) big card margins
+        ViewGroup.MarginLayoutParams bigLp = (ViewGroup.MarginLayoutParams) big.getLayoutParams();
+        int bigMargins = bigLp.topMargin + bigLp.bottomMargin;
+
+        // 3) expanded content height
+        int expandedContent = parentH - smallVisible - bigMargins;
+        expandedContent = Math.max(expandedContent, dpToPx(120)); // safety min
+
+        setExactHeight(small, collapsedContent);
+        setExactHeight(big,   expandedContent);
+    }
+
+    /** Even split of (parentHeight − both cards' total margins) */
+    private void expandBothNormal() {
+        View parent = (View) dietCard.getParent();
+        int parentH = parent.getHeight();
+
+        ViewGroup.MarginLayoutParams lpDiet = (ViewGroup.MarginLayoutParams) dietCard.getLayoutParams();
+        ViewGroup.MarginLayoutParams lpExer = (ViewGroup.MarginLayoutParams) exerciseCard.getLayoutParams();
+        int totalMargins = lpDiet.topMargin + lpDiet.bottomMargin +
+                lpExer.topMargin + lpExer.bottomMargin;
+
+        int remaining = parentH - totalMargins;
+        int half = remaining / 2;
+
+        setExactHeight(dietCard,     half);
+        setExactHeight(exerciseCard, half);
+    }
+
+    // ────────── height helpers ──────────
+    private static void setExactHeight(View v, int px) {
+        ViewGroup.LayoutParams lp = v.getLayoutParams();
+        lp.height = px;
+        v.setLayoutParams(lp);
+    }
+    private int dpToPx(int dp) {
+        return Math.round(TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, dp,
+                getResources().getDisplayMetrics()));
+    }
+    private void updateIcons() {
+        dietBtn.setImageResource(dietOpen ? R.drawable.fold : R.drawable.unfold);
+        exerBtn.setImageResource(exerOpen ? R.drawable.fold : R.drawable.unfold);
+    }
+
+    // ────────── data / persistence helpers (unchanged) ──────────
     private void loadFromPrefsAndFill() {
         SharedPreferences sp = requireContext()
                 .getSharedPreferences(RecoWorker.PREFS, Context.MODE_PRIVATE);
-
-        String diet = sp.getString(RecoWorker.KEY_DIET, "");
-        String exer = sp.getString(RecoWorker.KEY_EXER, "");
-
-        // 1) Split into lines…
-        List<String> dietLines = splitLines(diet);
-        List<String> exerLines = splitLines(exer);
-
-        // 2) Set adapters as before
-        dietRv.setAdapter(new SimpleStringAdapter(dietLines));
-        exerRv.setAdapter(new SimpleStringAdapter(exerLines));
-
-
+        dietRv.setAdapter(new SimpleStringAdapter(
+                splitLines(sp.getString(RecoWorker.KEY_DIET, ""))));
+        exerRv.setAdapter(new SimpleStringAdapter(
+                splitLines(sp.getString(RecoWorker.KEY_EXER, ""))));
     }
 
-    /**
-     * Persist the full diet & exercise blocks once, when new data arrives.
-     */
     private void persistCurrentRecommendations() {
         SharedPreferences sp = requireContext()
                 .getSharedPreferences(RecoWorker.PREFS, Context.MODE_PRIVATE);
-
         String diet = sp.getString(RecoWorker.KEY_DIET, "");
         String exer = sp.getString(RecoWorker.KEY_EXER, "");
-
-        if (!diet.isEmpty()) {
+        if (!diet.isEmpty())
             PredictionPoster.post(requireContext(), diet, "diet", null, null);
-        }
-        if (!exer.isEmpty()) {
+        if (!exer.isEmpty())
             PredictionPoster.post(requireContext(), exer, "exercise", null, null);
-        }
     }
 
-
-    /** Fire a one-shot work if nothing is stored yet (e.g. fresh install). */
     private void ensureNotEmpty() {
         SharedPreferences sp = requireContext()
                 .getSharedPreferences(RecoWorker.PREFS, Context.MODE_PRIVATE);
-
         if (!sp.contains(RecoWorker.KEY_DIET) &&
                 !sp.contains(RecoWorker.KEY_EXER)) {
-
-            WorkManager.getInstance(requireContext()).enqueue(
-                    new OneTimeWorkRequest.Builder(RecoWorker.class).build());
+            WorkManager.getInstance(requireContext())
+                    .enqueue(new OneTimeWorkRequest.Builder(RecoWorker.class).build());
         }
     }
 
-    /**
-     * Splits a block of recommendations into individual sentences.
-     * Each sentence becomes its own list item with a trailing period.
-     */
     private static List<String> splitLines(String block) {
-        if (block.isEmpty())
-            return Collections.singletonList("(no data yet)");
-
-        List<String> sentences = new ArrayList<>();
-        for (String part : block.split("\\.")) {   // split on every period
-            String sentence = part.trim();
-            if (sentence.isEmpty()) continue;
-            // ensure the period is kept
-            if (!sentence.endsWith(".")) sentence += ".";
-            sentences.add(sentence);
+        if (block.isEmpty()) return Collections.singletonList("(no data yet)");
+        List<String> out = new ArrayList<>();
+        for (String p : block.split("\\.")) {
+            String s = p.trim();
+            if (!s.isEmpty())
+                out.add(s.endsWith(".") ? s : s + ".");
         }
-        return sentences;
+        return out;
     }
 
-    /* --------------------------------------------------  adapter with nicer row layout  */
+    // ────────── simple bullet adapter ──────────
     private static class SimpleStringAdapter
             extends RecyclerView.Adapter<SimpleStringAdapter.Holder> {
 
         private final List<String> items;
         SimpleStringAdapter(List<String> items) { this.items = items; }
 
-        @NonNull @Override public Holder onCreateViewHolder(
-                @NonNull ViewGroup parent, int viewType) {
-            View row = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_reco, parent, false);
+        @NonNull @Override public Holder onCreateViewHolder(@NonNull ViewGroup p, int v) {
+            View row = LayoutInflater.from(p.getContext())
+                    .inflate(R.layout.item_reco, p, false);
             return new Holder(row);
         }
-
         @Override public void onBindViewHolder(@NonNull Holder h, int pos) {
             String line = items.get(pos).trim();
             if (line.isEmpty()) {
@@ -245,19 +237,17 @@ public class DashboardFragment extends Fragment {
                 h.text.setText(line);
             }
         }
-
         @Override public int getItemCount() { return items.size(); }
 
         static class Holder extends RecyclerView.ViewHolder {
-            final TextView bullet;
-            final TextView text;
+            final TextView bullet, text;
             Holder(@NonNull View v) {
                 super(v);
                 bullet = v.findViewById(R.id.bullet);
                 text   = v.findViewById(R.id.lineText);
-                int beeBlack = ContextCompat.getColor(v.getContext(), R.color.beeBlack);
-                bullet.setTextColor(beeBlack);
-                text.setTextColor(beeBlack);
+                int c = ContextCompat.getColor(v.getContext(), R.color.beeBlack);
+                bullet.setTextColor(c);
+                text.setTextColor(c);
             }
         }
     }

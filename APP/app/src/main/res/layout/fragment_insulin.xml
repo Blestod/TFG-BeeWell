@@ -34,7 +34,7 @@
                 android:dropDownHeight="200dp"
                 android:hint="Insulin type"
                 android:inputType="none"
-                android:popupBackground="@color/beeBlack"
+                android:popupBackground="@color/beeBlue"
                 android:textColor="@color/beeBlack"
                 app:popupTheme="@style/ThemeOverlay.Bee.Dropdown" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -60,7 +60,7 @@
                 android:dropDownHeight="200dp"
                 android:hint="Injection spot"
                 android:inputType="none"
-                android:popupBackground="@color/beeBlack"
+                android:popupBackground="@color/beeBlue"
                 android:textColor="@color/beeBlack"
                 app:popupTheme="@style/ThemeOverlay.Bee.Dropdown" />
         </com.google.android.material.textfield.TextInputLayout>

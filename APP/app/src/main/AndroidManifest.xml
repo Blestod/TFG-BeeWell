@@ -34,10 +34,15 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="34">
         <service
+            android:name=".utils.HomeService"
+            android:enabled="true"
+            android:exported="true"></service>
+        <service
             android:name=".utils.HealthDataService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+
         <activity
             android:name=".SplashActivity"
             android:exported="true">
@@ -66,16 +71,17 @@
         <activity
             android:name=".ProfileActivity"
             android:screenOrientation="portrait" />
-        <activity android:name=".ui.log.LogsActivity"
-            android:label="Logs"/>
-        <activity android:name=".TutorialActivity"
+        <activity
+            android:name=".ui.log.LogsActivity"
+            android:label="Logs" />
+        <activity
+            android:name=".TutorialActivity"
             android:exported="false"
-            android:theme="@style/Theme.BeeWell.Fullscreen"/>
+            android:theme="@style/Theme.BeeWell.Fullscreen" />
         <activity
             android:name=".AboutActivity"
             android:exported="true"
             android:screenOrientation="portrait" />
-
         <!--
  ─────────────────────────────────────────────
              1) ACTIVITY de explicación de permisos

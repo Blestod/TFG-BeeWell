@@ -55,7 +55,7 @@
                 android:layout_height="wrap_content"
                 android:hint="Intensity"
                 android:inputType="none"
-                android:popupBackground="@color/beeBlack"
+                android:popupBackground="@color/beeBlue"
                 android:textColor="@color/beeBlack"
                 app:popupTheme="@style/ThemeOverlay.Bee.Dropdown" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -78,7 +78,7 @@
                 android:layout_height="wrap_content"
                 android:hint="Type"
                 android:inputType="none"
-                android:popupBackground="@color/beeBlack"
+                android:popupBackground="@color/beeBlue"
                 android:textColor="@color/beeBlack"
                 app:popupTheme="@style/ThemeOverlay.Bee.Dropdown" />
         </com.google.android.material.textfield.TextInputLayout>
