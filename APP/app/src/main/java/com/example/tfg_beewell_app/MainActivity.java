@@ -212,8 +212,7 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.menu_aboutus).setOnClickListener(v -> {
             overlay.setVisibility(View.GONE);
-            // You can open an about screen here or remove this if unused
-            Toast.makeText(this, "About Us clicked", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, AboutActivity.class));
         });
 
         findViewById(R.id.menu_tutorial).setOnClickListener(v -> {

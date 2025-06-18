@@ -198,7 +198,7 @@ public class HomeFragment extends Fragment {
 
         /* dots – meals (green) */
         if(!mealDots.isEmpty()){
-            LineDataSet ds = new LineDataSet(mealDots,"Comidas");
+            LineDataSet ds = new LineDataSet(mealDots,"Meals");
             ds.setColor(ContextCompat.getColor(requireContext(), android.R.color.holo_green_dark));
             ds.setCircleColor(ContextCompat.getColor(requireContext(), android.R.color.holo_green_dark));
             ds.setCircleRadius(4f);
@@ -209,7 +209,7 @@ public class HomeFragment extends Fragment {
 
         /* dots – insulin (grey) */
         if(!insulinDots.isEmpty()){
-            LineDataSet ds = new LineDataSet(insulinDots,"Insulina");
+            LineDataSet ds = new LineDataSet(insulinDots,"Insulin");
             ds.setColor(ContextCompat.getColor(requireContext(), android.R.color.darker_gray));
             ds.setCircleColor(ContextCompat.getColor(requireContext(), android.R.color.darker_gray));
             ds.setCircleRadius(4f);
@@ -220,7 +220,7 @@ public class HomeFragment extends Fragment {
 
         /* dots – activity (blue) */
         if(!actDots.isEmpty()){
-            LineDataSet ds = new LineDataSet(actDots,"Ejercicio");
+            LineDataSet ds = new LineDataSet(actDots,"Exercise");
             ds.setColor(ContextCompat.getColor(requireContext(), android.R.color.holo_blue_light));
             ds.setCircleColor(ContextCompat.getColor(requireContext(), android.R.color.holo_blue_light));
             ds.setCircleRadius(4f);

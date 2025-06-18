@@ -71,6 +71,10 @@
         <activity android:name=".TutorialActivity"
             android:exported="false"
             android:theme="@style/Theme.BeeWell.Fullscreen"/>
+        <activity
+            android:name=".AboutActivity"
+            android:exported="true"
+            android:screenOrientation="portrait" />
 
         <!--
  ─────────────────────────────────────────────

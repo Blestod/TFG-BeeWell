@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -17,6 +16,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -28,7 +28,6 @@ import com.example.tfg_beewell_app.R;
 import com.example.tfg_beewell_app.utils.RecoWorker;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -175,20 +174,26 @@ public class DashboardFragment extends Fragment {
         }
     }
 
+    /**
+     * Splits a block of recommendations into individual sentences.
+     * Each sentence becomes its own list item with a trailing period.
+     */
     private static List<String> splitLines(String block) {
         if (block.isEmpty())
             return Collections.singletonList("(no data yet)");
 
-        List<String> separated = new ArrayList<>();
-        for (String line : block.split("\\n")) { //TODO: correctly split on \n
-            separated.add(line);
-            separated.add("");
+        List<String> sentences = new ArrayList<>();
+        for (String part : block.split("\\.")) {   // split on every period
+            String sentence = part.trim();
+            if (sentence.isEmpty()) continue;
+            // ensure the period is kept
+            if (!sentence.endsWith(".")) sentence += ".";
+            sentences.add(sentence);
         }
-        return separated;
+        return sentences;
     }
 
-
-    /* --------------------------------------------------  trivial adapter  */
+    /* --------------------------------------------------  adapter with nicer row layout  */
     private static class SimpleStringAdapter
             extends RecyclerView.Adapter<SimpleStringAdapter.Holder> {
 
@@ -196,24 +201,36 @@ public class DashboardFragment extends Fragment {
         SimpleStringAdapter(List<String> items) { this.items = items; }
 
         @NonNull @Override public Holder onCreateViewHolder(
-                @NonNull ViewGroup p, int v) {
-            View row = LayoutInflater.from(p.getContext())
-                    .inflate(android.R.layout.simple_list_item_1, p, false);
+                @NonNull ViewGroup parent, int viewType) {
+            View row = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_reco, parent, false);
             return new Holder(row);
         }
 
-        @Override
-        public void onBindViewHolder(@NonNull Holder h, int pos) {
-            TextView tv = (TextView) h.itemView;
-            tv.setText(items.get(pos));
-            tv.setTextColor(Color.BLACK);
+        @Override public void onBindViewHolder(@NonNull Holder h, int pos) {
+            String line = items.get(pos).trim();
+            if (line.isEmpty()) {
+                h.bullet.setVisibility(View.INVISIBLE);
+                h.text.setText("");
+            } else {
+                h.bullet.setVisibility(View.VISIBLE);
+                h.text.setText(line);
+            }
         }
-
 
         @Override public int getItemCount() { return items.size(); }
 
         static class Holder extends RecyclerView.ViewHolder {
-            Holder(@NonNull View v) { super(v); }
+            final TextView bullet;
+            final TextView text;
+            Holder(@NonNull View v) {
+                super(v);
+                bullet = v.findViewById(R.id.bullet);
+                text   = v.findViewById(R.id.lineText);
+                int beeBlack = ContextCompat.getColor(v.getContext(), R.color.beeBlack);
+                bullet.setTextColor(beeBlack);
+                text.setTextColor(beeBlack);
+            }
         }
     }
 }

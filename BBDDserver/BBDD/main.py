@@ -688,18 +688,10 @@ def generate_summary():
 
         ### Instructions
         1. Write in ENGLISH and **second person** (“you”).
-        2. Be concise but precise; max ~300 words per section.
+        2. Produce a profesional extensive summary summary of the user’s glucose trends.
         3. Use concrete numbers (ranges, averages, deviations) when possible.
         4. Keep a neutral-positive tone – neither alarming nor over-hyping.
-        5. Return **only** this JSON:
-
-        {{
-        "overview":            "<2 sentences describing your overall status>",
-        "key_trends":          ["<trend 1>", "<trend 2>", "<trend 3>"],
-        "achievements":        ["<achievement 1>", "<achievement 2>", "<achievement 3>"],
-        "areas_to_improve":    ["<improve 1>", "<improve 2>", "<improve 3>"],
-        "next_steps":          "<1–2 concrete actions for the coming month>"
-        }}
+        5. Talk about observations, trends, achievements, and areas for improvement.
         """
 
         response = client.chat.completions.create(
@@ -759,11 +751,12 @@ def generate_insights():
 
     {{
     "recommendation_vitals":     "<1–2 precise sentences based on live vitals (quote numbers) + 1 clear action>",
-    "recommendation_prediction": "<≤70-word paragraph on the forecast trend and ONE concrete next step>"
+    "recommendation_prediction": "<≤200-word paragraph on the forecast trend and concrete next steps>"
     }}
 
-    3. Avoid vague phrases like “be careful”. Give direct but calm advice.
-    4. If all metrics are healthy, acknowledge briefly (“Looks good—keep it up”) without over-enthusiasm.
+    3. Avoid vague phrases like “be careful” or redundant information like "its important to monitor". Give specific and direct but calm advice.
+    4. If all metrics are healthy or normal, acknowledge briefly (“Looks good—keep it up”) without over-enthusiasm.
+    5. If any metric is abnormal, provide a clear and specific action step (dont say "consider adjusting your insulin dose" or "consult your doctor if symptoms persist" but try to give clear actions to continue like inject more or less X amount of insuline, try to eat X food or do X thing that could help).
     """
 
 

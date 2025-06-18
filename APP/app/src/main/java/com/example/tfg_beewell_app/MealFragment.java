@@ -49,12 +49,16 @@ public class MealFragment extends Fragment {
     private final Map<String,Integer> foodMap = new HashMap<>();
     private Integer selectedFoodId = null;
 
+    // New flags for UX
+    private boolean suppressNextSearch = false;
+    private String  lastQuery          = "";
+
     private String email;
 
     private final Handler handler = new Handler();
     private Runnable searchRunnable;
 
-    /* ---------------- life-cycle ---------------- */
+    /* ---------------- life‑cycle ---------------- */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
@@ -82,104 +86,118 @@ public class MealFragment extends Fragment {
 
         /* ---- live search ---- */
         foodSearchInput.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s,int a,int b,int c){}
-            @Override public void onTextChanged(CharSequence s,int a,int b,int c){
-                if (searchRunnable!=null) handler.removeCallbacks(searchRunnable);
+            @Override public void beforeTextChanged(CharSequence s,int a,int b,int c) {}
+            @Override public void onTextChanged(CharSequence s,int a,int b,int c) {
+                if (suppressNextSearch) {          // ignore the echo after selection
+                    suppressNextSearch = false;
+                    return;
+                }
+                if (searchRunnable != null) handler.removeCallbacks(searchRunnable);
                 searchRunnable = () -> searchFood(s.toString());
-                handler.postDelayed(searchRunnable,300);
+                handler.postDelayed(searchRunnable, 300);
             }
-            @Override public void afterTextChanged(Editable s){
+            @Override public void afterTextChanged(Editable s) {
                 String typed = s.toString().trim();
                 selectedFoodId = foodMap.get(typed); // will be null if not found
             }
         });
+
         foodSearchInput.setOnItemClickListener((p1, p2, pos, id)->{
             String selected = adapter.getItem(pos);
             selectedFoodId  = foodMap.get(selected);
+
+            suppressNextSearch = true;              // prevent extra search
+            handler.removeCallbacks(searchRunnable);
+            foodSearchInput.dismissDropDown();
         });
 
         /* ---- UX tweaks ---- */
-        foodSearchInput.setOnFocusChangeListener((v1,has)->{
+        foodSearchInput.setOnFocusChangeListener((v1, has)->{
             if (has) {
-                InputMethodManager imm=(InputMethodManager)requireContext()
+                InputMethodManager imm = (InputMethodManager) requireContext()
                         .getSystemService(Context.INPUT_METHOD_SERVICE);
-                if (imm!=null) imm.hideSoftInputFromWindow(foodSearchInput.getWindowToken(),0);
-                handler.postDelayed(()->{
-                    if (foodSearchInput.getText().length()>0) foodSearchInput.showDropDown();
-                },200);
+                if (imm != null) imm.hideSoftInputFromWindow(foodSearchInput.getWindowToken(), 0);
+                handler.postDelayed(() -> {
+                    if (foodSearchInput.getText().length() > 0 && selectedFoodId == null) {
+                        foodSearchInput.showDropDown();
+                    }
+                }, 200);
             }
         });
 
-        saveBtn.setOnClickListener(x->saveMeal());
+        saveBtn.setOnClickListener(x -> saveMeal());
     }
 
     /* ---------------- REST search ---------------- */
-    private void searchFood(String q){
-        if (q.length()<2) return;
+    private void searchFood(String q) {
+        if (q.length() < 2 || q.equals(lastQuery)) return;
+        lastQuery = q;
 
-        new Thread(()->{
+        new Thread(() -> {
             try {
                 URL url = new URL(Constants.BASE_URL + "/food/search?q=" +
-                        URLEncoder.encode(q,"UTF-8"));
-                HttpURLConnection c=(HttpURLConnection)url.openConnection();
+                        URLEncoder.encode(q, "UTF-8"));
+                HttpURLConnection c = (HttpURLConnection) url.openConnection();
                 c.setRequestMethod("GET");
 
-                BufferedReader r=new BufferedReader(
+                BufferedReader r = new BufferedReader(
                         new InputStreamReader(c.getInputStream()));
-                StringBuilder sb=new StringBuilder(); String line;
-                while((line=r.readLine())!=null) sb.append(line);
+                StringBuilder sb = new StringBuilder(); String line;
+                while ((line = r.readLine()) != null) sb.append(line);
                 r.close();
 
-                JSONArray arr=new JSONArray(sb.toString());
-                foodMap.clear(); List<String> sugg=new ArrayList<>();
-                for(int i=0;i<arr.length();i++){
-                    JSONObject it=arr.getJSONObject(i);
-                    String name=it.getString("food_name");
-                    int id     =it.getInt("food_id");
-                    sugg.add(name); foodMap.put(name,id);
+                JSONArray arr = new JSONArray(sb.toString());
+                foodMap.clear(); List<String> sugg = new ArrayList<>();
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject it = arr.getJSONObject(i);
+                    String name = it.getString("food_name");
+                    int id      = it.getInt("food_id");
+                    sugg.add(name); foodMap.put(name, id);
                 }
 
-                requireActivity().runOnUiThread(()->{
+                requireActivity().runOnUiThread(() -> {
                     adapter.clear(); adapter.addAll(sugg); adapter.notifyDataSetChanged();
-                    handler.postDelayed(foodSearchInput::showDropDown,100);
+                    if (foodSearchInput.hasFocus() && selectedFoodId == null) {
+                        handler.postDelayed(foodSearchInput::showDropDown, 100);
+                    }
                 });
-            }catch(Exception e){ Log.e("FOOD_SEARCH","Error",e);}
+            } catch (Exception e) { Log.e("FOOD_SEARCH", "Error", e); }
         }).start();
     }
 
     /* ---------------- save Meal ---------------- */
-    private void saveMeal(){
-        if (selectedFoodId==null){
-            Toast.makeText(getContext(),"Please select a food",Toast.LENGTH_SHORT).show();return;}
+    private void saveMeal() {
+        if (selectedFoodId == null) {
+            Toast.makeText(getContext(),"Please select a food",Toast.LENGTH_SHORT).show(); return; }
 
-        String gramsTxt=gramsInput.getText().toString().trim();
-        if (gramsTxt.isEmpty()){
-            Toast.makeText(getContext(),"Please enter grams",Toast.LENGTH_SHORT).show();return;}
+        String gramsTxt = gramsInput.getText().toString().trim();
+        if (gramsTxt.isEmpty()) {
+            Toast.makeText(getContext(),"Please enter grams",Toast.LENGTH_SHORT).show(); return; }
 
         float grams = Float.parseFloat(gramsTxt);
-        long  tsSec = System.currentTimeMillis()/1000;
+        long  tsSec = System.currentTimeMillis() / 1000;
 
-        JSONObject body=new JSONObject();
-        try{
-            body.put("user_email",email);
+        JSONObject body = new JSONObject();
+        try {
+            body.put("user_email", email);
             body.put("meal_time", tsSec);
             body.put("grams",     grams);
             body.put("food_id",   selectedFoodId);
-        }catch(JSONException e){ e.printStackTrace(); return; }
+        } catch (JSONException e) { e.printStackTrace(); return; }
 
-        new Thread(()->{
-            try{
-                URL url=new URL(Constants.BASE_URL + "/meal");
-                HttpURLConnection c=(HttpURLConnection)url.openConnection();
+        new Thread(() -> {
+            try {
+                URL url = new URL(Constants.BASE_URL + "/meal");
+                HttpURLConnection c = (HttpURLConnection) url.openConnection();
                 c.setRequestMethod("POST");
-                c.setRequestProperty("Content-Type","application/json");
+                c.setRequestProperty("Content-Type", "application/json");
                 c.setDoOutput(true);
-                OutputStream os=c.getOutputStream();
+                OutputStream os = c.getOutputStream();
                 os.write(body.toString().getBytes("UTF-8")); os.close();
-                int code=c.getResponseCode();
+                int code = c.getResponseCode();
 
-                requireActivity().runOnUiThread(()->{
-                    if(code==200||code==201){
+                requireActivity().runOnUiThread(() -> {
+                    if (code == 200 || code == 201) {
                         Toast.makeText(getContext(),"Meal saved!",Toast.LENGTH_SHORT).show();
 
                         /*  LOCAL CACHE  */
@@ -190,13 +208,15 @@ public class MealFragment extends Fragment {
                                         selectedFoodId,
                                         foodSearchInput.getText().toString().trim()));
 
-                        foodSearchInput.setText(""); gramsInput.setText("");
-                    }else{
+                        foodSearchInput.setText("");
+                        gramsInput.setText("");
+                        selectedFoodId = null;
+                    } else {
                         Toast.makeText(getContext(),"Failed to save meal",
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
-            }catch(Exception e){ Log.e("SAVE_MEAL","Failed",e);}
+            } catch (Exception e) { Log.e("SAVE_MEAL","Failed", e); }
         }).start();
     }
 }
