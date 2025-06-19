@@ -233,15 +233,16 @@ public class HomeFragment extends Fragment {
         vitalsJob = scope.launchWhenStarted((co, ct) -> VitalsChangesListener.INSTANCE.listen(
                 requireContext(),
                 cont -> {
-                    Long bpm = HealthReader.getLastHeartRateBpmBlocking(requireContext());
-                    requireActivity().runOnUiThread(() ->
-                            binding.textInfo.setText(bpm != null ? bpm + " bpm" : "—")
-                    );
+                    VitalData latest = HealthReader.getLatestVitalsBlocking(requireContext(), userEmail);
+                    if (latest != null && latest.getGlucoseValue() != null && latest.getGlucoseValue() > 0) {
+                        requireActivity().runOnUiThread(() -> showVitals(latest));
+                    }
                     return Unit.INSTANCE;
                 },
                 ct
         ));
     }
+
 
     private final BroadcastReceiver vitalsUpdatedReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context c, Intent i) {
@@ -252,19 +253,24 @@ public class HomeFragment extends Fragment {
 
     private void showVitals(VitalData v) {
         currentVitals = v;
-        if (binding == null) {
-            // Prevent crash if fragment view is destroyed
-            return;
-        }
+        if (binding == null) return;
 
         FlexboxLayout card = binding.greenCard;
         card.removeAllViews();
-        addTxt(card, v.getGlucoseValue(), "mg/dL");
-        addTxt(card, v.getHeartRate(), "bpm");
+
+        // Arrow logic based on prediction trend
+        String glucoseDirection = "";
+        if (!currentPredictions.isEmpty()) {
+            float last = currentPredictions.get(currentPredictions.size() - 1).getY();
+            float now = currentPredictions.get(0).getY();
+            glucoseDirection = last > now ? "↑" : last < now ? "↓" : "→";
+        }
+
+        addTxt(card, v.getGlucoseValue(), "mg/dL " + glucoseDirection);
+        addTxt(card, v.getHeartRate() != null ? v.getHeartRate().intValue() : null, "bpm");
         addTxt(card, v.getTemperature(), "ºC");
         addTxt(card, v.getOxygenSaturation(), "% SpO₂");
     }
-
 
     private void addTxt(FlexboxLayout box, Number val, String unit) {
         if (val == null) return;

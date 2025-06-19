@@ -25,6 +25,7 @@ import com.example.tfg_beewell_app.utils.Prefs;        // ← NEW
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.Calendar;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -69,7 +70,31 @@ public class ProfileActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
         sexSpinner.setAdapter(adapter);
 
-        birthdateInput.setText(prefs.getString("birthdate", ""));
+        birthdateInput.setFocusable(false);
+        birthdateInput.setClickable(true);
+
+        birthdateInput.setOnClickListener(v -> {
+            Calendar cal = Calendar.getInstance();
+            new android.app.DatePickerDialog(ProfileActivity.this,
+                    (view, year, month, dayOfMonth) -> {
+                        // Display: DD-MM-YYYY
+                        String visible = String.format("%02d-%02d-%04d", dayOfMonth, month + 1, year);
+                        birthdateInput.setText(visible);
+
+                        // Store in SharedPreferences as DDMMYYYY for saving later
+                        String storedFormat = String.format("%02d%02d%04d", dayOfMonth, month + 1, year);
+                        getSharedPreferences("user_session", MODE_PRIVATE)
+                                .edit()
+                                .putString("birthdate_stored", storedFormat)
+                                .apply();
+                    },
+                    cal.get(Calendar.YEAR),
+                    cal.get(Calendar.MONTH),
+                    cal.get(Calendar.DAY_OF_MONTH)
+            ).show();
+        });
+
+
         String savedSex = prefs.getString("sex", "");
         sexSpinner.setSelection(!savedSex.isEmpty()
                 ? adapter.getPosition(savedSex) : 0);
@@ -89,7 +114,8 @@ public class ProfileActivity extends AppCompatActivity {
 
     /* ────── SAVE → USER TABLE ────── */
     private void saveUserInfo() {
-        String birthdateStr = birthdateInput.getText().toString();
+        SharedPreferences prefs = getSharedPreferences("user_session", MODE_PRIVATE);
+        String birthdateStr = prefs.getString("birthdate_stored", "");
         String selectedSex  = sexSpinner.getSelectedItem().toString();
 
         JSONObject body = new JSONObject();
@@ -249,16 +275,26 @@ public class ProfileActivity extends AppCompatActivity {
                     int birth = res.optInt("birth_date", 0);
                     boolean hasSex = res.has("sex") && !res.isNull("sex");
                     boolean sexVal = res.optBoolean("sex", false);
+
+                    if (birth > 0) {
+                        String raw = String.valueOf(birth); // e.g., 23022002
+                        if (raw.length() == 8) {
+                            String visible = raw.substring(0, 2) + "-" + raw.substring(2, 4) + "-" + raw.substring(4);
+                            birthdateInput.setText(visible);
+                            getSharedPreferences("user_session", MODE_PRIVATE)
+                                    .edit().putString("birthdate_stored", raw).apply();
+                        }
+                    }
+
                     if (birth > 0) Prefs.setBirthdate(this, birth);
                     if (hasSex)    Prefs.setSex(this, sexVal ? "Female" : "Male");
 
-
-                    birthdateInput.setText(birth > 0 ? String.valueOf(birth) : "");
                     sexSpinner.setSelection(hasSex ? (sexVal ? 2 : 1) : 0);
                 },
                 err -> t("Error loading user data"));
         Volley.newRequestQueue(this).add(req);
     }
+
 
     private void loadUserVariables(String mail) {
         String url = Constants.BASE_URL + "/user_variables/last/" + mail;

@@ -3,14 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white">
+    android:background="@color/white"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- ─────────────── ACHIEVEMENTS ─────────────── -->
         <androidx.cardview.widget.CardView
             android:id="@+id/achievementsCard"
             android:layout_width="match_parent"
@@ -19,7 +19,6 @@
             android:elevation="8dp"
             app:cardCornerRadius="0dp" />
 
-        <!-- ─────────────── OBSERVATIONS ─────────────── -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -30,22 +29,21 @@
             android:textSize="20sp"
             android:textStyle="bold" />
 
-        <!-- Contenedor para gráfico o fallback -->
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="280dp">
+            android:layout_height="280dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp">
 
             <androidx.viewpager2.widget.ViewPager2
                 android:id="@+id/chartViewPager"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="16dp"
+                android:layout_marginVertical="16dp"
                 android:background="@drawable/green_card_bg"
                 android:elevation="8dp" />
 
-            <!-- Mensaje sin datos -->
             <TextView
                 android:id="@+id/noChartsText"
                 android:layout_width="match_parent"
@@ -57,18 +55,32 @@
                 android:visibility="gone" />
         </FrameLayout>
 
-        <!-- Interpretación generada por GPT -->
+        <!-- Dot indicators for ViewPager2 -->
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/observationDots"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="0dp"
+            android:layout_marginBottom="8dp"
+            android:background="@android:color/transparent"
+            android:backgroundTint="@android:color/transparent"
+            app:tabBackground="@android:color/transparent"
+            app:tabIconTint="@null"
+            app:tabIndicatorColor="@android:color/transparent"
+            app:tabIndicatorHeight="0dp"
+            app:tabRippleColor="@android:color/transparent" />
+
         <TextView
             android:id="@+id/interpretationText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="16dp"
-            android:layout_marginTop="16dp"
             android:layout_marginRight="8dp"
-            android:layout_marginBottom="16dp"
-            android:paddingBottom="64dp"
-            android:text="Observation unavailable at this moment in time. Monthly data still has to be updated."
+            android:layout_marginBottom="64dp"
+            android:paddingBottom="8dp"
+            android:text="📊 Monthly Overview  The graph above will update automatically once you reach the first day of a new month. It will analyze and display insights based on your health data collected throughout the previous month.  After that, as each new month begins, the graph and summary will update with fresh insights.  You can also slide left to view summaries and trends from previous months, helping you track your progress over time."
             android:textColor="@color/beeBlack"
-            android:textSize="16sp" />   <!-- margen para que no lo tape el FAB -->
+            android:textSize="16sp" />
     </LinearLayout>
 </ScrollView>

@@ -3,7 +3,6 @@ package com.example.tfg_beewell_app.ui.notifications;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +18,9 @@ import com.example.tfg_beewell_app.local.GlucoseDB;
 import com.example.tfg_beewell_app.local.LocalGlucoseHistoryDao;
 import com.example.tfg_beewell_app.utils.GlucoseMonthAdapter;
 import com.example.tfg_beewell_app.utils.MonthlyInsightWorker;
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
+
 import java.time.Instant;
 import java.time.YearMonth;
 import java.time.ZoneId;
@@ -34,7 +36,7 @@ public class NotificationsFragment extends Fragment {
     private TextView interpretationText;
     private String userEmail;
 
-    @Override @NonNull
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container,
                              Bundle savedInstanceState) {
@@ -44,11 +46,11 @@ public class NotificationsFragment extends Fragment {
         pager = root.findViewById(R.id.chartViewPager);
         interpretationText = root.findViewById(R.id.interpretationText);
 
-        loadMonthRangeAndAdapter();
+        loadMonthRangeAndAdapter(root);
         return root;
     }
 
-    private void loadMonthRangeAndAdapter() {
+    private void loadMonthRangeAndAdapter(View root) {
         bg.execute(() -> {
             SharedPreferences session = requireContext()
                     .getSharedPreferences("user_session", Context.MODE_PRIVATE);
@@ -64,14 +66,13 @@ public class NotificationsFragment extends Fragment {
 
             ZoneId zone = ZoneId.systemDefault();
             YearMonth start = YearMonth.from(Instant.ofEpochSecond(minTs).atZone(zone));
-            YearMonth end   = YearMonth.from(Instant.ofEpochSecond(maxTs).atZone(zone));
+            YearMonth end = YearMonth.from(Instant.ofEpochSecond(maxTs).atZone(zone));
 
             List<YearMonth> list = new ArrayList<>();
             for (YearMonth cur = start; !cur.isAfter(end); cur = cur.plusMonths(1)) {
                 list.add(cur);
             }
 
-            // ✂️ remove the “current” (incomplete) month:
             YearMonth now = YearMonth.now(zone);
             list.removeIf(ym -> ym.equals(now));
 
@@ -84,18 +85,22 @@ public class NotificationsFragment extends Fragment {
                 pager.setAdapter(adapter);
                 pager.setOffscreenPageLimit(2);
 
+                TabLayout dots = root.findViewById(R.id.observationDots);
+                new TabLayoutMediator(dots, pager,
+                        (tab, position) -> tab.setIcon(R.drawable.dot_selector)
+                ).attach();
+
                 pager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-                    @Override public void onPageSelected(int position) {
+                    @Override
+                    public void onPageSelected(int position) {
                         int summaryPos = position == 0 ? 0 : position - 1;
                         updateMonthlySummary(summaryPos);
                     }
                 });
 
-                // jump to last historical month
                 pager.setCurrentItem(lastPos, false);
                 updateMonthlySummary(lastPos == 0 ? 0 : lastPos - 1);
 
-                // only enqueue summary for that same “last historical” month
                 YearMonth toSummarize = months.get(lastPos == 0 ? 0 : lastPos - 1);
                 String summaryKey = "summary_" + toSummarize.atDay(1);
                 SharedPreferences summaryPrefs = requireContext()
@@ -124,7 +129,8 @@ public class NotificationsFragment extends Fragment {
         interpretationText.setText(summary);
     }
 
-    @Override public void onDestroyView() {
+    @Override
+    public void onDestroyView() {
         super.onDestroyView();
         bg.shutdown();
     }
