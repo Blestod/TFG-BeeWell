@@ -131,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
                 );
 
 
+
     }
 
     @Override
@@ -166,19 +167,26 @@ public class MainActivity extends AppCompatActivity {
     private void notifyPermsGranted() {
         sendBroadcast(new Intent("HC_PERMS_GRANTED"));
 
-        Intent svc = new Intent(this,
-                com.example.tfg_beewell_app.utils.HealthDataService.class);
+        Intent svc = new Intent(this, com.example.tfg_beewell_app.utils.HealthDataService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(svc);
         } else {
             startService(svc);
         }
 
+        // 👇 Ejecutar worker inmediatamente si hay permisos
+        OneTimeWorkRequest vitalsNow =
+                new OneTimeWorkRequest.Builder(VitalsWorker.class)
+                        .setInitialDelay(1, TimeUnit.SECONDS)
+                        .build();
+        WorkManager.getInstance(this).enqueue(vitalsNow);
+
         if (!Prefs.wasTutorialShown(this)) {
             startActivity(new Intent(this, TutorialActivity.class));
             Prefs.markTutorialShown(this);
         }
     }
+
 
     private void setupMenu() {
         ImageView menuButton = findViewById(R.id.menuButton);

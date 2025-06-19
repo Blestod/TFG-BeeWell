@@ -67,12 +67,12 @@ public class Receiver extends BroadcastReceiver {
         }
 
         Bundle extras = intent.getExtras();
-        if (extras != null) {
-            for (String key : extras.keySet()) {
-                Object value = extras.get(key);
-                Log.d("ExtrasDebug", "Key: " + key + ", Value: " + value + " (" + (value != null ? value.getClass().getSimpleName() : "null") + ")");
-            }
-        }
+//        if (extras != null) {
+//            for (String key : extras.keySet()) {
+//                Object value = extras.get(key);
+//                Log.d("ExtrasDebug", "Key: " + key + ", Value: " + value + " (" + (value != null ? value.getClass().getSimpleName() : "null") + ")");
+//            }
+//        }
 
         String name = extras.getString(SERIAL);
         int mgdl = extras.getInt(MGDL);

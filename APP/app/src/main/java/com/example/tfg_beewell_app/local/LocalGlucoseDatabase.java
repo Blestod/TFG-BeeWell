@@ -15,7 +15,7 @@ import androidx.room.RoomDatabase;
                 LocalMealEntry.class,
                 LocalActivityEntry.class
         },
-        version = 4,
+        version = 5,
         exportSchema = false
 )
 public abstract class LocalGlucoseDatabase extends RoomDatabase {

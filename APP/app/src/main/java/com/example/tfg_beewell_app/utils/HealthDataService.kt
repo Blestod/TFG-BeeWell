@@ -22,13 +22,20 @@ class HealthDataService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startForeground(1, createNotification())
 
-        // Start periodic task, like using a coroutine or handler to poll Health Connect
         CoroutineScope(Dispatchers.IO).launch {
             while (true) {
-                // Your logic to read from Health Connect and send to server
-                delay(15 * 60 * 1000) // every 15 min
+                Log.d("HealthService", "⏱ Ejecutando VitalsWorker desde servicio...")
+
+                val req = androidx.work.OneTimeWorkRequest.Builder(
+                    com.example.tfg_beewell_app.utils.VitalsWorker::class.java
+                ).build()
+
+                androidx.work.WorkManager.getInstance(applicationContext).enqueue(req)
+
+                delay(30_000) // cada 30 segundos
             }
         }
+
         Log.d("HealthService", "Foreground service started");
         return START_STICKY
     }

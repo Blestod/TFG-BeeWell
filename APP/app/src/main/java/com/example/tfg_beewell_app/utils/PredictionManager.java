@@ -79,8 +79,8 @@ public final class PredictionManager {
         double instantEffect = units * eff * dIOB_dt;
 
         Log.d("PredManager", String.format(
-            "Instant insulin effect: %.2f (units: %.2f, eff: %.2f, min: %.1f, t: %.2f)",
-            instantEffect, units, eff, min, t
+                "Instant insulin effect: %.2f (units: %.2f, eff: %.2f, min: %.1f, t: %.2f)",
+                instantEffect, units, eff, min, t
         ));
 
         return instantEffect;
@@ -113,8 +113,8 @@ public final class PredictionManager {
         double effect = grams * dCOB_dt / cr * 50.0;  // 50 mg/dL por unidad de insulina aprox.
 
         Log.d("PredManager", String.format(
-            "Meal instant effect: %.2f (grams: %.1f, cr: %.1f, min: %.1f, t: %.2f, dur: %.1f)",
-            effect, grams, cr, min, t, dur
+                "Meal instant effect: %.2f (grams: %.1f, cr: %.1f, min: %.1f, t: %.2f, dur: %.1f)",
+                effect, grams, cr, min, t, dur
         ));
 
         return effect;
@@ -146,10 +146,26 @@ public final class PredictionManager {
         if (curve == null || curve.isEmpty()) return curve;
 
         /* 3️⃣  latest local events ------------------------------------ */
-        LocalMealEntry    meal  = Persist.getLastMeal (ctx, now-MEAL_WINDOW_H*3600_000L);
-        LocalInsulinEntry rapid = Persist.getLastRapid(ctx, now-4*3600_000L);
-        LocalInsulinEntry basal = Persist.getLastBasal(ctx, now-24*3600_000L);
-        LocalActivityEntry act  = Persist.getLastAct  (ctx, now-ACTIVITY_WINDOW_H*3600_000L);
+        LogbookDao dao = GlucoseDB.getInstance(ctx).logbookDao();
+
+        long fromMeal = now - MEAL_WINDOW_H * 3600_000L;
+        long fromIns  = now - 24 * 3600_000L;  // cover both rapid and basal
+        long fromAct  = now - ACTIVITY_WINDOW_H * 3600_000L;
+
+        List<LocalMealEntry>     meals  = dao.mealsBetween(fromMeal / 1000, now / 1000);
+        List<LocalInsulinEntry> rapidInsulins = new ArrayList<>();
+        List<LocalInsulinEntry> basalInsulins = new ArrayList<>();
+        List<LocalActivityEntry> acts   = dao.actsBetween(fromAct  / 1000, now / 1000);
+
+// ➕ Split insulin entries by kind
+        List<LocalInsulinEntry> allIns = dao.insulinBetween(fromIns / 1000, now / 1000);
+        for (LocalInsulinEntry i : allIns) {
+            if (i.kind != null && i.kind.toLowerCase().contains("rapid")) {
+                rapidInsulins.add(i);
+            } else {
+                basalInsulins.add(i);
+            }
+        }
 
         /* 4️⃣  user factors ------------------------------------------- */
         double isf = Prefs.getInsulinSensitivity(ctx);
@@ -163,21 +179,32 @@ public final class PredictionManager {
             long tMs   = (long)(p.getX()*Forecast.FUZZER);
             double y   = previousGlucose;
             Log.d("PredManager","------");
-            
-            // Time since events in minutes
-            double dtMeal  = meal  != null ? (tMs - meal.timestampSec  * 1000L) / 60_000.0 : Double.NaN;
-            double dtRapid = rapid != null ? (tMs - rapid.timestampSec * 1000L) / 60_000.0 : Double.NaN;
-            double dtBasal = basal != null ? (tMs - basal.timestampSec * 1000L) / 60_000.0 : Double.NaN;
-            double dtAct   = act   != null ? (tMs - act.timestampSec   * 1000L) / 60_000.0 : Double.NaN;
 
-            if (!Double.isNaN(dtMeal) && dtMeal >= 0)
-                y += mealInstantEffect(meal.grams, dtMeal, cr, carbh);
-            if (!Double.isNaN(dtRapid) && dtRapid >= 0)
-                y -= insulinInstantEffect(rapid.kind, rapid.units, dtRapid, isf);
-            if (!Double.isNaN(dtBasal) && dtBasal >= 0)
-                y -= insulinInstantEffect(basal.kind, basal.units, dtBasal, isf);
-            if (!Double.isNaN(dtAct) && dtAct >= 0 && dtAct <= ACTIVITY_WINDOW_H * 60)
-                y -= activityEffect(act.intensity, act.durationMin);
+            for (LocalMealEntry m : meals) {
+                double dt = (tMs - m.timestampSec * 1000L) / 60_000.0;
+                if (dt >= 0)
+                    y += mealInstantEffect(m.grams, dt, cr, carbh);
+            }
+
+            for (LocalInsulinEntry i : rapidInsulins) {
+                double dt = (tMs - i.timestampSec * 1000L) / 60_000.0;
+                if (dt >= 0)
+                    y -= insulinInstantEffect("rapid-acting", i.units, dt, isf);
+            }
+
+            for (LocalInsulinEntry i : basalInsulins) {
+                double dt = (tMs - i.timestampSec * 1000L) / 60_000.0;
+                if (dt >= 0)
+                    y -= insulinInstantEffect("basal", i.units, dt, isf);
+            }
+
+
+            for (LocalActivityEntry a : acts) {
+                double dt = (tMs - a.timestampSec * 1000L) / 60_000.0;
+                if (dt >= 0 && dt <= ACTIVITY_WINDOW_H * 60)
+                    y -= activityEffect(a.intensity, a.durationMin);
+            }
+
             // Adjust prediction limits to account for extreme hyper/hypoglycemia
             double lowerLimit = 40.0; // mg/dL (severe hypoglycemia)
             double upperLimit = 400.0; // mg/dL (severe hyperglycemia)
@@ -186,8 +213,8 @@ public final class PredictionManager {
             previousGlucose = y; // feedback loop: use new prediction as base
 
             Log.d("PredManager", String.format("Time: %s, Predicted Glucose: %.2f mg/dL",
-                Forecast.dateTimeText(tMs), y));
-    
+                    Forecast.dateTimeText(tMs), y));
+
         }
 
         Log.d("PredManager", "Forecast adjusted with limits ✔");

@@ -3,11 +3,12 @@ package com.example.tfg_beewell_app.local;
 
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
-import androidx.room.Ignore;          // ← ADD
+import androidx.room.Ignore;
 
 @Entity(tableName = "insulin_local")
 public class LocalInsulinEntry {
     @PrimaryKey(autoGenerate = true) public long id;
+    public int injected_id;
     public long   timestampSec;
     public double units;
     public String kind;      // "rapid-acting" | "slow-acting"

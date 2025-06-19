@@ -54,7 +54,7 @@
                         android:layout_margin="16dp"
                         android:layout_marginTop="8dp"
                         android:layout_marginBottom="8dp"
-                        android:text="Connection failed – Vitals review unavailable."
+                        android:text="If app recently installed please have patience for data to get stored, usually 5-10 min to start and 8 hours to have complete set."
                         android:textColor="@android:color/black"
                         android:textSize="16sp" />
 
@@ -162,7 +162,7 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="4dp"
                     android:padding="8dp"
-                    android:text="Connection failed – Forecast review unavailable."
+                    android:text="Connection failed – There can be delay or problems with the server"
                     android:textColor="@color/beeBlack"
                     android:textSize="16sp" />
             </androidx.cardview.widget.CardView>

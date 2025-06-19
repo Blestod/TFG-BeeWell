@@ -19,10 +19,14 @@ public class Prefs {
                 .edit().putBoolean(KEY_SHOWN,true).apply();
     }
 
-    /* user-variables (ISF, CR, CAR) ------------------------------- */
+    /* user-variables ------------------------------- */
     private static final String KEY_INSULIN_SENSITIVITY = "insulin_sensitivity";
     private static final String KEY_CARB_RATIO          = "carb_ratio";
     private static final String KEY_CARB_ABS_RATE       = "carb_absorption_rate";
+    private static final String KEY_HEIGHT = "user_height";
+    private static final String KEY_WEIGHT = "user_weight";
+    private static final String KEY_BIRTHDATE = "user_birthdate";
+    private static final String KEY_SEX = "user_sex";
 
     /* ----- getters (unchanged defaults) ----- */
     public static double getInsulinSensitivity(Context ctx){
@@ -38,6 +42,24 @@ public class Prefs {
         return p.getFloat(KEY_CARB_ABS_RATE,35f);            // g CHO · h⁻¹
     }
 
+    public static double getHeight(Context ctx) {
+        return PreferenceManager.getDefaultSharedPreferences(ctx).getFloat(KEY_HEIGHT, 0f);
+    }
+
+
+    public static double getWeight(Context ctx) {
+        return PreferenceManager.getDefaultSharedPreferences(ctx).getFloat(KEY_WEIGHT, 0f);
+    }
+
+    public static int getBirthdate(Context ctx) {
+        return PreferenceManager.getDefaultSharedPreferences(ctx).getInt(KEY_BIRTHDATE, 0);
+    }
+
+    public static String getSex(Context ctx) {
+        return PreferenceManager.getDefaultSharedPreferences(ctx).getString(KEY_SEX, "");
+    }
+
+
     /* ----- setters (NEW) ----- */
     public static void setInsulinSensitivity(Context ctx,double v){
         PreferenceManager.getDefaultSharedPreferences(ctx)
@@ -50,6 +72,18 @@ public class Prefs {
     public static void setCarbAbsorptionRate(Context ctx,double v){
         PreferenceManager.getDefaultSharedPreferences(ctx)
                 .edit().putFloat(KEY_CARB_ABS_RATE,(float)v).apply();
+    }
+    public static void setSex(Context ctx, String sex) {
+        PreferenceManager.getDefaultSharedPreferences(ctx).edit().putString(KEY_SEX, sex).apply();
+    }
+    public static void setBirthdate(Context ctx, int birthdate) {
+        PreferenceManager.getDefaultSharedPreferences(ctx).edit().putInt(KEY_BIRTHDATE, birthdate).apply();
+    }
+    public static void setWeight(Context ctx, double v) {
+        PreferenceManager.getDefaultSharedPreferences(ctx).edit().putFloat(KEY_WEIGHT, (float)v).apply();
+    }
+    public static void setHeight(Context ctx, double v) {
+        PreferenceManager.getDefaultSharedPreferences(ctx).edit().putFloat(KEY_HEIGHT, (float)v).apply();
     }
 
     // Turorial flag

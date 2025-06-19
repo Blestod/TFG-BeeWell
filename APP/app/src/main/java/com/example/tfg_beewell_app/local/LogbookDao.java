@@ -48,6 +48,16 @@ public interface LogbookDao {
         return getLastInsulin("slow-acting", sinceSec);
     }
 
+    /* ────────── DELETE methods ────────── */
+    @Query("DELETE FROM insulin_local WHERE injected_id = :id")
+    void deleteInsulin(int id);
+
+    @Query("DELETE FROM meal_local WHERE meal_id = :id")
+    void deleteMeal(int id);
+
+    @Query("DELETE FROM activity_local WHERE activity_id = :id")
+    void deleteActivity(int id);
+
 
     /* ────────── RANGE QUERIES (for chart markers) ────────── */
 

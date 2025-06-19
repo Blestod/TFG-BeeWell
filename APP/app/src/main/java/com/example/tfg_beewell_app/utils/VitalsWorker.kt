@@ -1,7 +1,9 @@
 package com.example.tfg_beewell_app.utils
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.android.volley.Response
@@ -79,6 +81,9 @@ class VitalsWorker(
                     Response.Listener { response ->
                         Log.d("VitalsWorker", "✅ Vitals enviados correctamente: $response")
                         prefs.edit().putInt(lastSavedTimeKey, vitalTime).apply()
+                        val intent = Intent("VITALS_UPDATED")
+                        LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
+
                         continuation.resume(Result.success(), null)
                     },
                     Response.ErrorListener { error ->

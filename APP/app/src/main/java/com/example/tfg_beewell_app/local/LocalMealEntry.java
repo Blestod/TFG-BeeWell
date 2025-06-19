@@ -8,6 +8,7 @@ import androidx.room.Ignore;
 @Entity(tableName = "meal_local")
 public class LocalMealEntry {
     @PrimaryKey(autoGenerate = true) public long id;
+    public int   meal_id;
     public long  timestampSec;
     public float grams;
     public int   foodId;

@@ -15,6 +15,11 @@ public class HomeService {
     private static final String BASE_URL = "https://beewell.core.sciling.com/";
     private static HomeService INSTANCE;
     private final HomeApi api;
+    private long lastFetchTime = 0;
+    private static final long CACHE_DURATION_MS = 20 * 60 * 1000; // 20 minutes
+    private String cachedVitals = null;
+    private String cachedPrediction = null;
+
 
     private HomeService() {
         HttpLoggingInterceptor log = new HttpLoggingInterceptor();
@@ -56,12 +61,9 @@ public class HomeService {
         public HomeRequestBody(String wrapperJson) {
             this.patient_data = new JSONObject();
             try {
-                // Parse the outer wrapper
                 JSONObject wrapper = new JSONObject(wrapperJson);
-                // Extract the real payload
                 JSONObject inner = wrapper.getJSONObject("patient_data");
 
-                // Copy the fields your endpoint expects:
                 patient_data.put("user_email",   inner.optString("user_email"));
                 patient_data.put("health_data",  inner.getJSONObject("health_data"));
                 patient_data.put("events",       inner.getJSONArray("events"));
@@ -71,40 +73,70 @@ public class HomeService {
         }
     }
 
+
     public void fetchHomeInsights(JSONObject fullWrapper, HomeCallback callback) {
+        long now = System.currentTimeMillis();
+
+        if (now - lastFetchTime < CACHE_DURATION_MS && cachedVitals != null && cachedPrediction != null) {
+            callback.onResult(cachedVitals, cachedPrediction);
+            return;
+        }
+
         HomeRequestBody body = new HomeRequestBody(fullWrapper.toString());
 
         api.getHomeInsights(body).enqueue(new Callback<ResponseBody>() {
             @Override
-            public void onResponse(@NonNull Call<ResponseBody> call,
-                                   @NonNull Response<ResponseBody> resp) {
+            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> resp) {
                 if (!resp.isSuccessful() || resp.body() == null) {
                     callback.onResult("(no vitals)", "(no predictions)");
                     return;
                 }
+
                 try {
                     String jsonStr = resp.body().string();
-                    JSONObject j      = new JSONObject(jsonStr);
-                    JSONObject recos  = j.optJSONObject("recommendations");
+                    JSONObject raw = new JSONObject(jsonStr);
+                    Object responseField = raw.opt("response");
 
-                    String vitalsAdvice = recos != null
-                            ? recos.optString("vitals_recommendation", "(no vitals)")
-                            : "(no vitals)";
-                    String predAdvice   = recos != null
-                            ? recos.optString("prediction_recommendation", "(no predictions)")
-                            : "(no predictions)";
+                    JSONObject inner = null;
+
+                    if (responseField instanceof String) {
+                        String str = (String) responseField;
+                        try {
+                            inner = new JSONObject(str); // Try to parse it as JSON
+                        } catch (Exception e) {
+                            // Not a JSON string, treat as plain fallback
+                            callback.onResult(str, "");
+                            return;
+                        }
+                    } else if (responseField instanceof JSONObject) {
+                        inner = (JSONObject) responseField;
+                    }
+
+                    if (inner == null) {
+                        callback.onResult("(invalid response)", "(invalid prediction)");
+                        return;
+                    }
+
+                    String vitalsAdvice = inner.optString("recommendation_vitals", "(no vitals)");
+                    String predAdvice   = inner.optString("recommendation_prediction", "(no predictions)");
+
+                    cachedVitals = vitalsAdvice;
+                    cachedPrediction = predAdvice;
+                    lastFetchTime = System.currentTimeMillis();
 
                     callback.onResult(vitalsAdvice, predAdvice);
+
                 } catch (Exception e) {
-                    callback.onResult("Parse error:" + e.getMessage(), "");
+                    callback.onResult("Parse error: " + e.getMessage(), "");
                 }
             }
 
             @Override
-            public void onFailure(@NonNull Call<ResponseBody> call,
-                                  @NonNull Throwable t) {
-                callback.onResult("Error:" + t.getMessage(), "");
+            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
+                callback.onResult("Error: " + t.getMessage(), "");
             }
         });
     }
+
+
 }

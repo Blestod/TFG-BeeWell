@@ -8,6 +8,7 @@ import androidx.room.Ignore;
 @Entity(tableName = "activity_local")
 public class LocalActivityEntry {
     @PrimaryKey(autoGenerate = true) public long id;
+    public int    activity_id;
     public long   timestampSec;
     public int    durationMin;
     public String intensity;

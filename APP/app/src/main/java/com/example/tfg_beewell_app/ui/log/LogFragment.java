@@ -1,6 +1,7 @@
 package com.example.tfg_beewell_app.ui.log;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,12 +10,15 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.tfg_beewell_app.R;
+import com.example.tfg_beewell_app.local.LocalGlucoseDatabase;
+import com.example.tfg_beewell_app.local.LogbookDao;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -136,14 +140,49 @@ public class LogFragment extends Fragment {
         /* -------- networking: DELETE -------- */
         private void deleteItem(Object item) {
             Call<Void> c =
-                    item instanceof Net.InsulinLog ? Net.api.delIns(((Net.InsulinLog) item).injected_id) :
-                            item instanceof Net.MealLog    ? Net.api.delMeal(((Net.MealLog) item).meal_id) :
-                                    Net.api.delAct(((Net.ActLog) item).activity_id);
+                    item instanceof Net.InsulinLog
+                            ? Net.api.delIns(((Net.InsulinLog) item).injected_id)
+                            : item instanceof Net.MealLog
+                            ? Net.api.delMeal(((Net.MealLog) item).meal_id)
+                            : Net.api.delAct(((Net.ActLog) item).activity_id);
 
             c.enqueue(new Callback<Void>() {
-                @Override public void onResponse(Call<Void> call, Response<Void> r) { load(); }
-                @Override public void onFailure(Call<Void> call, Throwable t) { }
+                @Override
+                public void onResponse(Call<Void> call, Response<Void> r) {
+                    if (!r.isSuccessful()) {
+                        Toast.makeText(getContext(), "Failed to delete", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    // delete locally in background
+                    new Thread(() -> {
+                        LogbookDao dao = LocalGlucoseDatabase
+                                .getInstance(requireContext())
+                                .logbookDao();
+
+                        if (item instanceof Net.InsulinLog) {
+                            dao.deleteInsulin(((Net.InsulinLog) item).injected_id);
+                        } else if (item instanceof Net.MealLog) {
+                            dao.deleteMeal(((Net.MealLog) item).meal_id);
+                        } else {
+                            dao.deleteActivity(((Net.ActLog) item).activity_id);
+                        }
+
+                        // notify HomeFragment to redraw chart
+                        Intent upd = new Intent("LOG_UPDATED");
+                        LocalBroadcastManager.getInstance(requireContext())
+                                .sendBroadcast(upd);
+
+                        // finally, reload this page’s list on the UI thread
+                        requireActivity().runOnUiThread(() -> load());
+                    }).start();
+                }
+
+                @Override
+                public void onFailure(Call<Void> call, Throwable t) {
+                    Toast.makeText(getContext(), "Network error", Toast.LENGTH_SHORT).show();
+                }
             });
         }
+
     }
 }

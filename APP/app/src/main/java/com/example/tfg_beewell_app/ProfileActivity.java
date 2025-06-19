@@ -99,6 +99,13 @@ public class ProfileActivity extends AppCompatActivity {
                 body.put("birth_date", Integer.parseInt(birthdateStr));
                 something = true;
             }
+            if (!birthdateStr.isEmpty()) {
+                Prefs.setBirthdate(this, Integer.parseInt(birthdateStr));
+            }
+            if (selectedSex.equals("Male") || selectedSex.equals("Female")) {
+                Prefs.setSex(this, selectedSex);
+            }
+
             if (selectedSex.equals("Male"))   { body.put("sex", false); something = true; }
             if (selectedSex.equals("Female")) { body.put("sex", true);  something = true; }
         } catch (Exception ignore) {}
@@ -142,6 +149,11 @@ public class ProfileActivity extends AppCompatActivity {
                 () -> {
                     t(updated.toString().trim() + " saved");
                     /* 🔄 update Prefs so PredictionManager reads fresh values */
+                    final String hFinal = h, wFinal = w;
+
+                    if (!hFinal.isEmpty()) Prefs.setHeight(this, Double.parseDouble(hFinal));
+                    if (!wFinal.isEmpty()) Prefs.setWeight(this, Double.parseDouble(wFinal));
+
                     if (!sFinal.isEmpty()) Prefs.setInsulinSensitivity(this,  Double.parseDouble(sFinal));
                     if (!rFinal.isEmpty()) Prefs.setCarbRatio(this,           Double.parseDouble(rFinal));
                     if (!aFinal.isEmpty()) Prefs.setCarbAbsorptionRate(this,  Double.parseDouble(aFinal));
@@ -237,6 +249,9 @@ public class ProfileActivity extends AppCompatActivity {
                     int birth = res.optInt("birth_date", 0);
                     boolean hasSex = res.has("sex") && !res.isNull("sex");
                     boolean sexVal = res.optBoolean("sex", false);
+                    if (birth > 0) Prefs.setBirthdate(this, birth);
+                    if (hasSex)    Prefs.setSex(this, sexVal ? "Female" : "Male");
+
 
                     birthdateInput.setText(birth > 0 ? String.valueOf(birth) : "");
                     sexSpinner.setSelection(hasSex ? (sexVal ? 2 : 1) : 0);
@@ -260,7 +275,11 @@ public class ProfileActivity extends AppCompatActivity {
                     double isf = res.optDouble("insulin_sensitivity", -1);
                     double cr  = res.optDouble("carb_ratio",           -1);
                     double car = res.optDouble("carb_absorption_rate", -1);
+                    double height = res.optDouble("height", -1);
+                    double weight = res.optDouble("weight", -1);
 
+                    if (height > 0) Prefs.setHeight(this, height);
+                    if (weight > 0) Prefs.setWeight(this, weight);
                     if (isf > 0) Prefs.setInsulinSensitivity(this, isf);
                     if (cr  > 0) Prefs.setCarbRatio(this, cr);
                     if (car > 0) Prefs.setCarbAbsorptionRate(this, car);
