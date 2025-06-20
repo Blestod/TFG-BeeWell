@@ -198,7 +198,6 @@ public final class PredictionManager {
                     y -= insulinInstantEffect("basal", i.units, dt, isf);
             }
 
-
             for (LocalActivityEntry a : acts) {
                 double dt = (tMs - a.timestampSec * 1000L) / 60_000.0;
                 if (dt >= 0 && dt <= ACTIVITY_WINDOW_H * 60)
@@ -210,11 +209,10 @@ public final class PredictionManager {
             double upperLimit = 400.0; // mg/dL (severe hyperglycemia)
             y = Math.max(lowerLimit, Math.min(upperLimit, y));
             adjustedCurve.add(new PointValue(p.getX(), (float) y));
-            previousGlucose = y; // feedback loop: use new prediction as base
+            previousGlucose = p.getY(); // feedback loop: use new prediction as base
 
             Log.d("PredManager", String.format("Time: %s, Predicted Glucose: %.2f mg/dL",
                     Forecast.dateTimeText(tMs), y));
-
         }
 
         Log.d("PredManager", "Forecast adjusted with limits ✔");
