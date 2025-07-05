@@ -668,7 +668,7 @@ def get_exercise_events(user_email):
 
 
 #---------------------CHATGPT----------------------
-client = openai.OpenAI(api_key = "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")  # tu token aquí, SOLO en backend
+client = openai.OpenAI(api_key = "your token")  # tu token aquí, SOLO en backend
 
 @api.route("/generate_summary", methods=["POST"])
 def generate_summary():

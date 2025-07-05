@@ -34,10 +34,6 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="34">
         <service
-            android:name=".utils.HomeService"
-            android:enabled="true"
-            android:exported="true"></service>
-        <service
             android:name=".utils.HealthDataService"
             android:enabled="true"
             android:exported="false"
