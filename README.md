@@ -1,4 +1,3 @@
-=======
 # BeeWell – Diabetes Management & Health Assistant
 
 ## Overview
@@ -186,4 +185,3 @@ nities for the availability of software tools, frameworks, and documentation tha
 this project. In particular, this work reuses parts of the xDrip+ codebase, specifically
 for the integration with GlucoDataHandler and the initial estimation of one-hour glucose
 forecasts.
->>>>>>> 2f13c690c824524b370f0d485bbe410768d59b77
